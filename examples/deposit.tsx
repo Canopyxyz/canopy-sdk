@@ -1,4 +1,5 @@
 import { useClients, useSignAndSubmitTransaction } from "@aptos-labs/react";
+// Use actual imports here instead of ../src/client
 import { CanopyClient } from "../src/client";
 
 export default function App() {
