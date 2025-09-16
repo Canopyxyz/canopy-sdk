@@ -117,7 +117,7 @@ export class CanopyClient {
     if (!userAddress || typeof userAddress !== "string") {
       throw new CanopyError(
         "User address is required and must be a string",
-        CanopyErrorCode.INVALID_VAULT_ADDRESS,
+        CanopyErrorCode.INVALID_VAULT_ADDRESS, // Incorrect error code
         { userAddress }
       );
     }
@@ -189,7 +189,7 @@ export class CanopyClient {
     if (!stakingTokens || stakingTokens.length === 0) {
       throw new CanopyError(
         "At least one staking token is required",
-        CanopyErrorCode.INVALID_VAULT_ADDRESS,
+        CanopyErrorCode.INVALID_VAULT_ADDRESS, // Incorrect error code
         { stakingTokens }
       );
     }
@@ -208,14 +208,14 @@ export class CanopyClient {
     if (!userAddress || typeof userAddress !== "string") {
       throw new CanopyError(
         "User address is required and must be a string",
-        CanopyErrorCode.INVALID_VAULT_ADDRESS,
+        CanopyErrorCode.INVALID_VAULT_ADDRESS, // Incorrect error code
         { userAddress }
       );
     }
     if (!stakingToken || typeof stakingToken !== "string") {
       throw new CanopyError(
         "Staking token is required and must be a string",
-        CanopyErrorCode.INVALID_VAULT_ADDRESS,
+        CanopyErrorCode.INVALID_VAULT_ADDRESS, // Incorrect error code
         { stakingToken }
       );
     }
