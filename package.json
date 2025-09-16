@@ -1,6 +1,6 @@
 {
   "name": "@canopyhub/canopy-sdk",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "TypeScript SDK for Canopy Protocol",
   "keywords": [
     "movement",

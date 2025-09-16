@@ -3,7 +3,7 @@ import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
 import { WalletConnector } from "./WalletConnector";
 import VaultOperations from "./VaultOperations";
 import StakingOperations from "./StakingOperations";
-import { CanopyClient } from "@canopy/ts-sdk";
+import { CanopyClient } from "@canopyhub/canopy-sdk";
 
 export default function App() {
   const aptos = new Aptos(

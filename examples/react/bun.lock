@@ -6,7 +6,7 @@
       "dependencies": {
         "@aptos-labs/ts-sdk": "^5.0.0",
         "@aptos-labs/wallet-adapter-react": "^7.0.7",
-        "@canopy/ts-sdk": "file:../..",
+        "@canopyhub/canopy-sdk": "file:../..",
         "@tanstack/react-query": "^5.89.0",
         "react": "^19.1.1",
         "react-dom": "^19.1.1",
@@ -119,7 +119,7 @@
 
     "@bcoe/v8-coverage": ["@bcoe/v8-coverage@0.2.3", "", {}, "sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw=="],
 
-    "@canopy/ts-sdk": ["@canopy/ts-sdk@file:../..", { "dependencies": { "@aptos-labs/ts-sdk": "^4.0.0" }, "devDependencies": { "@aptos-labs/react": "^0.1.4", "@types/jest": "^30.0.0", "@types/node": "^24.4.0", "@typescript-eslint/eslint-plugin": "^8.43.0", "@typescript-eslint/parser": "^8.43.0", "eslint": "^9.35.0", "jest": "^30.1.3", "ts-jest": "^29.4.1", "tsup": "^8.5.0", "typescript": "^5.9.2" } }],
+    "@canopyhub/canopy-sdk": ["@canopyhub/canopy-sdk@file:../..", { "dependencies": { "@aptos-labs/ts-sdk": "^4.0.0" }, "devDependencies": { "@aptos-labs/react": "^0.1.4", "@types/jest": "^30.0.0", "@types/node": "^24.4.0", "@typescript-eslint/eslint-plugin": "^8.43.0", "@typescript-eslint/parser": "^8.43.0", "eslint": "^9.35.0", "jest": "^30.1.3", "ts-jest": "^29.4.1", "tsup": "^8.5.0", "typescript": "^5.9.2" } }],
 
     "@emnapi/core": ["@emnapi/core@1.5.0", "", { "dependencies": { "@emnapi/wasi-threads": "1.1.0", "tslib": "^2.4.0" } }, "sha512-sbP8GzB1WDzacS8fgNPpHlp6C9VZe+SJP3F90W9rLemaQj2PzIuTEl1qDOYQf58YIpyjViI24y9aPWCjEzY2cg=="],
 
@@ -1181,7 +1181,7 @@
 
     "@aptos-labs/wallet-adapter-core/eventemitter3": ["eventemitter3@4.0.7", "", {}, "sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw=="],
 
-    "@canopy/ts-sdk/@aptos-labs/ts-sdk": ["@aptos-labs/ts-sdk@4.0.0", "", { "dependencies": { "@aptos-labs/aptos-cli": "^1.0.2", "@aptos-labs/aptos-client": "^2.0.0", "@noble/curves": "^1.6.0", "@noble/hashes": "^1.5.0", "@scure/bip32": "^1.4.0", "@scure/bip39": "^1.3.0", "eventemitter3": "^5.0.1", "form-data": "^4.0.0", "js-base64": "^3.7.7", "jwt-decode": "^4.0.0", "poseidon-lite": "^0.2.0" } }, "sha512-bRB9fT0t86btGyL/b5I4c3K1gZvldSvFv2KkV+1kEHt+yDbDrWI43wsfHLv0fFAVatCrH610NpLONMCnQSqQhA=="],
+    "@canopyhub/canopy-sdk/@aptos-labs/ts-sdk": ["@aptos-labs/ts-sdk@4.0.0", "", { "dependencies": { "@aptos-labs/aptos-cli": "^1.0.2", "@aptos-labs/aptos-client": "^2.0.0", "@noble/curves": "^1.6.0", "@noble/hashes": "^1.5.0", "@scure/bip32": "^1.4.0", "@scure/bip39": "^1.3.0", "eventemitter3": "^5.0.1", "form-data": "^4.0.0", "js-base64": "^3.7.7", "jwt-decode": "^4.0.0", "poseidon-lite": "^0.2.0" } }, "sha512-bRB9fT0t86btGyL/b5I4c3K1gZvldSvFv2KkV+1kEHt+yDbDrWI43wsfHLv0fFAVatCrH610NpLONMCnQSqQhA=="],
 
     "@eslint-community/eslint-utils/eslint-visitor-keys": ["eslint-visitor-keys@3.4.3", "", {}, "sha512-wpc+LXeiyiisxPlEkUzU6svyS1frIO3Mgxj1fdy7Pm8Ygzguax2N3Fa/D/ag1WqbOprdI+uY6wMUl8/a2G+iag=="],
 

@@ -440,9 +440,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@canopy/ts-sdk@workspace:.":
+"@canopyhub/canopy-sdk@workspace:.":
   version: 0.0.0-use.local
-  resolution: "@canopy/ts-sdk@workspace:."
+  resolution: "@canopyhub/canopy-sdk@workspace:."
   dependencies:
     "@aptos-labs/react": ^0.1.4
     "@aptos-labs/ts-sdk": ^4.0.0

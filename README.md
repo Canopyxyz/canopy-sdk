@@ -13,18 +13,18 @@ TypeScript SDK for integrating Canopy Protocol vaults into your dApp.
 ## Installation
 
 ```bash
-npm install @canopy/ts-sdk
+npm install @canopyhub/canopy-sdk
 # or
-yarn add @canopy/ts-sdk
+yarn add @canopyhub/canopy-sdk
 # or
-bun add @canopy/ts-sdk
+bun add @canopyhub/canopy-sdk
 ```
 
 ## Quick Start
 
 ```typescript
 import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
-import { CanopyClient } from "@canopy/ts-sdk";
+import { CanopyClient } from "@canopyhub/canopy-sdk";
 
 // Initialize Aptos client for Movement Network
 const aptos = new Aptos(
@@ -251,7 +251,7 @@ const response = await aptos.signAndSubmitTransaction({
 The SDK throws `CanopyError` with specific error codes:
 
 ```typescript
-import { CanopyError, CanopyErrorCode } from "@canopy/ts-sdk";
+import { CanopyError, CanopyErrorCode } from "@canopyhub/canopy-sdk";
 
 try {
   await canopyClient.deposit(vaultAddress, amount);

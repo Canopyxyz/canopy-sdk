@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { scaleToDecimals, scaleFromDecimals, formatAddress } from "./utils";
-import type { CanopyClient } from "@canopy/ts-sdk";
+import type { CanopyClient } from "@canopyhub/canopy-sdk";
 
 export default function StakingOperations({
   canopyClient,
