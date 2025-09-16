@@ -181,9 +181,10 @@ const payload = await canopyClient.stake(
 ```
 
 ### Layer 2: Static Mapping Fallback
-
+// Add a reminder to keep this SDK up to date for user relying on this static mapping, as newer pools might be added in a recent SDK version.
 Built-in mappings for common staking tokens. The SDK automatically checks these when no pool addresses are provided.
 
+// Should the API come before the static fallback (which is incomplete and maybe outdated in the future?)
 ### Layer 3: GraphQL API (Requires API Key)
 
 ```typescript
