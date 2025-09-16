@@ -1,0 +1,892 @@
+{
+    "address": "0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b",
+    "name": "multi_rewards",
+    "friends": [],
+    "exposed_functions": [
+        {
+            "name": "add_reward",
+            "visibility": "public",
+            "is_entry": true,
+            "is_view": false,
+            "generic_type_params": [],
+            "params": [
+                "&signer",
+                "0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>",
+                "0x1::object::Object<0x1::fungible_asset::Metadata>",
+                "address",
+                "u64"
+            ],
+            "return": []
+        },
+        {
+            "name": "claim_reward",
+            "visibility": "public",
+            "is_entry": true,
+            "is_view": false,
+            "generic_type_params": [],
+            "params": [
+                "&signer",
+                "0x1::object::Object<0x1::fungible_asset::Metadata>"
+            ],
+            "return": []
+        },
+        {
+            "name": "clear_admin_withdrawal_proposal",
+            "visibility": "public",
+            "is_entry": true,
+            "is_view": false,
+            "generic_type_params": [],
+            "params": [
+                "&signer",
+                "0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>"
+            ],
+            "return": []
+        },
+        {
+            "name": "create_staking_pool",
+            "visibility": "public",
+            "is_entry": false,
+            "is_view": false,
+            "generic_type_params": [],
+            "params": [
+                "&signer",
+                "0x1::object::Object<0x1::fungible_asset::Metadata>"
+            ],
+            "return": [
+                "0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>"
+            ]
+        },
+        {
+            "name": "emergency_withdraw",
+            "visibility": "public",
+            "is_entry": true,
+            "is_view": false,
+            "generic_type_params": [],
+            "params": [
+                "&signer",
+                "0x1::object::Object<0x1::fungible_asset::Metadata>"
+            ],
+            "return": []
+        },
+        {
+            "name": "entry_create_staking_pool",
+            "visibility": "public",
+            "is_entry": true,
+            "is_view": false,
+            "generic_type_params": [],
+            "params": [
+                "&signer",
+                "0x1::object::Object<0x1::fungible_asset::Metadata>"
+            ],
+            "return": []
+        },
+        {
+            "name": "execute_admin_withdrawal",
+            "visibility": "public",
+            "is_entry": true,
+            "is_view": false,
+            "generic_type_params": [],
+            "params": [
+                "0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>"
+            ],
+            "return": []
+        },
+        {
+            "name": "get_earned",
+            "visibility": "public",
+            "is_entry": false,
+            "is_view": true,
+            "generic_type_params": [],
+            "params": [
+                "address",
+                "0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>",
+                "0x1::object::Object<0x1::fungible_asset::Metadata>"
+            ],
+            "return": [
+                "u64"
+            ]
+        },
+        {
+            "name": "get_last_time_reward_applicable",
+            "visibility": "public",
+            "is_entry": false,
+            "is_view": true,
+            "generic_type_params": [],
+            "params": [
+                "0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>",
+                "0x1::object::Object<0x1::fungible_asset::Metadata>"
+            ],
+            "return": [
+                "u64"
+            ]
+        },
+        {
+            "name": "get_pool_info",
+            "visibility": "public",
+            "is_entry": false,
+            "is_view": true,
+            "generic_type_params": [],
+            "params": [
+                "0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>"
+            ],
+            "return": [
+                "0x1::object::Object<0x1::fungible_asset::Metadata>",
+                "vector<0x1::object::Object<0x1::fungible_asset::Metadata>>",
+                "u64"
+            ]
+        },
+        {
+            "name": "get_pool_reward_tokens",
+            "visibility": "public",
+            "is_entry": false,
+            "is_view": true,
+            "generic_type_params": [],
+            "params": [
+                "0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>"
+            ],
+            "return": [
+                "vector<0x1::object::Object<0x1::fungible_asset::Metadata>>"
+            ]
+        },
+        {
+            "name": "get_remaining_rewards",
+            "visibility": "public",
+            "is_entry": false,
+            "is_view": true,
+            "generic_type_params": [],
+            "params": [
+                "0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>",
+                "0x1::object::Object<0x1::fungible_asset::Metadata>"
+            ],
+            "return": [
+                "u64"
+            ]
+        },
+        {
+            "name": "get_reward_data",
+            "visibility": "public",
+            "is_entry": false,
+            "is_view": true,
+            "generic_type_params": [],
+            "params": [
+                "0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>",
+                "0x1::object::Object<0x1::fungible_asset::Metadata>"
+            ],
+            "return": [
+                "address",
+                "u64",
+                "u64",
+                "u64",
+                "u128",
+                "u128"
+            ]
+        },
+        {
+            "name": "get_reward_per_token",
+            "visibility": "public",
+            "is_entry": false,
+            "is_view": true,
+            "generic_type_params": [],
+            "params": [
+                "0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>",
+                "0x1::object::Object<0x1::fungible_asset::Metadata>"
+            ],
+            "return": [
+                "u128"
+            ]
+        },
+        {
+            "name": "get_unallocated_rewards",
+            "visibility": "public",
+            "is_entry": false,
+            "is_view": true,
+            "generic_type_params": [],
+            "params": [
+                "0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>",
+                "0x1::object::Object<0x1::fungible_asset::Metadata>"
+            ],
+            "return": [
+                "u64"
+            ]
+        },
+        {
+            "name": "get_user_reward_data",
+            "visibility": "public",
+            "is_entry": false,
+            "is_view": true,
+            "generic_type_params": [],
+            "params": [
+                "address",
+                "0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>",
+                "0x1::object::Object<0x1::fungible_asset::Metadata>"
+            ],
+            "return": [
+                "u128",
+                "u64"
+            ]
+        },
+        {
+            "name": "get_user_staked_balance",
+            "visibility": "public",
+            "is_entry": false,
+            "is_view": true,
+            "generic_type_params": [],
+            "params": [
+                "address",
+                "0x1::object::Object<0x1::fungible_asset::Metadata>"
+            ],
+            "return": [
+                "u64"
+            ]
+        },
+        {
+            "name": "get_user_subscribed_pools",
+            "visibility": "public",
+            "is_entry": false,
+            "is_view": true,
+            "generic_type_params": [],
+            "params": [
+                "address",
+                "0x1::object::Object<0x1::fungible_asset::Metadata>"
+            ],
+            "return": [
+                "vector<0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>>"
+            ]
+        },
+        {
+            "name": "is_user_subscribed",
+            "visibility": "public",
+            "is_entry": false,
+            "is_view": true,
+            "generic_type_params": [],
+            "params": [
+                "address",
+                "0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>"
+            ],
+            "return": [
+                "bool"
+            ]
+        },
+        {
+            "name": "notify_reward_amount",
+            "visibility": "public",
+            "is_entry": true,
+            "is_view": false,
+            "generic_type_params": [],
+            "params": [
+                "&signer",
+                "0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>",
+                "0x1::object::Object<0x1::fungible_asset::Metadata>",
+                "u64"
+            ],
+            "return": []
+        },
+        {
+            "name": "propose_admin_withdrawal",
+            "visibility": "public",
+            "is_entry": true,
+            "is_view": false,
+            "generic_type_params": [],
+            "params": [
+                "&signer",
+                "0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>"
+            ],
+            "return": []
+        },
+        {
+            "name": "set_rewards_duration",
+            "visibility": "public",
+            "is_entry": true,
+            "is_view": false,
+            "generic_type_params": [],
+            "params": [
+                "&signer",
+                "0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>",
+                "0x1::object::Object<0x1::fungible_asset::Metadata>",
+                "u64"
+            ],
+            "return": []
+        },
+        {
+            "name": "stake",
+            "visibility": "public",
+            "is_entry": true,
+            "is_view": false,
+            "generic_type_params": [],
+            "params": [
+                "&signer",
+                "0x1::object::Object<0x1::fungible_asset::Metadata>",
+                "u64"
+            ],
+            "return": []
+        },
+        {
+            "name": "subscribe",
+            "visibility": "public",
+            "is_entry": true,
+            "is_view": false,
+            "generic_type_params": [],
+            "params": [
+                "&signer",
+                "0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>"
+            ],
+            "return": []
+        },
+        {
+            "name": "sweep_token",
+            "visibility": "public",
+            "is_entry": true,
+            "is_view": false,
+            "generic_type_params": [],
+            "params": [
+                "&signer",
+                "0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>",
+                "0x1::object::Object<0x1::fungible_asset::Metadata>"
+            ],
+            "return": []
+        },
+        {
+            "name": "unsubscribe",
+            "visibility": "public",
+            "is_entry": true,
+            "is_view": false,
+            "generic_type_params": [],
+            "params": [
+                "&signer",
+                "0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>"
+            ],
+            "return": []
+        },
+        {
+            "name": "withdraw",
+            "visibility": "public",
+            "is_entry": true,
+            "is_view": false,
+            "generic_type_params": [],
+            "params": [
+                "&signer",
+                "0x1::object::Object<0x1::fungible_asset::Metadata>",
+                "u64"
+            ],
+            "return": []
+        }
+    ],
+    "structs": [
+        {
+            "name": "AdminWithdrawProposal",
+            "is_native": false,
+            "abilities": [
+                "drop",
+                "store"
+            ],
+            "generic_type_params": [],
+            "fields": [
+                {
+                    "name": "proposed_at",
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "AdminWithdrawalClearedEvent",
+            "is_native": false,
+            "abilities": [
+                "drop",
+                "store"
+            ],
+            "generic_type_params": [],
+            "fields": [
+                {
+                    "name": "pool_address",
+                    "type": "address"
+                },
+                {
+                    "name": "cleared_by",
+                    "type": "address"
+                }
+            ]
+        },
+        {
+            "name": "AdminWithdrawalExecutedEvent",
+            "is_native": false,
+            "abilities": [
+                "drop",
+                "store"
+            ],
+            "generic_type_params": [],
+            "fields": [
+                {
+                    "name": "pool_address",
+                    "type": "address"
+                },
+                {
+                    "name": "recipient",
+                    "type": "address"
+                },
+                {
+                    "name": "tokens",
+                    "type": "vector<0x1::object::Object<0x1::fungible_asset::Metadata>>"
+                },
+                {
+                    "name": "amounts",
+                    "type": "vector<u64>"
+                }
+            ]
+        },
+        {
+            "name": "AdminWithdrawalProposedEvent",
+            "is_native": false,
+            "abilities": [
+                "drop",
+                "store"
+            ],
+            "generic_type_params": [],
+            "fields": [
+                {
+                    "name": "pool_address",
+                    "type": "address"
+                },
+                {
+                    "name": "proposed_at",
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "EmergencyWithdrawEvent",
+            "is_native": false,
+            "abilities": [
+                "drop",
+                "store"
+            ],
+            "generic_type_params": [],
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "address"
+                },
+                {
+                    "name": "staking_token",
+                    "type": "0x1::object::Object<0x1::fungible_asset::Metadata>"
+                },
+                {
+                    "name": "amount",
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "InitConfiguration",
+            "is_native": false,
+            "abilities": [
+                "key"
+            ],
+            "generic_type_params": [],
+            "fields": [
+                {
+                    "name": "resource_signer_cap",
+                    "type": "0x1::account::SignerCapability"
+                }
+            ]
+        },
+        {
+            "name": "ManagedFungibleStore",
+            "is_native": false,
+            "abilities": [
+                "store"
+            ],
+            "generic_type_params": [],
+            "fields": [
+                {
+                    "name": "store",
+                    "type": "0x1::object::Object<0x1::fungible_asset::FungibleStore>"
+                },
+                {
+                    "name": "store_extend_ref",
+                    "type": "0x1::object::ExtendRef"
+                }
+            ]
+        },
+        {
+            "name": "MultiRewardsModule",
+            "is_native": false,
+            "abilities": [
+                "key"
+            ],
+            "generic_type_params": [],
+            "fields": [
+                {
+                    "name": "staking_stores",
+                    "type": "0x1::table::Table<0x1::object::Object<0x1::fungible_asset::Metadata>, 0x1::object::Object<0x1::fungible_asset::FungibleStore>>"
+                },
+                {
+                    "name": "user_staked_balances",
+                    "type": "0x1::table::Table<address, 0x1::table::Table<0x1::object::Object<0x1::fungible_asset::Metadata>, u64>>"
+                }
+            ]
+        },
+        {
+            "name": "RewardAddedEvent",
+            "is_native": false,
+            "abilities": [
+                "drop",
+                "store"
+            ],
+            "generic_type_params": [],
+            "fields": [
+                {
+                    "name": "pool_address",
+                    "type": "address"
+                },
+                {
+                    "name": "reward_token",
+                    "type": "0x1::object::Object<0x1::fungible_asset::Metadata>"
+                },
+                {
+                    "name": "rewards_distributor",
+                    "type": "address"
+                },
+                {
+                    "name": "rewards_duration",
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "RewardClaimedEvent",
+            "is_native": false,
+            "abilities": [
+                "drop",
+                "store"
+            ],
+            "generic_type_params": [],
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "address"
+                },
+                {
+                    "name": "pool_address",
+                    "type": "address"
+                },
+                {
+                    "name": "reward_token",
+                    "type": "0x1::object::Object<0x1::fungible_asset::Metadata>"
+                },
+                {
+                    "name": "reward_amount",
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "RewardData",
+            "is_native": false,
+            "abilities": [
+                "store"
+            ],
+            "generic_type_params": [],
+            "fields": [
+                {
+                    "name": "rewards_distributor",
+                    "type": "address"
+                },
+                {
+                    "name": "rewards_duration",
+                    "type": "u64"
+                },
+                {
+                    "name": "period_finish",
+                    "type": "u64"
+                },
+                {
+                    "name": "last_update_time",
+                    "type": "u64"
+                },
+                {
+                    "name": "reward_rate",
+                    "type": "u128"
+                },
+                {
+                    "name": "reward_per_token_stored",
+                    "type": "u128"
+                },
+                {
+                    "name": "unallocated_rewards",
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "RewardNotifiedEvent",
+            "is_native": false,
+            "abilities": [
+                "drop",
+                "store"
+            ],
+            "generic_type_params": [],
+            "fields": [
+                {
+                    "name": "pool_address",
+                    "type": "address"
+                },
+                {
+                    "name": "reward_token",
+                    "type": "0x1::object::Object<0x1::fungible_asset::Metadata>"
+                },
+                {
+                    "name": "reward_amount",
+                    "type": "u64"
+                },
+                {
+                    "name": "reward_rate",
+                    "type": "u128"
+                },
+                {
+                    "name": "period_finish",
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "RewardsDurationUpdatedEvent",
+            "is_native": false,
+            "abilities": [
+                "drop",
+                "store"
+            ],
+            "generic_type_params": [],
+            "fields": [
+                {
+                    "name": "pool_address",
+                    "type": "address"
+                },
+                {
+                    "name": "reward_token",
+                    "type": "0x1::object::Object<0x1::fungible_asset::Metadata>"
+                },
+                {
+                    "name": "new_duration",
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "StakeEvent",
+            "is_native": false,
+            "abilities": [
+                "drop",
+                "store"
+            ],
+            "generic_type_params": [],
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "address"
+                },
+                {
+                    "name": "staking_token",
+                    "type": "0x1::object::Object<0x1::fungible_asset::Metadata>"
+                },
+                {
+                    "name": "amount",
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "StakingPool",
+            "is_native": false,
+            "abilities": [
+                "key"
+            ],
+            "generic_type_params": [],
+            "fields": [
+                {
+                    "name": "owner",
+                    "type": "address"
+                },
+                {
+                    "name": "staking_token",
+                    "type": "0x1::object::Object<0x1::fungible_asset::Metadata>"
+                },
+                {
+                    "name": "reward_tokens",
+                    "type": "vector<0x1::object::Object<0x1::fungible_asset::Metadata>>"
+                },
+                {
+                    "name": "reward_stores",
+                    "type": "0x1::table::Table<0x1::object::Object<0x1::fungible_asset::Metadata>, 0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::ManagedFungibleStore>"
+                },
+                {
+                    "name": "reward_data",
+                    "type": "0x1::table::Table<0x1::object::Object<0x1::fungible_asset::Metadata>, 0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::RewardData>"
+                },
+                {
+                    "name": "total_subscribed",
+                    "type": "u64"
+                },
+                {
+                    "name": "pool_extend_ref",
+                    "type": "0x1::object::ExtendRef"
+                },
+                {
+                    "name": "admin_withdraw_proposal",
+                    "type": "0x1::option::Option<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::AdminWithdrawProposal>"
+                }
+            ]
+        },
+        {
+            "name": "StakingPoolCreatedEvent",
+            "is_native": false,
+            "abilities": [
+                "drop",
+                "store"
+            ],
+            "generic_type_params": [],
+            "fields": [
+                {
+                    "name": "creator",
+                    "type": "address"
+                },
+                {
+                    "name": "staking_token",
+                    "type": "0x1::object::Object<0x1::fungible_asset::Metadata>"
+                },
+                {
+                    "name": "pool_address",
+                    "type": "address"
+                }
+            ]
+        },
+        {
+            "name": "SubscriptionEvent",
+            "is_native": false,
+            "abilities": [
+                "drop",
+                "store"
+            ],
+            "generic_type_params": [],
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "address"
+                },
+                {
+                    "name": "pool_address",
+                    "type": "address"
+                },
+                {
+                    "name": "staking_token",
+                    "type": "0x1::object::Object<0x1::fungible_asset::Metadata>"
+                }
+            ]
+        },
+        {
+            "name": "TokenSweptEvent",
+            "is_native": false,
+            "abilities": [
+                "drop",
+                "store"
+            ],
+            "generic_type_params": [],
+            "fields": [
+                {
+                    "name": "pool_address",
+                    "type": "address"
+                },
+                {
+                    "name": "token",
+                    "type": "0x1::object::Object<0x1::fungible_asset::Metadata>"
+                },
+                {
+                    "name": "amount",
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "UnsubscriptionEvent",
+            "is_native": false,
+            "abilities": [
+                "drop",
+                "store"
+            ],
+            "generic_type_params": [],
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "address"
+                },
+                {
+                    "name": "pool_address",
+                    "type": "address"
+                },
+                {
+                    "name": "staking_token",
+                    "type": "0x1::object::Object<0x1::fungible_asset::Metadata>"
+                }
+            ]
+        },
+        {
+            "name": "UserData",
+            "is_native": false,
+            "abilities": [
+                "key"
+            ],
+            "generic_type_params": [],
+            "fields": [
+                {
+                    "name": "subscribed_pools",
+                    "type": "0x1::table::Table<0x1::object::Object<0x1::fungible_asset::Metadata>, vector<0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>>>"
+                },
+                {
+                    "name": "pool_rewards",
+                    "type": "0x1::table::Table<0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>, 0x1::table::Table<0x1::object::Object<0x1::fungible_asset::Metadata>, 0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::UserRewardData>>"
+                }
+            ]
+        },
+        {
+            "name": "UserRewardData",
+            "is_native": false,
+            "abilities": [
+                "drop",
+                "store"
+            ],
+            "generic_type_params": [],
+            "fields": [
+                {
+                    "name": "reward_per_token_paid",
+                    "type": "u128"
+                },
+                {
+                    "name": "rewards",
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "WithdrawEvent",
+            "is_native": false,
+            "abilities": [
+                "drop",
+                "store"
+            ],
+            "generic_type_params": [],
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "address"
+                },
+                {
+                    "name": "staking_token",
+                    "type": "0x1::object::Object<0x1::fungible_asset::Metadata>"
+                },
+                {
+                    "name": "amount",
+                    "type": "u64"
+                }
+            ]
+        }
+    ]
+}

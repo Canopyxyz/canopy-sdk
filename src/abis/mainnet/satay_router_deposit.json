@@ -1,0 +1,118 @@
+{
+    "address": "0x717b417949cd5bfa6dc02822eacb727d820de2741f6ea90bf16be6c0ed46ff4b",
+    "name": "deposit",
+    "friends": [
+        "0x717b417949cd5bfa6dc02822eacb727d820de2741f6ea90bf16be6c0ed46ff4b::router"
+    ],
+    "exposed_functions": [
+        {
+            "name": "deploy_coin_funds",
+            "visibility": "friend",
+            "is_entry": false,
+            "is_view": false,
+            "generic_type_params": [
+                {
+                    "constraints": []
+                }
+            ],
+            "params": [
+                "0x1::object::Object<0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::vault::Vault>",
+                "0x1::simple_map::SimpleMap<0x1::object::Object<0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::base_strategy::BaseStrategy>, vector<u8>>"
+            ],
+            "return": []
+        },
+        {
+            "name": "deploy_fa_funds",
+            "visibility": "friend",
+            "is_entry": false,
+            "is_view": false,
+            "generic_type_params": [],
+            "params": [
+                "0x1::object::Object<0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::vault::Vault>",
+                "0x1::simple_map::SimpleMap<0x1::object::Object<0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::base_strategy::BaseStrategy>, vector<u8>>"
+            ],
+            "return": []
+        },
+        {
+            "name": "deploy_fa_funds_with_coin_type",
+            "visibility": "friend",
+            "is_entry": false,
+            "is_view": false,
+            "generic_type_params": [
+                {
+                    "constraints": []
+                }
+            ],
+            "params": [
+                "0x1::object::Object<0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::vault::Vault>",
+                "0x1::simple_map::SimpleMap<0x1::object::Object<0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::base_strategy::BaseStrategy>, vector<u8>>"
+            ],
+            "return": []
+        },
+        {
+            "name": "deposit_coin",
+            "visibility": "friend",
+            "is_entry": false,
+            "is_view": false,
+            "generic_type_params": [
+                {
+                    "constraints": []
+                }
+            ],
+            "params": [
+                "0x1::object::Object<0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::vault::Vault>",
+                "0x1::object::Object<0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::base_strategy::BaseStrategy>",
+                "0x1::option::Option<vector<u8>>",
+                "u64"
+            ],
+            "return": []
+        },
+        {
+            "name": "deposit_fa",
+            "visibility": "friend",
+            "is_entry": false,
+            "is_view": false,
+            "generic_type_params": [],
+            "params": [
+                "0x1::object::Object<0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::vault::Vault>",
+                "0x1::object::Object<0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::base_strategy::BaseStrategy>",
+                "0x1::option::Option<vector<u8>>",
+                "u64"
+            ],
+            "return": []
+        },
+        {
+            "name": "deposit_fa_with_coin_type",
+            "visibility": "friend",
+            "is_entry": false,
+            "is_view": false,
+            "generic_type_params": [
+                {
+                    "constraints": []
+                }
+            ],
+            "params": [
+                "0x1::object::Object<0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::vault::Vault>",
+                "0x1::object::Object<0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::base_strategy::BaseStrategy>",
+                "0x1::option::Option<vector<u8>>",
+                "u64"
+            ],
+            "return": []
+        },
+        {
+            "name": "get_allocations_view",
+            "visibility": "public",
+            "is_entry": false,
+            "is_view": true,
+            "generic_type_params": [],
+            "params": [
+                "0x1::object::Object<0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::vault::Vault>",
+                "u64"
+            ],
+            "return": [
+                "0x1::simple_map::SimpleMap<0x1::object::Object<0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::base_strategy::BaseStrategy>, u64>"
+            ]
+        }
+    ],
+    "structs": []
+}

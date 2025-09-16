@@ -1,0 +1,29 @@
+{
+  "name": "@canopy-sdk-example/react",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@aptos-labs/ts-sdk": "^5.0.0",
+    "@aptos-labs/wallet-adapter-react": "^7.0.7",
+    "@canopy/ts-sdk": "file:../..",
+    "@tanstack/react-query": "^5.89.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "latest",
+    "@vitejs/plugin-rsc": "latest",
+    "rsc-html-stream": "^0.0.7",
+    "typescript": "^5.5.3",
+    "vite": "^7.1.4"
+  }
+}

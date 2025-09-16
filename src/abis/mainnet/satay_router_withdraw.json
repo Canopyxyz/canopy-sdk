@@ -1,0 +1,100 @@
+{
+    "address": "0x717b417949cd5bfa6dc02822eacb727d820de2741f6ea90bf16be6c0ed46ff4b",
+    "name": "withdraw",
+    "friends": [
+        "0x717b417949cd5bfa6dc02822eacb727d820de2741f6ea90bf16be6c0ed46ff4b::router"
+    ],
+    "exposed_functions": [
+        {
+            "name": "get_withdrawal_map",
+            "visibility": "friend",
+            "is_entry": false,
+            "is_view": false,
+            "generic_type_params": [],
+            "params": [
+                "0x1::object::Object<0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::vault::Vault>",
+                "&0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::vault::WithdrawalRequest"
+            ],
+            "return": [
+                "0x1::simple_map::SimpleMap<0x1::object::Object<0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::base_strategy::BaseStrategy>, u64>"
+            ]
+        },
+        {
+            "name": "get_withdrawal_map_view",
+            "visibility": "public",
+            "is_entry": false,
+            "is_view": true,
+            "generic_type_params": [],
+            "params": [
+                "0x1::object::Object<0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::vault::Vault>",
+                "u64"
+            ],
+            "return": [
+                "0x1::simple_map::SimpleMap<0x1::object::Object<0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::base_strategy::BaseStrategy>, u64>"
+            ]
+        },
+        {
+            "name": "withdraw_coin",
+            "visibility": "friend",
+            "is_entry": false,
+            "is_view": false,
+            "generic_type_params": [
+                {
+                    "constraints": []
+                }
+            ],
+            "params": [
+                "&signer",
+                "&mut 0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::vault::WithdrawalRequest",
+                "0x1::object::Object<0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::base_strategy::BaseStrategy>",
+                "0x1::option::Option<vector<u8>>",
+                "u64",
+                "0x1::option::Option<u64>"
+            ],
+            "return": [
+                "0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::hot_coin::HotCoin<T0>"
+            ]
+        },
+        {
+            "name": "withdraw_fa",
+            "visibility": "friend",
+            "is_entry": false,
+            "is_view": false,
+            "generic_type_params": [],
+            "params": [
+                "&signer",
+                "&mut 0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::vault::WithdrawalRequest",
+                "0x1::object::Object<0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::base_strategy::BaseStrategy>",
+                "0x1::option::Option<vector<u8>>",
+                "u64",
+                "0x1::option::Option<u64>"
+            ],
+            "return": [
+                "0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::hot_asset::HotAsset"
+            ]
+        },
+        {
+            "name": "withdraw_fa_with_coin_type",
+            "visibility": "friend",
+            "is_entry": false,
+            "is_view": false,
+            "generic_type_params": [
+                {
+                    "constraints": []
+                }
+            ],
+            "params": [
+                "&signer",
+                "&mut 0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::vault::WithdrawalRequest",
+                "0x1::object::Object<0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::base_strategy::BaseStrategy>",
+                "0x1::option::Option<vector<u8>>",
+                "u64",
+                "0x1::option::Option<u64>"
+            ],
+            "return": [
+                "0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::hot_asset::HotAsset"
+            ]
+        }
+    ],
+    "structs": []
+}

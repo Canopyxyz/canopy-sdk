@@ -1,0 +1,261 @@
+{
+    "address": "0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b",
+    "name": "router",
+    "friends": [],
+    "exposed_functions": [
+        {
+            "name": "add_reward",
+            "visibility": "public",
+            "is_entry": true,
+            "is_view": false,
+            "generic_type_params": [
+                {
+                    "constraints": []
+                }
+            ],
+            "params": [
+                "&signer",
+                "0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>",
+                "address",
+                "u64"
+            ],
+            "return": []
+        },
+        {
+            "name": "claim_rewards",
+            "visibility": "public",
+            "is_entry": true,
+            "is_view": false,
+            "generic_type_params": [],
+            "params": [
+                "&signer",
+                "vector<0x1::object::Object<0x1::fungible_asset::Metadata>>"
+            ],
+            "return": []
+        },
+        {
+            "name": "create_fungible_asset_for_token",
+            "visibility": "public",
+            "is_entry": true,
+            "is_view": false,
+            "generic_type_params": [],
+            "params": [
+                "address",
+                "0x1::string::String",
+                "0x1::string::String",
+                "u64"
+            ],
+            "return": []
+        },
+        {
+            "name": "create_staking_pool",
+            "visibility": "public",
+            "is_entry": true,
+            "is_view": false,
+            "generic_type_params": [
+                {
+                    "constraints": []
+                }
+            ],
+            "params": [
+                "&signer"
+            ],
+            "return": []
+        },
+        {
+            "name": "notify_reward_amount",
+            "visibility": "public",
+            "is_entry": true,
+            "is_view": false,
+            "generic_type_params": [
+                {
+                    "constraints": []
+                }
+            ],
+            "params": [
+                "&signer",
+                "0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>",
+                "u64"
+            ],
+            "return": []
+        },
+        {
+            "name": "set_rewards_duration",
+            "visibility": "public",
+            "is_entry": true,
+            "is_view": false,
+            "generic_type_params": [
+                {
+                    "constraints": []
+                }
+            ],
+            "params": [
+                "&signer",
+                "0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>",
+                "u64"
+            ],
+            "return": []
+        },
+        {
+            "name": "stake",
+            "visibility": "public",
+            "is_entry": true,
+            "is_view": false,
+            "generic_type_params": [
+                {
+                    "constraints": []
+                }
+            ],
+            "params": [
+                "&signer",
+                "u64"
+            ],
+            "return": []
+        },
+        {
+            "name": "stake_and_subscribe",
+            "visibility": "public",
+            "is_entry": true,
+            "is_view": false,
+            "generic_type_params": [
+                {
+                    "constraints": []
+                }
+            ],
+            "params": [
+                "&signer",
+                "vector<0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>>",
+                "u64"
+            ],
+            "return": []
+        },
+        {
+            "name": "stake_and_subscribe_fa",
+            "visibility": "public",
+            "is_entry": true,
+            "is_view": false,
+            "generic_type_params": [],
+            "params": [
+                "&signer",
+                "0x1::object::Object<0x1::fungible_asset::Metadata>",
+                "u64",
+                "vector<0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>>"
+            ],
+            "return": []
+        },
+        {
+            "name": "stake_and_subscribe_token",
+            "visibility": "public",
+            "is_entry": true,
+            "is_view": false,
+            "generic_type_params": [],
+            "params": [
+                "&signer",
+                "vector<0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>>",
+                "u64",
+                "address",
+                "0x1::string::String",
+                "0x1::string::String",
+                "u64"
+            ],
+            "return": []
+        },
+        {
+            "name": "stake_token",
+            "visibility": "public",
+            "is_entry": true,
+            "is_view": false,
+            "generic_type_params": [],
+            "params": [
+                "&signer",
+                "u64",
+                "address",
+                "0x1::string::String",
+                "0x1::string::String",
+                "u64"
+            ],
+            "return": []
+        },
+        {
+            "name": "unsubscribe_and_withdraw",
+            "visibility": "public",
+            "is_entry": true,
+            "is_view": false,
+            "generic_type_params": [
+                {
+                    "constraints": []
+                }
+            ],
+            "params": [
+                "&signer",
+                "vector<0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>>",
+                "u64"
+            ],
+            "return": []
+        },
+        {
+            "name": "unsubscribe_and_withdraw_fa",
+            "visibility": "public",
+            "is_entry": true,
+            "is_view": false,
+            "generic_type_params": [],
+            "params": [
+                "&signer",
+                "0x1::object::Object<0x1::fungible_asset::Metadata>",
+                "u64",
+                "vector<0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>>"
+            ],
+            "return": []
+        },
+        {
+            "name": "unsubscribe_and_withdraw_token",
+            "visibility": "public",
+            "is_entry": true,
+            "is_view": false,
+            "generic_type_params": [],
+            "params": [
+                "&signer",
+                "vector<0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>>",
+                "u64",
+                "address",
+                "0x1::string::String",
+                "0x1::string::String",
+                "u64"
+            ],
+            "return": []
+        },
+        {
+            "name": "withdraw",
+            "visibility": "public",
+            "is_entry": true,
+            "is_view": false,
+            "generic_type_params": [
+                {
+                    "constraints": []
+                }
+            ],
+            "params": [
+                "&signer",
+                "u64"
+            ],
+            "return": []
+        },
+        {
+            "name": "withdraw_token",
+            "visibility": "public",
+            "is_entry": true,
+            "is_view": false,
+            "generic_type_params": [],
+            "params": [
+                "&signer",
+                "u64",
+                "address",
+                "0x1::string::String",
+                "0x1::string::String",
+                "u64"
+            ],
+            "return": []
+        }
+    ],
+    "structs": []
+}

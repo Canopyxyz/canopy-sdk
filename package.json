@@ -1,0 +1,66 @@
+{
+  "name": "@canopyhub/canopy-sdk",
+  "version": "0.0.1",
+  "description": "TypeScript SDK for Canopy Protocol",
+  "keywords": [
+    "movement",
+    "defi",
+    "vault",
+    "canopy",
+    "typescript",
+    "sdk"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "homepage": "https://github.com/Canopyxyz/canopy-sdk#readme",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "jest",
+    "lint": "eslint src/**/*.ts",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@aptos-labs/ts-sdk": "^4.0.0"
+  },
+  "devDependencies": {
+    "@aptos-labs/react": "^0.1.4",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.4.0",
+    "@typescript-eslint/eslint-plugin": "^8.43.0",
+    "@typescript-eslint/parser": "^8.43.0",
+    "eslint": "^9.35.0",
+    "jest": "^30.1.3",
+    "ts-jest": "^29.4.1",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2"
+  },
+  "bugs": {
+    "url": "https://github.com/Canopyxyz/canopy-sdk/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Canopyxyz/canopy-sdk.git",
+    "directory": "canopy-sdk"
+  },
+  "author": "Canopy Protocol",
+  "license": "MIT",
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+}
