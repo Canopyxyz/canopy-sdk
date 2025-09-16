@@ -78,8 +78,10 @@ const vault = await canopyClient.getVault(vaultAddress);
 // stakingToken should be the vault's shares token (vault.token1)
 // userAddress is optional for subscription checking
 // poolAddresses is optional - provide specific pool addresses to skip auto-discovery
+
+const vault = await canopyClient.getVault(vaultAddress);
 const payload = await canopyClient.stake(
-  stakingToken,
+  vault.token1, // Maybe easier to understand it like this? Alternatively, we can make the VaultData object the input, to ensure ONLY a vault token will be used in this SDK
   amount,
   userAddress,
   poolAddresses
@@ -88,9 +90,11 @@ const payload = await canopyClient.stake(
 // Unstake tokens (auto-detects coin vs FA based on format)
 // Fungible Asset: "0x123..."
 // Coin Type: "0x1::aptos_coin::AptosCoin"
+// Whhat is tokenAddress? same as stakingToken/vault.token1?
 const payload = await canopyClient.unstake(tokenAddress, amount);
 
 // Claim all pending rewards for multiple staking tokens
+// Rename stakingToken from earlier to stakingToken1, to make it easier to understand we're talking about the same. Or again use vault.token1 here.
 const payload = await canopyClient.claimRewards([stakingToken1, stakingToken2]);
 ```
 
@@ -111,6 +115,7 @@ const balance = await canopyClient.getUserStakedBalance(
 );
 
 // Get earned rewards for a specific pool
+// Where do we get this pool address from? Is auto-discovery also available here?
 const earned = await canopyClient.getUserEarned(userAddress, pool, rewardToken);
 ```
 
@@ -135,6 +140,8 @@ npm run dev
 ## Decimal Handling
 
 All amounts in the SDK use `bigint` with full decimal precision. You need to scale your values:
+
+// Probably too much to add now, but maybe for backlog. Would it make sense to instead of decimals, have the tokenAddress as input. We can get decimals from metadata.
 
 ```typescript
 // Helper functions for decimal conversion
@@ -174,9 +181,10 @@ const payload = await canopyClient.stake(
 ```
 
 ### Layer 2: Static Mapping Fallback
-
+// Add a reminder to keep this SDK up to date for user relying on this static mapping, as newer pools might be added in a recent SDK version.
 Built-in mappings for common staking tokens. The SDK automatically checks these when no pool addresses are provided.
 
+// Should the API come before the static fallback (which is incomplete and maybe outdated in the future?)
 ### Layer 3: GraphQL API (Requires API Key)
 
 ```typescript
@@ -208,9 +216,11 @@ Calculate user's vault position value:
 ```typescript
 // Get on-chain data
 const vault = await canopyClient.getVault(vaultAddress);
+// Is this not implemented yet? It's a bit confusing, why wouldn't this be a part of the SDK, it's quite simple to get a FA balance for a user right?
 const userShares = await getUserVaultShares(userAddress, vaultAddress); // You need to implement this
 
 // Get external data
+// Maybe add a comment here saying fetchTVLFromAPI is not part of the SDK.
 const tvlUSD = await fetchTVLFromAPI(vaultAddress);
 
 // Calculate user's position value

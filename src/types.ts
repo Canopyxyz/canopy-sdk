@@ -59,6 +59,7 @@ export interface VaultData {
   // Token information
   token0: string;
   token1: string;
+  // Why does a vault have two tokens? Seems confusing, we need explanation here. Or rename token0 and token1 to something more appropriate.
   decimals0: number;
   decimals1: number;
 

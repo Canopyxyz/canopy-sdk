@@ -84,7 +84,7 @@ export class CanopyClient {
    * @param vaultAddress The vault address to fetch
    * @returns Enriched vault data or null if not found
    */
-  async getVault(vaultAddress: string) {
+  async getVault(vaultAddress: string) { // Missing return type
     if (!vaultAddress || typeof vaultAddress !== "string") {
       throw new CanopyError(
         ERROR_MESSAGES.VAULT_ADDRESS_REQUIRED,
@@ -117,7 +117,7 @@ export class CanopyClient {
     if (!userAddress || typeof userAddress !== "string") {
       throw new CanopyError(
         "User address is required and must be a string",
-        CanopyErrorCode.INVALID_VAULT_ADDRESS,
+        CanopyErrorCode.INVALID_VAULT_ADDRESS, // Incorrect error code
         { userAddress }
       );
     }
@@ -186,10 +186,10 @@ export class CanopyClient {
    * Claim rewards for multiple staking tokens
    */
   async claimRewards(stakingTokens: string[]): Promise<InputEntryFunctionData> {
-    if (!stakingTokens || stakingTokens.length === 0) {
+    if (!stakingTokens || stakingTokens.length === 0) { // No validation on if each item is a string, this is inconsistent with the validation on single addresses in other functions
       throw new CanopyError(
         "At least one staking token is required",
-        CanopyErrorCode.INVALID_VAULT_ADDRESS,
+        CanopyErrorCode.INVALID_VAULT_ADDRESS, // Incorrect error code
         { stakingTokens }
       );
     }
@@ -208,14 +208,14 @@ export class CanopyClient {
     if (!userAddress || typeof userAddress !== "string") {
       throw new CanopyError(
         "User address is required and must be a string",
-        CanopyErrorCode.INVALID_VAULT_ADDRESS,
+        CanopyErrorCode.INVALID_VAULT_ADDRESS, // Incorrect error code
         { userAddress }
       );
     }
     if (!stakingToken || typeof stakingToken !== "string") {
       throw new CanopyError(
         "Staking token is required and must be a string",
-        CanopyErrorCode.INVALID_VAULT_ADDRESS,
+        CanopyErrorCode.INVALID_VAULT_ADDRESS, // Incorrect error code
         { stakingToken }
       );
     }
