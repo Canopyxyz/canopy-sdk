@@ -81,8 +81,8 @@ export default function VaultOperations({
       const vault = vaults.find((v) => v.address === selectedVault);
       if (!vault) throw new Error("Vault not found");
 
-      // Scale amount by decimals (assuming 8 decimals for now, adjust based on vault.decimals)
-      const decimals = vault.decimals || 8;
+      // Scale amount by decimals (using base asset decimals for deposit)
+      const decimals = vault.baseAssetDecimals || 8;
       const scaledAmount = scaleToDecimals(amount, decimals);
 
       // Build deposit transaction
@@ -109,7 +109,7 @@ export default function VaultOperations({
                 selectedVault
               );
               const vault = vaults.find((v) => v.address === selectedVault);
-              const decimals = vault?.decimals || 8;
+              const decimals = vault?.sharesAssetDecimals || 8;
               setUserPosition({
                 sharesBalance: scaleFromDecimals(
                   BigInt(position.sharesBalance),
@@ -176,7 +176,7 @@ export default function VaultOperations({
                 selectedVault
               );
               const vault = vaults.find((v) => v.address === selectedVault);
-              const decimals = vault?.decimals || 8;
+              const decimals = vault?.sharesAssetDecimals || 8;
               setUserPosition({
                 sharesBalance: scaleFromDecimals(
                   BigInt(position.sharesBalance),
