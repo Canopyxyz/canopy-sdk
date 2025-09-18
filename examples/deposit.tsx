@@ -1,5 +1,5 @@
 import { useClients, useSignAndSubmitTransaction } from "@aptos-labs/react";
-import { CanopyClient } from "../src/client";
+import { CanopyClient } from "@canopyhub/canopy-sdk";
 
 export default function App() {
   const { aptos } = useClients();

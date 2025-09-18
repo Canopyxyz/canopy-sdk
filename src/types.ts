@@ -6,6 +6,10 @@ export enum CanopyErrorCode {
   VAULT_NOT_FOUND = "VAULT_NOT_FOUND",
   AMOUNT_TOO_SMALL = "AMOUNT_TOO_SMALL",
   INVALID_VAULT_ADDRESS = "INVALID_VAULT_ADDRESS",
+  INVALID_USER_ADDRESS = "INVALID_USER_ADDRESS",
+  INVALID_TOKEN_ADDRESS = "INVALID_TOKEN_ADDRESS",
+  INVALID_POOL_ADDRESS = "INVALID_POOL_ADDRESS",
+  INVALID_INPUT = "INVALID_INPUT",
   TRANSACTION_BUILD_FAILED = "TRANSACTION_BUILD_FAILED",
   INSUFFICIENT_BALANCE = "INSUFFICIENT_BALANCE",
   PACKET_GENERATION_FAILED = "PACKET_GENERATION_FAILED",
@@ -57,10 +61,10 @@ export interface VaultData {
   paused: boolean;
 
   // Token information
-  token0: string;
-  token1: string;
-  decimals0: number;
-  decimals1: number;
+  baseAsset: string; // The underlying asset deposited into the vault (e.g., USDC, MOVE)
+  sharesAsset: string; // The vault's LP token representing user shares
+  baseAssetDecimals: number;
+  sharesAssetDecimals: number;
 
   // Financial metrics (GraphQL - off-chain calculated)
   tvl: string;
@@ -70,8 +74,8 @@ export interface VaultData {
   // On-chain state (from view functions)
   totalAssets?: string;
   totalSupply?: string;
-  token0Balance?: string;
-  token1Balance?: string;
+  baseAssetBalance?: string;
+  sharesAssetBalance?: string;
   strategies?: string[];
 
   // Additional metadata

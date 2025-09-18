@@ -22,7 +22,9 @@ export class MultiRewardsGQLClient {
 
   constructor(apiKey?: string, endpoint?: string) {
     this.endpoint = endpoint || SENTIO_MULTI_REWARDS_ENDPOINT;
-    this.apiKey = apiKey;
+    if (apiKey !== undefined) {
+      this.apiKey = apiKey;
+    }
   }
 
   /**

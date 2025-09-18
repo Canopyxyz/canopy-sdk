@@ -75,7 +75,7 @@ const vault = await canopyClient.getVault(vaultAddress);
 
 ```typescript
 // Stake vault shares into reward pools
-// stakingToken should be the vault's shares token (vault.token1)
+// stakingToken should be the vault's shares token (vault.sharesAsset)
 // userAddress is optional for subscription checking
 // poolAddresses is optional - provide specific pool addresses to skip auto-discovery
 const payload = await canopyClient.stake(
