@@ -69,7 +69,7 @@ export class MultiRewardsClient {
           if (!pool || typeof pool !== "string" || !pool.startsWith("0x")) {
             throw new CanopyError(
               "Invalid pool address format",
-              CanopyErrorCode.INVALID_VAULT_ADDRESS,
+              CanopyErrorCode.INVALID_POOL_ADDRESS,
               { pool }
             );
           }
@@ -153,7 +153,7 @@ export class MultiRewardsClient {
           if (!pool || typeof pool !== "string" || !pool.startsWith("0x")) {
             throw new CanopyError(
               "Invalid pool address format",
-              CanopyErrorCode.INVALID_VAULT_ADDRESS,
+              CanopyErrorCode.INVALID_POOL_ADDRESS,
               { pool }
             );
           }

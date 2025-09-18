@@ -2,9 +2,20 @@ import { Aptos, type InputEntryFunctionData } from "@aptos-labs/ts-sdk";
 import { TransactionBuilder } from "./internal/transaction-builder";
 import { VaultDetector } from "./internal/vault-detector";
 import { MultiRewardsClient } from "./internal/multi-rewards-client";
-import { CanopyError, CanopyErrorCode, type VaultPosition } from "./types";
+import {
+  CanopyError,
+  CanopyErrorCode,
+  type VaultPosition,
+  type VaultData,
+} from "./types";
 import { ERROR_MESSAGES, NETWORK_TYPES, type NetworkType } from "./constants";
 import type { UserStakingPosition } from "./internal/multi-rewards-types";
+import {
+  validateAddress,
+  validateAmount,
+  validateVaultInputs,
+  validateAddressArray,
+} from "./utils/validation";
 
 export interface CanopyClientOptions {
   network?: NetworkType;
@@ -41,7 +52,7 @@ export class CanopyClient {
     vaultAddress: string,
     amount: bigint
   ): Promise<InputEntryFunctionData> {
-    this.validateInputs(vaultAddress, amount, "deposit");
+    validateVaultInputs(vaultAddress, amount, "deposit");
 
     try {
       return this.transactionBuilder.buildDepositPayload(vaultAddress, amount);
@@ -62,7 +73,7 @@ export class CanopyClient {
     vaultAddress: string,
     shares: bigint
   ): Promise<InputEntryFunctionData> {
-    this.validateInputs(vaultAddress, shares, "withdraw");
+    validateVaultInputs(vaultAddress, shares, "withdraw");
 
     try {
       return this.transactionBuilder.buildWithdrawPayload(vaultAddress, shares);
@@ -84,15 +95,8 @@ export class CanopyClient {
    * @param vaultAddress The vault address to fetch
    * @returns Enriched vault data or null if not found
    */
-  async getVault(vaultAddress: string) {
-    if (!vaultAddress || typeof vaultAddress !== "string") {
-      throw new CanopyError(
-        ERROR_MESSAGES.VAULT_ADDRESS_REQUIRED,
-        CanopyErrorCode.INVALID_VAULT_ADDRESS,
-        { vaultAddress }
-      );
-    }
-
+  async getVault(vaultAddress: string): Promise<VaultData | null> {
+    validateAddress(vaultAddress, "vault");
     return await this.vaultDetector.getVaultData(vaultAddress);
   }
 
@@ -114,22 +118,8 @@ export class CanopyClient {
     userAddress: string,
     vaultAddress: string
   ): Promise<VaultPosition> {
-    if (!userAddress || typeof userAddress !== "string") {
-      throw new CanopyError(
-        "User address is required and must be a string",
-        CanopyErrorCode.INVALID_VAULT_ADDRESS,
-        { userAddress }
-      );
-    }
-
-    if (!vaultAddress || typeof vaultAddress !== "string") {
-      throw new CanopyError(
-        ERROR_MESSAGES.VAULT_ADDRESS_REQUIRED,
-        CanopyErrorCode.INVALID_VAULT_ADDRESS,
-        { vaultAddress }
-      );
-    }
-
+    validateAddress(userAddress, "user");
+    validateAddress(vaultAddress, "vault");
     return await this.vaultDetector.getUserVaultPosition(
       userAddress,
       vaultAddress
@@ -151,7 +141,16 @@ export class CanopyClient {
     userAddress?: string,
     poolAddresses?: string[]
   ): Promise<InputEntryFunctionData> {
-    this.validateInputs(stakingToken, amount, "stake");
+    validateAddress(stakingToken, "token");
+    validateAmount(amount, "stake");
+    
+    if (userAddress !== undefined) {
+      validateAddress(userAddress, "user");
+    }
+    
+    if (poolAddresses !== undefined) {
+      validateAddressArray(poolAddresses, "pool");
+    }
 
     return await this.multiRewardsClient.stakeVaultShares(
       stakingToken,
@@ -170,7 +169,8 @@ export class CanopyClient {
     tokenAddress: string,
     amount: bigint
   ): Promise<InputEntryFunctionData> {
-    this.validateInputs(tokenAddress, amount, "unstake");
+    validateAddress(tokenAddress, "token");
+    validateAmount(amount, "unstake");
 
     // Determine if it's a coin type or FA based on format
     if (tokenAddress.includes("::")) {
@@ -186,13 +186,7 @@ export class CanopyClient {
    * Claim rewards for multiple staking tokens
    */
   async claimRewards(stakingTokens: string[]): Promise<InputEntryFunctionData> {
-    if (!stakingTokens || stakingTokens.length === 0) {
-      throw new CanopyError(
-        "At least one staking token is required",
-        CanopyErrorCode.INVALID_VAULT_ADDRESS,
-        { stakingTokens }
-      );
-    }
+    validateAddressArray(stakingTokens, "token");
     return await this.multiRewardsClient.claimRewards(stakingTokens);
   }
 
@@ -205,20 +199,8 @@ export class CanopyClient {
     userAddress: string,
     stakingToken: string
   ): Promise<UserStakingPosition> {
-    if (!userAddress || typeof userAddress !== "string") {
-      throw new CanopyError(
-        "User address is required and must be a string",
-        CanopyErrorCode.INVALID_VAULT_ADDRESS,
-        { userAddress }
-      );
-    }
-    if (!stakingToken || typeof stakingToken !== "string") {
-      throw new CanopyError(
-        "Staking token is required and must be a string",
-        CanopyErrorCode.INVALID_VAULT_ADDRESS,
-        { stakingToken }
-      );
-    }
+    validateAddress(userAddress, "user");
+    validateAddress(stakingToken, "token");
     return await this.multiRewardsClient.getUserStakingPosition(
       userAddress,
       stakingToken
@@ -232,20 +214,8 @@ export class CanopyClient {
     userAddress: string,
     stakingToken: string
   ): Promise<string> {
-    if (!userAddress || typeof userAddress !== "string") {
-      throw new CanopyError(
-        "User address is required and must be a string",
-        CanopyErrorCode.INVALID_VAULT_ADDRESS,
-        { userAddress }
-      );
-    }
-    if (!stakingToken || typeof stakingToken !== "string") {
-      throw new CanopyError(
-        "Staking token is required and must be a string",
-        CanopyErrorCode.INVALID_VAULT_ADDRESS,
-        { stakingToken }
-      );
-    }
+    validateAddress(userAddress, "user");
+    validateAddress(stakingToken, "token");
     return await this.multiRewardsClient.getUserStakedBalance(
       userAddress,
       stakingToken
@@ -260,13 +230,9 @@ export class CanopyClient {
     pool: string,
     rewardToken: string
   ): Promise<string> {
-    if (!userAddress || typeof userAddress !== "string") {
-      throw new CanopyError(
-        "User address is required and must be a string",
-        CanopyErrorCode.INVALID_VAULT_ADDRESS,
-        { userAddress }
-      );
-    }
+    validateAddress(userAddress, "user");
+    validateAddress(pool, "pool");
+    validateAddress(rewardToken, "token");
     return await this.multiRewardsClient.getUserEarned(
       userAddress,
       pool,
@@ -274,41 +240,4 @@ export class CanopyClient {
     );
   }
 
-  private validateInputs(
-    vaultAddress: string,
-    amount: bigint,
-    operation: string
-  ): void {
-    if (!vaultAddress || typeof vaultAddress !== "string") {
-      throw new CanopyError(
-        ERROR_MESSAGES.VAULT_ADDRESS_REQUIRED,
-        CanopyErrorCode.INVALID_VAULT_ADDRESS,
-        { vaultAddress }
-      );
-    }
-
-    if (!vaultAddress.startsWith("0x")) {
-      throw new CanopyError(
-        ERROR_MESSAGES.VAULT_ADDRESS_FORMAT,
-        CanopyErrorCode.INVALID_VAULT_ADDRESS,
-        { vaultAddress }
-      );
-    }
-
-    if (typeof amount !== "bigint") {
-      throw new CanopyError(
-        `${operation} ${ERROR_MESSAGES.AMOUNT_MUST_BE_BIGINT}`,
-        CanopyErrorCode.AMOUNT_TOO_SMALL,
-        { amount }
-      );
-    }
-
-    if (amount <= 0n) {
-      throw new CanopyError(
-        `${operation} ${ERROR_MESSAGES.AMOUNT_TOO_SMALL}`,
-        CanopyErrorCode.AMOUNT_TOO_SMALL,
-        { amount: amount.toString() }
-      );
-    }
-  }
 }

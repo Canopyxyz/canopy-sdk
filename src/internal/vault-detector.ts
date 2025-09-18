@@ -566,10 +566,10 @@ export class VaultDetector {
 
       paused: metadata?.paused || false,
 
-      token0: metadata?.token0 || onChainData?.assetAddress || "",
-      token1: metadata?.token1 || onChainData?.sharesAddress || "",
-      decimals0: metadata?.decimals0 || onChainData?.decimals || 8,
-      decimals1: metadata?.decimals1 || onChainData?.decimals || 8,
+      baseAsset: metadata?.token0 || onChainData?.assetAddress || "",
+      sharesAsset: metadata?.token1 || onChainData?.sharesAddress || "",
+      baseAssetDecimals: metadata?.decimals0 || onChainData?.decimals || 8,
+      sharesAssetDecimals: metadata?.decimals1 || onChainData?.decimals || 8,
 
       tvl: metadata?.tvl || "0",
       apr: metadata?.apr || 0,
@@ -586,8 +586,8 @@ export class VaultDetector {
         metadata?.totalSupply && { totalSupply: metadata.totalSupply }),
 
       // Use metadata for token balances, fallback to on-chain total values
-      token0Balance: metadata?.token0Balance || onChainData?.totalAsset || "0",
-      token1Balance: metadata?.token1Balance || onChainData?.totalShares || "0",
+      baseAssetBalance: metadata?.token0Balance || onChainData?.totalAsset || "0",
+      sharesAssetBalance: metadata?.token1Balance || onChainData?.totalShares || "0",
       ...(onChainData?.strategies && {
         strategies: onChainData.strategies.map((s) => s.strategyAddress),
       }),
@@ -655,10 +655,10 @@ export class VaultDetector {
 
           paused: metadata?.paused || false,
 
-          token0: metadata?.token0 || vault.assetAddress || "",
-          token1: metadata?.token1 || vault.sharesAddress || "",
-          decimals0: metadata?.decimals0 || vault.decimals || 8,
-          decimals1: metadata?.decimals1 || vault.decimals || 8,
+          baseAsset: metadata?.token0 || vault.assetAddress || "",
+          sharesAsset: metadata?.token1 || vault.sharesAddress || "",
+          baseAssetDecimals: metadata?.decimals0 || vault.decimals || 8,
+          sharesAssetDecimals: metadata?.decimals1 || vault.decimals || 8,
 
           tvl: metadata?.tvl || "0",
           apr: metadata?.apr || 0,
@@ -669,8 +669,8 @@ export class VaultDetector {
           totalSupply: vault.totalShares,
 
           // Use metadata for token balances, fallback to on-chain total values
-          token0Balance: metadata?.token0Balance || vault.totalAsset || "0",
-          token1Balance: metadata?.token1Balance || vault.totalShares || "0",
+          baseAssetBalance: metadata?.token0Balance || vault.totalAsset || "0",
+          sharesAssetBalance: metadata?.token1Balance || vault.totalShares || "0",
 
           strategies: vault.strategies.map((s) => s.strategyAddress),
 
@@ -698,18 +698,18 @@ export class VaultDetector {
 
           paused: metadata.paused,
 
-          token0: metadata.token0,
-          token1: metadata.token1,
-          decimals0: metadata.decimals0,
-          decimals1: metadata.decimals1,
+          baseAsset: metadata.token0,
+          sharesAsset: metadata.token1,
+          baseAssetDecimals: metadata.decimals0,
+          sharesAssetDecimals: metadata.decimals1,
 
           tvl: metadata.tvl,
           apr: metadata.apr,
           rewardApr: metadata.rewardApr,
 
           totalSupply: metadata.totalSupply,
-          token0Balance: metadata.token0Balance,
-          token1Balance: metadata.token1Balance,
+          baseAssetBalance: metadata.token0Balance,
+          sharesAssetBalance: metadata.token1Balance,
 
           rewardPools: metadata.rewardPools,
           additionalMetadata: metadata.additionalMetadata,

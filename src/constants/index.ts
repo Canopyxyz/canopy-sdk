@@ -103,6 +103,13 @@ export const ERROR_MESSAGES = {
   STRATEGY_ADDRESS_REQUIRED:
     "Strategy address is required and must be a string",
   INVALID_VAULT_ADDRESS_FORMAT: "Invalid vault address format",
+  INVALID_USER_ADDRESS_FORMAT: "Invalid user address format",
+  INVALID_TOKEN_ADDRESS_FORMAT: "Invalid token address format",
+  INVALID_POOL_ADDRESS_FORMAT: "Invalid pool address format",
+  USER_ADDRESS_REQUIRED: "User address is required and must be a string",
+  TOKEN_ADDRESS_REQUIRED: "Token address is required and must be a string",
+  POOL_ADDRESS_REQUIRED: "Pool address is required and must be a string",
+  INVALID_INPUT_FORMAT: "Invalid input format",
   VAULT_PAUSED: "Vault is currently paused and cannot accept transactions",
   VAULT_NOT_FOUND: "Vault not found or inaccessible",
   FAILED_TO_DETECT_VAULT: "Failed to detect vault type",

@@ -42,8 +42,8 @@ export default function StakingOperations({
     if (vaultAddress) {
       const vault = vaults.find((v) => v.address === vaultAddress);
       setSelectedVaultData(vault);
-      // Use token1 as the shares token (staking token)
-      setStakingToken(vault?.token1 || "");
+      // Use sharesAsset as the shares token (staking token)
+      setStakingToken(vault?.sharesAsset || "");
     } else {
       setSelectedVaultData(null);
       setStakingToken("");
@@ -64,7 +64,7 @@ export default function StakingOperations({
           userAddress,
           selectedVault
         );
-        const decimals = selectedVaultData?.decimals1 || 8;
+        const decimals = selectedVaultData?.sharesAssetDecimals || 8;
         setSharesBalance(
           scaleFromDecimals(BigInt(position.sharesBalance), decimals)
         );

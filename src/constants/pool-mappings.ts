@@ -16,6 +16,9 @@ export const STAKING_TOKEN_POOL_MAPPINGS: Record<string, string[]> = {
     "0xf7ce62c86bb4789e9f7b9a8effbe38e53aab6b28bd536ed5f0f898ae58a0df89",
     "0xff22e2f44b858bcfd6477ddf1e4ee561bbc4c2624eaa33c58a51eaecfc13087b",
   ],
+  "0xf1f5f765dd5c5254712e5cb35b87fd04526bc316a20bc6bea6f16746780da80a": [
+    "0x5bdac1313cbb023b09f56c519943c7d0e7728ca780c7a0aa43469a2d0ff73a5",
+  ],
 };
 
 /**
