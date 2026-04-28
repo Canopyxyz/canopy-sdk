@@ -1,0 +1,51 @@
+{
+  "chain": "movement-mainnet",
+  "chainId": 126,
+  "fullnode": "https://mainnet.movementnetwork.xyz/v1",
+  "canopy": {
+    "core": "0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d",
+    "router": "0x717b417949cd5bfa6dc02822eacb727d820de2741f6ea90bf16be6c0ed46ff4b",
+    "blocks": {
+      "echelon": "0x2859e4b5922d5c6746e51387eea923cd8630ecba132e3eafdf6924269b0dc319",
+      "moveposition": "0xf35c3fb25b800e4e25b71e255bd3194812d08a0044b45373c53798280db58dca",
+      "layerbank": "0x61a67557042baa9fd928e874b84ed53b5de73a0f5474fd278e4d73393125d32e",
+      "placeholder": "0xf23a6e822ee3605642d7ce720f2dc0f8269c199da94d93136f56089bb005f309",
+      "meridianFarming": "0x04d59ca485d294ce6645e456a7ec4ddf1363c844365e4a568ff9211c7e21c8b3",
+      "layerbankAirdrop": "0xac80083d55f39c8a62eea93d3877b2f5fd40ef469ae54910ff27ff49dd42c8a6"
+    },
+    "strategies": {
+      "movepositionSimple": "0xd7c7b27e361434e18d2410fd02f7140a8c10d174c9be0efd5324578d243953bd",
+      "layerbankSimple": "0xad1b34939f164ec6f6c0157da3a30bf9e5d408250978691872a79aa584852b85",
+      "echelonSimple": "0x5d2b6a8b6478d86f62c9d3378e2a1fa265e85e69046946632d1fecae1940e851",
+      "placeholderSimple": "0xa9cebc4e3a52f186c831666a6e2f0475d32ebd23244b207ffde0ce06d9813414",
+      "meridianRewards": "0x133b23036f4ac78279fd4cc75b798ccfe2d3c002585049d7483230653b924b7d"
+    },
+    "helpers": "0x93c6d4852a37be13ec1487a60d32433e396b048ce634b4e8b9f60ff0dac365d2",
+    "views": "0x707462571715301b063d79c2cdb57c3bd1cfe2189889793b00077ceed86e0219"
+  },
+  "rewards": {
+    "module": "0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b",
+    "router": "0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b",
+    "batcher": "0x265d62018bb6ec05859cdf5520cfc1efa8e84a4f9a853c66f139a2184d367be4",
+    "stdBatcher": "0x2a6b1dd5556386991fc6f4fa140ae65a6fc90414acec00e7f0254e98929ec140"
+  },
+  "alm": {
+    "meridian": {
+      "vaults": "0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83",
+      "standard": "0xec1daab2836431755e13aadec864bccf552dfe7c846b5684b60238394dc91326",
+      "registry": "0x3b0710d1a0a14a38e2059fc9562f875a1a275a580b7c43c019e68be5a8ae1741",
+      "strategies": {
+        "regularV4": "0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607",
+        "medianStableV2": "0xce4cb4a684e38346910686cf63fcbb9f3678c2b2fdd9d297bd375e617cee5cee"
+      }
+    }
+  },
+  "sharedPackages": {
+    "largePackages": "0x1f33887fba324884468f326ab741e937fb2b9563faa467dca15e4eb198817531"
+  },
+  "features": {
+    "canopy": true,
+    "rewards": true,
+    "almMeridian": true
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "chain": "aptos-mainnet",
+  "chainId": 1,
+  "fullnode": "https://api.mainnet.aptoslabs.com/v1",
+  "alm": {
+    "meridian": {
+      "vaults": "0xeb57695cd494c59ea7b1356580f1e7d5666fd84827322369e21d712e22397b54",
+      "standard": "0x781a660f7f6e1f3b6318c365ccb3fe01804ac318224784fd5c955c0f53ed77c7",
+      "registry": "0xae645c9ef6a7d68d64e2beb1c6896f73f189ab609e650ace8bdeeac390b0dd38",
+      "strategies": {
+        "regularV4": "0xad879f655500986d56972c95817575b5ddc1a65c5181be15cbf1f5f6ad685d04"
+      }
+    }
+  },
+  "features": {
+    "canopy": false,
+    "rewards": false,
+    "almMeridian": true
+  }
+}

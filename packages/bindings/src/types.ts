@@ -32,7 +32,7 @@ export interface CanopyAbiSet {
   multiRewardsRouter: MoveModuleAbi;
   multiRewardsBatcherView: MoveModuleAbi;
   multiRewardsBatcherEntry: MoveModuleAbi;
-  multiRewardsStdViews: MoveModuleAbi;
+  multiRewardsStdViews?: MoveModuleAbi;
   canopyStrategyEchelonSimple?: MoveModuleAbi;
   canopyStrategyMovepositionSimple?: MoveModuleAbi;
   canopyStrategyMovepositionTicket?: MoveModuleAbi;
