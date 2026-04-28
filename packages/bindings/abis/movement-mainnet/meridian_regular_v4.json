@@ -1,0 +1,1799 @@
+{
+  "address": "0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607",
+  "name": "regular_v4",
+  "friends": [],
+  "exposed_functions": [
+    {
+      "name": "check_upkeep",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "bool",
+        "u64"
+      ]
+    },
+    {
+      "name": "claim_ownership",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer"
+      ],
+      "return": []
+    },
+    {
+      "name": "create_strategy",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "u64",
+        "u64",
+        "u64",
+        "u128",
+        "u128",
+        "u128",
+        "u128",
+        "u64",
+        "u64",
+        "u128",
+        "u64",
+        "u64",
+        "u64",
+        "u64",
+        "u64",
+        "u64",
+        "u64",
+        "u64",
+        "u64"
+      ],
+      "return": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ]
+    },
+    {
+      "name": "destroy_low_high_position",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::LowHighPosition"
+      ],
+      "return": [
+        "0xcff27db92178da13d6543c9036552fcee0f4c7a2cca464e58bab1f40db2296e7::i64::I64",
+        "0xcff27db92178da13d6543c9036552fcee0f4c7a2cca464e58bab1f40db2296e7::i64::I64",
+        "0xcff27db92178da13d6543c9036552fcee0f4c7a2cca464e58bab1f40db2296e7::i64::I64",
+        "0xcff27db92178da13d6543c9036552fcee0f4c7a2cca464e58bab1f40db2296e7::i64::I64",
+        "0x1::option::Option<bool>"
+      ]
+    },
+    {
+      "name": "get_action_code",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "u64"
+      ]
+    },
+    {
+      "name": "get_begin_over_inv_bps",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "u64"
+      ]
+    },
+    {
+      "name": "get_begin_under_inv_bps",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "u64"
+      ]
+    },
+    {
+      "name": "get_current_volatility",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "u128"
+      ]
+    },
+    {
+      "name": "get_defensive_concentration_bps",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "u64"
+      ]
+    },
+    {
+      "name": "get_deposit_concentration_bps",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "u64"
+      ]
+    },
+    {
+      "name": "get_deposit_token_ratio",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "u64"
+      ]
+    },
+    {
+      "name": "get_dtr_delta",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "u64"
+      ]
+    },
+    {
+      "name": "get_end_over_inv_bps",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "u64"
+      ]
+    },
+    {
+      "name": "get_end_under_inv_bps",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "u64"
+      ]
+    },
+    {
+      "name": "get_execution_delay",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "u64"
+      ]
+    },
+    {
+      "name": "get_inv_bps",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "u64",
+        "u64",
+        "u64",
+        "u64"
+      ]
+    },
+    {
+      "name": "get_last_active_tick",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "0xcff27db92178da13d6543c9036552fcee0f4c7a2cca464e58bab1f40db2296e7::i64::I64"
+      ]
+    },
+    {
+      "name": "get_last_strategy_rebalance_time",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "u64"
+      ]
+    },
+    {
+      "name": "get_last_vault_rebalance_time",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "u64"
+      ]
+    },
+    {
+      "name": "get_last_vault_state",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "u16"
+      ]
+    },
+    {
+      "name": "get_limit_reserve_bps",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "u64"
+      ]
+    },
+    {
+      "name": "get_min_time_between_rebalances",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "u64"
+      ]
+    },
+    {
+      "name": "get_owner",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [],
+      "return": [
+        "address"
+      ]
+    },
+    {
+      "name": "get_pending_deposits_bps",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "u64"
+      ]
+    },
+    {
+      "name": "get_pending_deposits_ratio",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "u64"
+      ]
+    },
+    {
+      "name": "get_pending_owner",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [],
+      "return": [
+        "address"
+      ]
+    },
+    {
+      "name": "get_pool_prices",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "0xcff27db92178da13d6543c9036552fcee0f4c7a2cca464e58bab1f40db2296e7::i64::I64",
+        "0xcff27db92178da13d6543c9036552fcee0f4c7a2cca464e58bab1f40db2296e7::i64::I64",
+        "0xcff27db92178da13d6543c9036552fcee0f4c7a2cca464e58bab1f40db2296e7::i64::I64"
+      ]
+    },
+    {
+      "name": "get_price_change",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "u128"
+      ]
+    },
+    {
+      "name": "get_quote_concentration_bps",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "u64"
+      ]
+    },
+    {
+      "name": "get_rebalance_initiation_time",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "u64"
+      ]
+    },
+    {
+      "name": "get_resource_signer_address",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [],
+      "return": [
+        "address"
+      ]
+    },
+    {
+      "name": "get_strategy_settings",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "u64",
+        "u64",
+        "u64",
+        "u128",
+        "u128",
+        "u128",
+        "u128",
+        "u64",
+        "u128",
+        "u64",
+        "u64",
+        "u64",
+        "u64",
+        "u64",
+        "u64",
+        "u64",
+        "u64",
+        "u64",
+        "u64"
+      ]
+    },
+    {
+      "name": "get_twaps",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "u64",
+        "u64"
+      ]
+    },
+    {
+      "name": "get_vault_amounts",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "u128",
+        "u128"
+      ]
+    },
+    {
+      "name": "get_vault_immutables",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "bool",
+        "u64"
+      ]
+    },
+    {
+      "name": "get_vault_state_to_rebalance_into",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "u16"
+      ]
+    },
+    {
+      "name": "get_volatilities",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "u128",
+        "u128",
+        "u128",
+        "u128"
+      ]
+    },
+    {
+      "name": "multi_check_upkeep",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "vector<0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>>"
+      ],
+      "return": [
+        "vector<bool>"
+      ]
+    },
+    {
+      "name": "multi_perform_upkeep",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "vector<0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>>"
+      ],
+      "return": []
+    },
+    {
+      "name": "perform_upkeep",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": []
+    },
+    {
+      "name": "perform_upkeep_internal",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "bool",
+        "u64"
+      ]
+    },
+    {
+      "name": "reset",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": []
+    },
+    {
+      "name": "set_defensive_concentration_bps",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>",
+        "u64"
+      ],
+      "return": []
+    },
+    {
+      "name": "set_deposit_concentration_bps",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>",
+        "u64"
+      ],
+      "return": []
+    },
+    {
+      "name": "set_dtr_boundaries",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>",
+        "u64",
+        "u64",
+        "u64",
+        "u64"
+      ],
+      "return": []
+    },
+    {
+      "name": "set_dtr_delta",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>",
+        "u64"
+      ],
+      "return": []
+    },
+    {
+      "name": "set_execution_delay",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>",
+        "u64"
+      ],
+      "return": []
+    },
+    {
+      "name": "set_extreme_volatility",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>",
+        "u128"
+      ],
+      "return": []
+    },
+    {
+      "name": "set_extreme_volatility_last_rebalance",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>",
+        "u128"
+      ],
+      "return": []
+    },
+    {
+      "name": "set_high_volatility",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>",
+        "u128"
+      ],
+      "return": []
+    },
+    {
+      "name": "set_limit_reserve_bps",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>",
+        "u64"
+      ],
+      "return": []
+    },
+    {
+      "name": "set_min_time_between_rebalances",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>",
+        "u64"
+      ],
+      "return": []
+    },
+    {
+      "name": "set_pending_deposits_bps",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>",
+        "u64"
+      ],
+      "return": []
+    },
+    {
+      "name": "set_price_change",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>",
+        "u128"
+      ],
+      "return": []
+    },
+    {
+      "name": "set_quote_concentration_bps",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>",
+        "u64"
+      ],
+      "return": []
+    },
+    {
+      "name": "set_some_volatility",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>",
+        "u128"
+      ],
+      "return": []
+    },
+    {
+      "name": "set_twap_fast",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>",
+        "u64"
+      ],
+      "return": []
+    },
+    {
+      "name": "set_twap_slow",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>",
+        "u64"
+      ],
+      "return": []
+    },
+    {
+      "name": "simulate",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::LowHighPosition"
+      ]
+    },
+    {
+      "name": "simulate_u64",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "bool",
+        "u64",
+        "bool",
+        "u64",
+        "bool",
+        "u64",
+        "bool",
+        "u64",
+        "0x1::option::Option<bool>"
+      ]
+    },
+    {
+      "name": "simulate_upkeep",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::LowHighPosition",
+        "u64"
+      ]
+    },
+    {
+      "name": "simulate_upkeep_u64",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+      ],
+      "return": [
+        "bool",
+        "u64",
+        "bool",
+        "u64",
+        "bool",
+        "u64",
+        "bool",
+        "u64",
+        "0x1::option::Option<bool>",
+        "u64"
+      ]
+    },
+    {
+      "name": "transfer_ownership",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "address"
+      ],
+      "return": []
+    },
+    {
+      "name": "update_multiple_strategies_different_settings",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "vector<0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>>",
+        "vector<0x1::option::Option<u64>>",
+        "vector<0x1::option::Option<u64>>",
+        "vector<0x1::option::Option<u64>>",
+        "vector<0x1::option::Option<u128>>",
+        "vector<0x1::option::Option<u128>>",
+        "vector<0x1::option::Option<u128>>",
+        "vector<0x1::option::Option<u128>>",
+        "vector<0x1::option::Option<u64>>",
+        "vector<0x1::option::Option<u128>>",
+        "vector<0x1::option::Option<u64>>",
+        "vector<0x1::option::Option<u64>>",
+        "vector<0x1::option::Option<u64>>",
+        "vector<0x1::option::Option<u64>>",
+        "vector<0x1::option::Option<u64>>",
+        "vector<0x1::option::Option<u64>>",
+        "vector<0x1::option::Option<u64>>",
+        "vector<0x1::option::Option<u64>>",
+        "vector<0x1::option::Option<u64>>",
+        "vector<0x1::option::Option<u64>>"
+      ],
+      "return": []
+    },
+    {
+      "name": "update_multiple_strategies_same_settings",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "vector<0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u128>",
+        "0x1::option::Option<u128>",
+        "0x1::option::Option<u128>",
+        "0x1::option::Option<u128>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u128>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>"
+      ],
+      "return": []
+    },
+    {
+      "name": "update_strategy_settings",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u128>",
+        "0x1::option::Option<u128>",
+        "0x1::option::Option<u128>",
+        "0x1::option::Option<u128>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u128>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>"
+      ],
+      "return": []
+    }
+  ],
+  "structs": [
+    {
+      "name": "ClaimOwnershipEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "old_owner",
+          "type": "address"
+        },
+        {
+          "name": "new_owner",
+          "type": "address"
+        }
+      ]
+    },
+    {
+      "name": "GlobalConfig",
+      "is_native": false,
+      "is_event": false,
+      "abilities": [
+        "key"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "resource_signer_address",
+          "type": "address"
+        },
+        {
+          "name": "resource_signer_cap",
+          "type": "0x1::account::SignerCapability"
+        },
+        {
+          "name": "pending_owner",
+          "type": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address"
+        }
+      ]
+    },
+    {
+      "name": "LowHighPosition",
+      "is_native": false,
+      "is_event": false,
+      "abilities": [
+        "copy",
+        "drop"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "base_lower",
+          "type": "0xcff27db92178da13d6543c9036552fcee0f4c7a2cca464e58bab1f40db2296e7::i64::I64"
+        },
+        {
+          "name": "base_upper",
+          "type": "0xcff27db92178da13d6543c9036552fcee0f4c7a2cca464e58bab1f40db2296e7::i64::I64"
+        },
+        {
+          "name": "limit_lower",
+          "type": "0xcff27db92178da13d6543c9036552fcee0f4c7a2cca464e58bab1f40db2296e7::i64::I64"
+        },
+        {
+          "name": "limit_upper",
+          "type": "0xcff27db92178da13d6543c9036552fcee0f4c7a2cca464e58bab1f40db2296e7::i64::I64"
+        },
+        {
+          "name": "base_straddles",
+          "type": "0x1::option::Option<bool>"
+        }
+      ]
+    },
+    {
+      "name": "PerformUpkeepFailureEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "strategy_address",
+          "type": "address"
+        },
+        {
+          "name": "error_code",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "RebalanceActionEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "strategy_address",
+          "type": "address"
+        },
+        {
+          "name": "action_code",
+          "type": "u64"
+        },
+        {
+          "name": "dtr",
+          "type": "u64"
+        },
+        {
+          "name": "pending_ratio_bps",
+          "type": "u64"
+        },
+        {
+          "name": "last_vault_state",
+          "type": "u16"
+        },
+        {
+          "name": "vault_state_to_rebalance_into",
+          "type": "u16"
+        },
+        {
+          "name": "last_price",
+          "type": "0x1::option::Option<u128>"
+        },
+        {
+          "name": "current_price",
+          "type": "u128"
+        }
+      ]
+    },
+    {
+      "name": "RebalanceInfo",
+      "is_native": false,
+      "is_event": false,
+      "abilities": [
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "rebalance_initiation_time",
+          "type": "u64"
+        },
+        {
+          "name": "last_vault_state",
+          "type": "u16"
+        },
+        {
+          "name": "last_active_tick",
+          "type": "0xcff27db92178da13d6543c9036552fcee0f4c7a2cca464e58bab1f40db2296e7::i64::I64"
+        },
+        {
+          "name": "last_strategy_rebalance_time",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "SetBaseLoBps",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "strategy_address",
+          "type": "address"
+        },
+        {
+          "name": "base_lo_bps",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "SetBeginOverInvBps",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "strategy_address",
+          "type": "address"
+        },
+        {
+          "name": "begin_over_inv_bps",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "SetBeginUnderInvBps",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "strategy_address",
+          "type": "address"
+        },
+        {
+          "name": "begin_under_inv_bps",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "SetDefensiveBps",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "strategy_address",
+          "type": "address"
+        },
+        {
+          "name": "defensive_bps",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "SetDtrBoundaries",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "strategy_address",
+          "type": "address"
+        },
+        {
+          "name": "begin_over_inv_bps",
+          "type": "u64"
+        },
+        {
+          "name": "end_over_inv_bps",
+          "type": "u64"
+        },
+        {
+          "name": "end_under_inv_bps",
+          "type": "u64"
+        },
+        {
+          "name": "begin_under_inv_bps",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "SetDtrDelta",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "strategy_address",
+          "type": "address"
+        },
+        {
+          "name": "dtr_delta_bps",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "SetEndOverInvBps",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "strategy_address",
+          "type": "address"
+        },
+        {
+          "name": "end_over_inv_bps",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "SetEndUnderInvBps",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "strategy_address",
+          "type": "address"
+        },
+        {
+          "name": "end_under_inv_bps",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "SetExecutionDelay",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "strategy_address",
+          "type": "address"
+        },
+        {
+          "name": "execution_delay",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "SetExtremeVolatility",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "strategy_address",
+          "type": "address"
+        },
+        {
+          "name": "extreme_volatility_bps",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "SetExtremeVolatilityLastRebalance",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "strategy_address",
+          "type": "address"
+        },
+        {
+          "name": "extreme_volatility_last_rebalance_bps",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "SetHighVolatility",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "strategy_address",
+          "type": "address"
+        },
+        {
+          "name": "high_volatility_bps",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "SetLimitReserveBps",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "strategy_address",
+          "type": "address"
+        },
+        {
+          "name": "limit_reserve_bps",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "SetLimitUpBps",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "strategy_address",
+          "type": "address"
+        },
+        {
+          "name": "limit_up_bps",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "SetMinTimeBetweenRebalancesEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "strategy_address",
+          "type": "address"
+        },
+        {
+          "name": "min_time_between_rebalances",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "SetPendingDepositsBps",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "strategy_address",
+          "type": "address"
+        },
+        {
+          "name": "pending_deposits_bps",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "SetPriceChange",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "strategy_address",
+          "type": "address"
+        },
+        {
+          "name": "price_change_bps",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "SetSomeVolatility",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "strategy_address",
+          "type": "address"
+        },
+        {
+          "name": "some_volatility_bps",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "SetTwapFast",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "strategy_address",
+          "type": "address"
+        },
+        {
+          "name": "twap_fast",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "SetTwapSlow",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "strategy_address",
+          "type": "address"
+        },
+        {
+          "name": "twap_slow",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "Strategy",
+      "is_native": false,
+      "is_event": false,
+      "abilities": [
+        "key"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "strategy_info",
+          "type": "0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::StrategyInfo"
+        },
+        {
+          "name": "strategy_config",
+          "type": "0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::StrategyConfig"
+        },
+        {
+          "name": "rebalance_info",
+          "type": "0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::RebalanceInfo"
+        }
+      ]
+    },
+    {
+      "name": "StrategyConfig",
+      "is_native": false,
+      "is_event": false,
+      "abilities": [
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "execution_delay",
+          "type": "u64"
+        },
+        {
+          "name": "twap_slow",
+          "type": "u64"
+        },
+        {
+          "name": "twap_fast",
+          "type": "u64"
+        },
+        {
+          "name": "extreme_volatility_bps",
+          "type": "u128"
+        },
+        {
+          "name": "extreme_volatility_last_rebalance_bps",
+          "type": "u128"
+        },
+        {
+          "name": "high_volatility_bps",
+          "type": "u128"
+        },
+        {
+          "name": "some_volatility_bps",
+          "type": "u128"
+        },
+        {
+          "name": "dtr_delta_bps",
+          "type": "u64"
+        },
+        {
+          "name": "price_change_bps",
+          "type": "u128"
+        },
+        {
+          "name": "min_time_between_rebalances",
+          "type": "u64"
+        },
+        {
+          "name": "base_lo_bps",
+          "type": "u64"
+        },
+        {
+          "name": "limit_up_bps",
+          "type": "u64"
+        },
+        {
+          "name": "defensive_bps",
+          "type": "u64"
+        },
+        {
+          "name": "limit_reserve_bps",
+          "type": "u64"
+        },
+        {
+          "name": "pending_deposits_bps",
+          "type": "u64"
+        },
+        {
+          "name": "begin_over_inv_bps",
+          "type": "u64"
+        },
+        {
+          "name": "end_over_inv_bps",
+          "type": "u64"
+        },
+        {
+          "name": "end_under_inv_bps",
+          "type": "u64"
+        },
+        {
+          "name": "begin_under_inv_bps",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "StrategyCreatedEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "vault",
+          "type": "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+        },
+        {
+          "name": "strategy",
+          "type": "0x1::object::Object<0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607::regular_v4::Strategy>"
+        }
+      ]
+    },
+    {
+      "name": "StrategyInfo",
+      "is_native": false,
+      "is_event": false,
+      "abilities": [
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "vault",
+          "type": "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+        },
+        {
+          "name": "is_inverted",
+          "type": "bool"
+        },
+        {
+          "name": "tick_spacing",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "TransferOwnershipEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "current_owner",
+          "type": "address"
+        },
+        {
+          "name": "pending_owner",
+          "type": "address"
+        }
+      ]
+    },
+    {
+      "name": "UpkeepCtx",
+      "is_native": false,
+      "is_event": false,
+      "abilities": [
+        "copy",
+        "drop"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "active_tick",
+          "type": "0xcff27db92178da13d6543c9036552fcee0f4c7a2cca464e58bab1f40db2296e7::i64::I64"
+        },
+        {
+          "name": "twap_slow_tick",
+          "type": "0xcff27db92178da13d6543c9036552fcee0f4c7a2cca464e58bab1f40db2296e7::i64::I64"
+        },
+        {
+          "name": "twap_fast_tick",
+          "type": "0xcff27db92178da13d6543c9036552fcee0f4c7a2cca464e58bab1f40db2296e7::i64::I64"
+        },
+        {
+          "name": "current_price_dq",
+          "type": "u128"
+        },
+        {
+          "name": "scarce_token_value",
+          "type": "u128"
+        },
+        {
+          "name": "base_token_ratio_bps",
+          "type": "u64"
+        },
+        {
+          "name": "base_total",
+          "type": "u128"
+        },
+        {
+          "name": "scarce_total",
+          "type": "u128"
+        },
+        {
+          "name": "pending_ratio_bps",
+          "type": "u64"
+        },
+        {
+          "name": "observation_at_current_time",
+          "type": "bool"
+        },
+        {
+          "name": "time_now",
+          "type": "u64"
+        },
+        {
+          "name": "cooldown_period",
+          "type": "u64"
+        }
+      ]
+    }
+  ]
+}
