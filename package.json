@@ -18,10 +18,26 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
+    },
+    "./core": {
+      "types": "./dist/core.d.ts",
+      "import": "./dist/core.mjs",
+      "require": "./dist/core.js"
+    },
+    "./deployments": {
+      "types": "./dist/deployments.d.ts",
+      "import": "./dist/deployments.mjs",
+      "require": "./dist/deployments.js"
+    },
+    "./bindings": {
+      "types": "./dist/bindings.d.ts",
+      "import": "./dist/bindings.mjs",
+      "require": "./dist/bindings.js"
     }
   },
   "files": [
     "dist",
+    "packages/deployments/addresses",
     "README.md"
   ],
   "homepage": "https://github.com/Canopyxyz/canopy-sdk#readme",
@@ -33,15 +49,20 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "test": "jest",
-    "lint": "eslint src/**/*.ts",
+    "lint": "eslint \"src/**/*.ts\" \"packages/**/*.ts\"",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "npm run build"
+    "abi:fetch": "node scripts/abi/fetch-abis.mjs",
+    "abi:check": "node scripts/abi/fetch-abis.mjs --check",
+    "abi:check-local": "node scripts/abi/check-local-abis.mjs",
+    "check:exports": "node scripts/ci/check-exports.mjs",
+    "validate:deployments": "node -e \"import('./dist/deployments.mjs').then(({listDeployments})=>{listDeployments(); console.log('deployments ok')})\"",
+    "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
-    "@aptos-labs/ts-sdk": "^4.0.0"
+    "@moveindustries/ts-sdk": "^5.1.7",
+    "got": "^11.8.6"
   },
   "devDependencies": {
-    "@aptos-labs/react": "^0.1.4",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.4.0",
     "@typescript-eslint/eslint-plugin": "^8.43.0",
@@ -62,5 +83,5 @@
   },
   "author": "Canopy Protocol",
   "license": "MIT",
-  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+  "packageManager": "pnpm@9.15.9"
 }

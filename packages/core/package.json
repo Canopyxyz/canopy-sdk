@@ -1,0 +1,6 @@
+{
+  "name": "@canopyhub/canopy-sdk-core",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts"
+}
