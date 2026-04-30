@@ -1,8 +1,6 @@
-export { CanopyClient } from "../../../src/client";
-export type { CanopyClientOptions } from "../../../src/client";
-export type {
-  StrategyDetails,
-  TransactionPayload,
-  VaultData,
-  VaultMetadata,
-} from "../../../src/types";
+export * from "./alm";
+export * from "./canopy";
+export * from "./client";
+export * from "./data";
+export * from "./rewards";
+export * from "./types";

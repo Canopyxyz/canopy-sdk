@@ -1,0 +1,1322 @@
+import {
+  CanopySdk,
+  createCanopySdk,
+  findFungibleAssetDeposit,
+  movementTestnetMovePositionConfig,
+} from "../packages/sdk/src";
+
+const APTOS_COIN_TYPE =
+  "0x0000000000000000000000000000000000000000000000000000000000000001::aptos_coin::AptosCoin";
+
+interface MockViewClient {
+  view: jest.Mock<Promise<unknown[]>, [unknown]>;
+}
+
+function createMovementMock(
+  responses: Record<string, unknown[] | ((args: unknown[]) => unknown[])>
+): MockViewClient {
+  return {
+    view: jest.fn(async (input: unknown) => {
+      const payload = (input as { payload: { function: string; functionArguments?: unknown[] } }).payload;
+      const response = responses[payload.function];
+
+      if (!response) {
+        throw new Error(`Missing mock response for ${payload.function}`);
+      }
+
+      return typeof response === "function"
+        ? response(payload.functionArguments ?? [])
+        : response;
+    }),
+  };
+}
+
+describe("CanopySdk", () => {
+  it("composes protocol modules from deployment features", () => {
+    const movementClient = createMovementMock({});
+    const movementSdk = new CanopySdk(movementClient as never, {
+      chain: "movement-mainnet",
+    });
+
+    expect(movementSdk.canopy).toBeDefined();
+    expect(movementSdk.rewards).toBeDefined();
+    expect(movementSdk.alm.meridian).toBeDefined();
+
+    const aptosMainnetClient = createMovementMock({});
+    const aptosMainnetSdk = createCanopySdk(aptosMainnetClient as never, {
+      chain: "aptos-mainnet",
+    });
+
+    expect(aptosMainnetSdk.canopy).toBeUndefined();
+    expect(aptosMainnetSdk.rewards).toBeUndefined();
+    expect(aptosMainnetSdk.alm.meridian).toBeDefined();
+
+    const aptosTestnetClient = createMovementMock({});
+    const aptosTestnetSdk = createCanopySdk(aptosTestnetClient as never, {
+      chain: "aptos-testnet",
+    });
+
+    expect(aptosTestnetSdk.canopy).toBeDefined();
+    expect(aptosTestnetSdk.rewards).toBeDefined();
+    expect(aptosTestnetSdk.alm.meridian).toBeUndefined();
+
+    const movementTestnetClient = createMovementMock({});
+    const movementTestnetSdk = createCanopySdk(movementTestnetClient as never, {
+      chain: "movement-testnet",
+    });
+
+    expect(movementTestnetSdk.canopy).toBeUndefined();
+    expect(movementTestnetSdk.rewards).toBeUndefined();
+    expect(movementTestnetSdk.alm.meridian).toBeUndefined();
+  });
+
+  it("parses canopy vault views", async () => {
+    const client = createMovementMock({
+      "0xe5ec58845afb1cb164d1c260f2a284b2f1311318973e13355b9e4dc2908eed5a::vault::vault_view":
+        [
+          {
+            decimals: "8",
+            total_debt: "1",
+            total_idle: "2",
+            total_shares: "3",
+            total_asset: "4",
+            asset_name: "USDC",
+            shares_name: "Canopy USDC",
+            vault_address: "0xabc",
+            asset_address: "0xdef",
+            shares_address: "0x123",
+            paired_coin_type: { vec: ["0x1::aptos_coin::AptosCoin"] },
+            strategies: [
+              {
+                strategy_address: "0x1",
+                asset_address: "0x2",
+                concrete_address: "0x3",
+                current_vault_debt: "4",
+                debt_limit: "5",
+                decimals: "6",
+                last_report: "7",
+                shares_address: "0x8",
+                total_asset: "9",
+                total_debt: "10",
+                total_idle: "11",
+                total_loss: "12",
+                total_profit: "13",
+                total_shares: "14",
+                vault_address: "0xabc",
+              },
+            ],
+          },
+        ],
+      "0xe5ec58845afb1cb164d1c260f2a284b2f1311318973e13355b9e4dc2908eed5a::vault::vaults_view":
+        [
+          {
+            limit: "1",
+            offset: "0",
+            total_count: "1",
+            vaults: [
+              {
+                decimals: "8",
+                total_debt: "1",
+                total_idle: "2",
+                total_shares: "3",
+                total_asset: "4",
+                asset_name: "USDC",
+                shares_name: "Canopy USDC",
+                vault_address: "0xabc",
+                asset_address: "0xdef",
+                shares_address: "0x123",
+                strategies: [],
+              },
+            ],
+          },
+        ],
+    });
+    const sdk = new CanopySdk(client as never, { chain: "aptos-testnet" });
+
+    const vault = await sdk.canopy?.getVault("0xabc");
+    expect(vault).toMatchObject({
+      vaultAddress: "0x0000000000000000000000000000000000000000000000000000000000000abc",
+      assetName: "USDC",
+      pairedCoinType: APTOS_COIN_TYPE,
+      totalAsset: 4n,
+      totalDebt: 1n,
+      totalIdle: 2n,
+      totalShares: 3n,
+    });
+    expect(vault?.strategies[0]).toMatchObject({
+      strategyAddress: "0x0000000000000000000000000000000000000000000000000000000000000001",
+      concreteAddress: "0x0000000000000000000000000000000000000000000000000000000000000003",
+      currentVaultDebt: 4n,
+      totalAsset: 9n,
+    });
+
+    const page = await sdk.canopy?.listVaults({ limit: 1, offset: 0 });
+    expect(page).toMatchObject({
+      limit: 1,
+      offset: 0,
+      totalCount: 1,
+    });
+    expect(page?.vaults).toHaveLength(1);
+  });
+
+  it("builds canopy payloads with explicit limits", async () => {
+    const client = createMovementMock({
+      "0xe5ec58845afb1cb164d1c260f2a284b2f1311318973e13355b9e4dc2908eed5a::vault::vault_view":
+        [
+          {
+            decimals: "8",
+            total_debt: "1",
+            total_idle: "2",
+            total_shares: "3",
+            total_asset: "4",
+            asset_name: "USDC",
+            shares_name: "Canopy USDC",
+            vault_address: "0xabc",
+            asset_address: "0xdef",
+            shares_address: "0x123",
+            paired_coin_type: { vec: ["0x1::aptos_coin::AptosCoin"] },
+            strategies: [],
+          },
+        ],
+    });
+    const sdk = new CanopySdk(client as never, { chain: "aptos-testnet" });
+
+    await expect(
+      sdk.canopy?.buildDepositPayload({
+        vaultAddress: "0xabc",
+        amount: 10n,
+        minSharesOut: 9n,
+      })
+    ).resolves.toEqual({
+      function:
+        "0x6db956973bb73aff8b6c3712a7b4fff18bfefd850cce81c558d20a7ab1fc37d9::router::deposit_coin",
+      typeArguments: [APTOS_COIN_TYPE, APTOS_COIN_TYPE],
+      functionArguments: [
+        "0x0000000000000000000000000000000000000000000000000000000000000abc",
+        [],
+        [],
+        "10",
+        "9",
+      ],
+    });
+
+    await expect(
+      sdk.canopy?.buildWithdrawPayload({
+        vaultAddress: "0xabc",
+        shares: 10n,
+        maxLossBps: 50n,
+        minAmountOut: 3n,
+      })
+    ).resolves.toEqual({
+      function:
+        "0x6db956973bb73aff8b6c3712a7b4fff18bfefd850cce81c558d20a7ab1fc37d9::router::withdraw_coin",
+      typeArguments: [APTOS_COIN_TYPE, APTOS_COIN_TYPE],
+      functionArguments: [
+        "0x0000000000000000000000000000000000000000000000000000000000000abc",
+        [],
+        [],
+        "10",
+        "50",
+        "3",
+      ],
+    });
+  });
+
+  it("plans unstake-and-withdraw only when wallet shares are insufficient", async () => {
+    const client = createMovementMock({
+      "0xe5ec58845afb1cb164d1c260f2a284b2f1311318973e13355b9e4dc2908eed5a::vault::vault_view":
+        [
+          {
+            decimals: "8",
+            total_debt: "1",
+            total_idle: "2",
+            total_shares: "3",
+            total_asset: "4",
+            asset_name: "USDC",
+            shares_name: "Canopy USDC",
+            vault_address: "0xabc",
+            asset_address: "0xdef",
+            shares_address: "0x123",
+            paired_coin_type: { vec: ["0x1::aptos_coin::AptosCoin"] },
+            strategies: [],
+          },
+        ],
+    });
+    const sdk = new CanopySdk(client as never, { chain: "aptos-testnet" });
+
+    await expect(
+      sdk.canopy?.unstakeAndWithdraw({
+        vaultAddress: "0xabc",
+        shares: 10n,
+        walletShares: 10n,
+        stakedShares: 99n,
+        maxLossBps: 50n,
+        minAmountOut: 3n,
+      })
+    ).resolves.toEqual({
+      requiresUnstake: false,
+      unstakeAmount: 0n,
+        withdrawPayload: {
+          function:
+            "0x6db956973bb73aff8b6c3712a7b4fff18bfefd850cce81c558d20a7ab1fc37d9::router::withdraw_coin",
+          typeArguments: [APTOS_COIN_TYPE, APTOS_COIN_TYPE],
+          functionArguments: [
+            "0x0000000000000000000000000000000000000000000000000000000000000abc",
+            [],
+            [],
+          "10",
+          "50",
+          "3",
+        ],
+      },
+    });
+
+    await expect(
+      sdk.canopy?.unstakeAndWithdraw({
+        vaultAddress: "0xabc",
+        shares: 10n,
+        walletShares: 4n,
+        stakedShares: 9n,
+        maxLossBps: 50n,
+        minAmountOut: 3n,
+      })
+    ).resolves.toEqual({
+      requiresUnstake: true,
+      unstakeAmount: 6n,
+      unstakePayload: {
+        function:
+          "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3::multi_rewards::withdraw",
+        typeArguments: [],
+        functionArguments: [
+          "0x0000000000000000000000000000000000000000000000000000000000000123",
+          "6",
+        ],
+      },
+        withdrawPayload: {
+          function:
+            "0x6db956973bb73aff8b6c3712a7b4fff18bfefd850cce81c558d20a7ab1fc37d9::router::withdraw_coin",
+          typeArguments: [APTOS_COIN_TYPE, APTOS_COIN_TYPE],
+          functionArguments: [
+            "0x0000000000000000000000000000000000000000000000000000000000000abc",
+            [],
+            [],
+          "10",
+          "50",
+          "3",
+        ],
+      },
+    });
+  });
+
+  it("builds moveposition-backed canopy payloads with packets", async () => {
+    const originalFetch = global.fetch;
+    const client = createMovementMock({
+      "0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::vault::vault_view":
+        [
+          {
+            decimals: "8",
+            total_debt: "1",
+            total_idle: "2",
+            total_shares: "3",
+            total_asset: "4",
+            asset_name: "MOVE",
+            shares_name: "Canopy MOVE",
+            vault_address: "0xabc",
+            asset_address:
+              "0x000000000000000000000000000000000000000000000000000000000000000a",
+            shares_address: "0x123",
+            strategies: [
+              {
+                strategy_address: "0x555",
+                asset_address:
+                  "0x000000000000000000000000000000000000000000000000000000000000000a",
+                concrete_address:
+                  "0xd7c7b27e361434e18d2410fd02f7140a8c10d174c9be0efd5324578d243953bd",
+                current_vault_debt: "4",
+                debt_limit: "5",
+                decimals: "6",
+                last_report: "7",
+                shares_address: "0x8",
+                total_asset: "9",
+                total_debt: "10",
+                total_idle: "11",
+                total_loss: "12",
+                total_profit: "13",
+                total_shares: "14",
+                vault_address: "0xabc",
+              },
+            ],
+          },
+        ],
+      "0x717b417949cd5bfa6dc02822eacb727d820de2741f6ea90bf16be6c0ed46ff4b::deposit::get_allocations_view":
+        [
+          {
+            data: [{ key: { inner: "0x555" }, value: "10" }],
+          },
+        ],
+      "0x717b417949cd5bfa6dc02822eacb727d820de2741f6ea90bf16be6c0ed46ff4b::withdraw::get_withdrawal_map_view":
+        [
+          {
+            data: [{ key: { inner: "0x555" }, value: "10" }],
+          },
+        ],
+      "0xd7c7b27e361434e18d2410fd02f7140a8c10d174c9be0efd5324578d243953bd::strategy::withdrawal_amount_view_fa":
+        ["7"],
+    });
+
+    global.fetch = jest.fn(async (url: string, init?: RequestInit) => {
+      if (url === "https://api.moveposition.xyz/portfolios/0x0000000000000000000000000000000000000000000000000000000000000555") {
+        return {
+          ok: true,
+          json: async () => ({
+            collaterals: [{ amount: "1", instrument: { name: "movement-move-fa" } }],
+            liabilities: [],
+          }),
+        } as Response;
+      }
+
+      if (url === "https://api.moveposition.xyz/brokers/lend/v2") {
+        expect(init?.method).toBe("POST");
+        expect(JSON.parse(String(init?.body))).toMatchObject({
+          brokerName: "movement-move-fa",
+          network: "movement-mainnet",
+          signerPubkey:
+            "0x0000000000000000000000000000000000000000000000000000000000000555",
+        });
+        return {
+          ok: true,
+          json: async () => ({
+            packet: "0x0102",
+          }),
+        } as Response;
+      }
+
+      if (url === "https://api.moveposition.xyz/brokers/redeem/v2") {
+        expect(init?.method).toBe("POST");
+        expect(JSON.parse(String(init?.body))).toMatchObject({
+          brokerName: "movement-move-fa",
+          network: "movement-mainnet",
+          signerPubkey:
+            "0x0000000000000000000000000000000000000000000000000000000000000555",
+        });
+        return {
+          ok: true,
+          json: async () => ({
+            packet: "0x0304",
+          }),
+        } as Response;
+      }
+
+      throw new Error(`Unexpected fetch ${url}`);
+    }) as typeof fetch;
+
+    const sdk = new CanopySdk(client as never, { chain: "movement-mainnet" });
+
+    await expect(
+      sdk.canopy?.buildDepositPayload({
+        vaultAddress: "0xabc",
+        amount: 10n,
+        minSharesOut: 8n,
+      })
+    ).resolves.toEqual({
+      function:
+        "0x717b417949cd5bfa6dc02822eacb727d820de2741f6ea90bf16be6c0ed46ff4b::router::deposit_fa_with_coin_type",
+      typeArguments: ["0x1::aptos_coin::AptosCoin"],
+      functionArguments: [
+        "0x0000000000000000000000000000000000000000000000000000000000000abc",
+        ["0x0000000000000000000000000000000000000000000000000000000000000555"],
+        [new Uint8Array([1, 2])],
+        "10",
+        "8",
+      ],
+    });
+
+    await expect(
+      sdk.canopy?.buildWithdrawPayload({
+        vaultAddress: "0xabc",
+        shares: 10n,
+        maxLossBps: 50n,
+        minAmountOut: 3n,
+      })
+    ).resolves.toEqual({
+      function:
+        "0x717b417949cd5bfa6dc02822eacb727d820de2741f6ea90bf16be6c0ed46ff4b::router::withdraw_fa_with_coin_type",
+      typeArguments: ["0x1::aptos_coin::AptosCoin"],
+      functionArguments: [
+        "0x0000000000000000000000000000000000000000000000000000000000000abc",
+        ["0x0000000000000000000000000000000000000000000000000000000000000555"],
+        [new Uint8Array([3, 4])],
+        "10",
+        "50",
+        "3",
+      ],
+    });
+
+    global.fetch = originalFetch;
+  });
+
+  it("uses built-in aptos testnet moveposition packet defaults", async () => {
+    const originalFetch = global.fetch;
+    const client = createMovementMock({
+      "0xe5ec58845afb1cb164d1c260f2a284b2f1311318973e13355b9e4dc2908eed5a::vault::vault_view":
+        [
+          {
+            decimals: "8",
+            total_debt: "1",
+            total_idle: "2",
+            total_shares: "3",
+            total_asset: "4",
+            asset_name: "TruAPT",
+            shares_name: "Canopy TruAPT",
+            vault_address: "0xabc",
+            asset_address:
+              "0xea1cc97dea8f5c75a5eff35d7ece118f1b43adb9bd34ed7a05560823acb3dbdc",
+            shares_address: "0x123",
+            strategies: [
+              {
+                strategy_address: "0x555",
+                asset_address:
+                  "0xea1cc97dea8f5c75a5eff35d7ece118f1b43adb9bd34ed7a05560823acb3dbdc",
+                concrete_address:
+                  "0x374b4443dbd6cd1ce289b47b7cc8cdc468571871161b6d672157fac41f5c6ab",
+                current_vault_debt: "4",
+                debt_limit: "5",
+                decimals: "6",
+                last_report: "7",
+                shares_address: "0x8",
+                total_asset: "9",
+                total_debt: "10",
+                total_idle: "11",
+                total_loss: "12",
+                total_profit: "13",
+                total_shares: "14",
+                vault_address: "0xabc",
+              },
+            ],
+          },
+        ],
+      "0x6db956973bb73aff8b6c3712a7b4fff18bfefd850cce81c558d20a7ab1fc37d9::deposit::get_allocations_view":
+        [
+          {
+            data: [{ key: { inner: "0x555" }, value: "10" }],
+          },
+        ],
+    });
+
+    global.fetch = jest.fn(async (url: string, init?: RequestInit) => {
+      if (url === "https://api.moveposition.xyz/portfolios/0x0000000000000000000000000000000000000000000000000000000000000555") {
+        return {
+          ok: true,
+          json: async () => ({
+            collaterals: [{ amount: "1", instrument: { name: "truapt" } }],
+            liabilities: [],
+          }),
+        } as Response;
+      }
+
+      if (url === "https://api.moveposition.xyz/brokers/lend/v2") {
+        expect(JSON.parse(String(init?.body))).toMatchObject({
+          brokerName: "truapt",
+          network: "aptos",
+          signerPubkey:
+            "0x0000000000000000000000000000000000000000000000000000000000000555",
+        });
+        return {
+          ok: true,
+          json: async () => ({
+            packet: "0x0506",
+          }),
+        } as Response;
+      }
+
+      throw new Error(`Unexpected fetch ${url}`);
+    }) as typeof fetch;
+
+    const sdk = new CanopySdk(client as never, { chain: "aptos-testnet" });
+
+    await expect(
+      sdk.canopy?.buildDepositPayload({
+        vaultAddress: "0xabc",
+        amount: 10n,
+        minSharesOut: 8n,
+      })
+    ).resolves.toEqual({
+      function:
+        "0x6db956973bb73aff8b6c3712a7b4fff18bfefd850cce81c558d20a7ab1fc37d9::router::deposit_fa",
+      typeArguments: [],
+      functionArguments: [
+        "0x0000000000000000000000000000000000000000000000000000000000000abc",
+        ["0x0000000000000000000000000000000000000000000000000000000000000555"],
+        [new Uint8Array([5, 6])],
+        "10",
+        "8",
+      ],
+    });
+
+    global.fetch = originalFetch;
+  });
+
+  it("supports explicit wrapper coin types for FA canopy payloads", async () => {
+    const originalFetch = global.fetch;
+    const client = createMovementMock({
+      "0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::vault::vault_view":
+        [
+          {
+            decimals: "8",
+            total_debt: "1",
+            total_idle: "2",
+            total_shares: "3",
+            total_asset: "4",
+            asset_name: "USDC",
+            shares_name: "Canopy USDC",
+            vault_address: "0xabc",
+            asset_address:
+              "0x000000000000000000000000000000000000000000000000000000000000000a",
+            shares_address: "0x123",
+            strategies: [
+              {
+                strategy_address: "0x555",
+                asset_address:
+                  "0x000000000000000000000000000000000000000000000000000000000000000a",
+                concrete_address:
+                  "0xd7c7b27e361434e18d2410fd02f7140a8c10d174c9be0efd5324578d243953bd",
+                current_vault_debt: "4",
+                debt_limit: "5",
+                decimals: "6",
+                last_report: "7",
+                shares_address: "0x8",
+                total_asset: "9",
+                total_debt: "10",
+                total_idle: "11",
+                total_loss: "12",
+                total_profit: "13",
+                total_shares: "14",
+                vault_address: "0xabc",
+              },
+            ],
+          },
+        ],
+      "0x717b417949cd5bfa6dc02822eacb727d820de2741f6ea90bf16be6c0ed46ff4b::deposit::get_allocations_view":
+        [
+          {
+            data: [{ key: { inner: "0x555" }, value: "10" }],
+          },
+        ],
+      "0x717b417949cd5bfa6dc02822eacb727d820de2741f6ea90bf16be6c0ed46ff4b::withdraw::get_withdrawal_map_view":
+        [
+          {
+            data: [{ key: { inner: "0x555" }, value: "10" }],
+          },
+        ],
+      "0xd7c7b27e361434e18d2410fd02f7140a8c10d174c9be0efd5324578d243953bd::strategy::withdrawal_amount_view_fa":
+        ["7"],
+    });
+    global.fetch = jest.fn(async (url: string) => {
+      if (url === "https://api.moveposition.xyz/portfolios/0x0000000000000000000000000000000000000000000000000000000000000555") {
+        return {
+          ok: true,
+          json: async () => ({
+            collaterals: [{ amount: "1", instrument: { name: "movement-move-fa" } }],
+            liabilities: [],
+          }),
+        } as Response;
+      }
+
+      return {
+        ok: true,
+        json: async () => ({
+          packet: "0x0102",
+        }),
+      } as Response;
+    }) as typeof fetch;
+    const sdk = new CanopySdk(client as never, { chain: "movement-mainnet" });
+
+    await expect(
+      sdk.canopy?.buildDepositPayload({
+        vaultAddress: "0xabc",
+        amount: 10n,
+        minSharesOut: 8n,
+        wrapperCoinType: "0xfoo::wrapped_usdc::WrappedUsdc",
+      })
+    ).resolves.toEqual({
+      function:
+        "0x717b417949cd5bfa6dc02822eacb727d820de2741f6ea90bf16be6c0ed46ff4b::router::deposit_fa_with_coin_type",
+      typeArguments: ["0xfoo::wrapped_usdc::WrappedUsdc"],
+      functionArguments: [
+        "0x0000000000000000000000000000000000000000000000000000000000000abc",
+        ["0x0000000000000000000000000000000000000000000000000000000000000555"],
+        [new Uint8Array([1, 2])],
+        "10",
+        "8",
+      ],
+    });
+
+    await expect(
+      sdk.canopy?.buildWithdrawPayload({
+        vaultAddress: "0xabc",
+        shares: 10n,
+        maxLossBps: 50n,
+        minAmountOut: 3n,
+        wrapperCoinType: "0xfoo::wrapped_usdc::WrappedUsdc",
+      })
+    ).resolves.toEqual({
+      function:
+        "0x717b417949cd5bfa6dc02822eacb727d820de2741f6ea90bf16be6c0ed46ff4b::router::withdraw_fa_with_coin_type",
+      typeArguments: ["0xfoo::wrapped_usdc::WrappedUsdc"],
+      functionArguments: [
+        "0x0000000000000000000000000000000000000000000000000000000000000abc",
+        ["0x0000000000000000000000000000000000000000000000000000000000000555"],
+        [new Uint8Array([1, 2])],
+        "10",
+        "50",
+        "3",
+      ],
+    });
+
+    global.fetch = originalFetch;
+  });
+
+  it("fails canopy parsing loudly on malformed data", async () => {
+    const client = createMovementMock({
+      "0xe5ec58845afb1cb164d1c260f2a284b2f1311318973e13355b9e4dc2908eed5a::vault::vault_view":
+        [
+          {
+            decimals: "8",
+            total_debt: "1",
+            total_idle: "2",
+            total_shares: "3",
+            total_asset: "4",
+            asset_name: "USDC",
+            shares_name: "Canopy USDC",
+            vault_address: "0xabc",
+            asset_address: { nope: true },
+            shares_address: "0x123",
+            strategies: [],
+          },
+        ],
+    });
+    const sdk = new CanopySdk(client as never, { chain: "aptos-testnet" });
+
+    await expect(sdk.canopy?.getVault("0xabc")).rejects.toMatchObject({
+      code: "VIEW_CALL_FAILED",
+    });
+  });
+
+  it("fails canopy packet allocation parsing loudly on unknown entry shapes", async () => {
+    const client = createMovementMock({
+      "0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::vault::vault_view":
+        [
+          {
+            decimals: "8",
+            total_debt: "1",
+            total_idle: "2",
+            total_shares: "3",
+            total_asset: "4",
+            asset_name: "MOVE",
+            shares_name: "Canopy MOVE",
+            vault_address: "0xabc",
+            asset_address:
+              "0x000000000000000000000000000000000000000000000000000000000000000a",
+            shares_address: "0x123",
+            strategies: [
+              {
+                strategy_address: "0x555",
+                asset_address:
+                  "0x000000000000000000000000000000000000000000000000000000000000000a",
+                concrete_address:
+                  "0xd7c7b27e361434e18d2410fd02f7140a8c10d174c9be0efd5324578d243953bd",
+                current_vault_debt: "4",
+                debt_limit: "5",
+                decimals: "6",
+                last_report: "7",
+                shares_address: "0x8",
+                total_asset: "9",
+                total_debt: "10",
+                total_idle: "11",
+                total_loss: "12",
+                total_profit: "13",
+                total_shares: "14",
+                vault_address: "0xabc",
+              },
+            ],
+          },
+        ],
+      "0x717b417949cd5bfa6dc02822eacb727d820de2741f6ea90bf16be6c0ed46ff4b::deposit::get_allocations_view":
+        [{ data: [{ unexpected: "shape" }] }],
+    });
+    const sdk = new CanopySdk(client as never, { chain: "movement-mainnet" });
+
+    await expect(
+      sdk.canopy?.buildDepositPayload({
+        vaultAddress: "0xabc",
+        amount: 10n,
+        minSharesOut: 8n,
+      })
+    ).rejects.toMatchObject({
+      code: "VIEW_CALL_FAILED",
+      message: "Allocation map entry has an unexpected shape",
+    });
+  });
+
+  it("exposes canopy user position, strategy details, and allocation views", async () => {
+    const client = createMovementMock({
+      "0xe5ec58845afb1cb164d1c260f2a284b2f1311318973e13355b9e4dc2908eed5a::vault::vault_view":
+        [
+          {
+            decimals: "8",
+            total_debt: "1",
+            total_idle: "2",
+            total_shares: "3",
+            total_asset: "4",
+            asset_name: "USDC",
+            shares_name: "Canopy USDC",
+            vault_address: "0xabc",
+            asset_address: "0xdef",
+            shares_address: "0x123",
+            strategies: [],
+          },
+        ],
+      "0x0000000000000000000000000000000000000000000000000000000000000001::primary_fungible_store::balance":
+        ["15"],
+      "0xe5ec58845afb1cb164d1c260f2a284b2f1311318973e13355b9e4dc2908eed5a::vault::shares_to_amount":
+        ["12"],
+      "0xe5ec58845afb1cb164d1c260f2a284b2f1311318973e13355b9e4dc2908eed5a::vault::strategy_debt":
+        ["4"],
+      "0xe5ec58845afb1cb164d1c260f2a284b2f1311318973e13355b9e4dc2908eed5a::vault::strategy_debt_limit":
+        ["5"],
+      "0xe5ec58845afb1cb164d1c260f2a284b2f1311318973e13355b9e4dc2908eed5a::vault::strategy_last_report":
+        ["6"],
+      "0xe5ec58845afb1cb164d1c260f2a284b2f1311318973e13355b9e4dc2908eed5a::vault::strategy_total_profit":
+        ["7"],
+      "0xe5ec58845afb1cb164d1c260f2a284b2f1311318973e13355b9e4dc2908eed5a::vault::strategy_total_loss":
+        ["8"],
+      "0xe5ec58845afb1cb164d1c260f2a284b2f1311318973e13355b9e4dc2908eed5a::vault::get_strategy_shares_balance":
+        ["9"],
+      "0x6db956973bb73aff8b6c3712a7b4fff18bfefd850cce81c558d20a7ab1fc37d9::deposit::get_allocations_view":
+        [
+          {
+            data: [{ key: { inner: "0xaaa" }, value: "10" }],
+          },
+        ],
+    });
+    const sdk = new CanopySdk(client as never, { chain: "aptos-testnet" });
+
+    await expect(
+      sdk.canopy?.getUserVaultPosition("0x111", "0xabc")
+    ).resolves.toEqual({
+      assetValue: 12n,
+      sharesBalance: 15n,
+      userAddress:
+        "0x0000000000000000000000000000000000000000000000000000000000000111",
+      vaultAddress:
+        "0x0000000000000000000000000000000000000000000000000000000000000abc",
+    });
+
+    await expect(
+      sdk.canopy?.getStrategyDetails("0xabc", "0xaaa")
+    ).resolves.toEqual({
+      debt: 4n,
+      debtLimit: 5n,
+      lastReport: 6n,
+      sharesBalance: 9n,
+      strategyAddress:
+        "0x0000000000000000000000000000000000000000000000000000000000000aaa",
+      totalLoss: 8n,
+      totalProfit: 7n,
+      vaultAddress:
+        "0x0000000000000000000000000000000000000000000000000000000000000abc",
+    });
+
+    await expect(
+      sdk.canopy?.getVaultAllocation({
+        vaultAddress: "0xabc",
+        amount: 10n,
+        operation: "deposit",
+      })
+    ).resolves.toEqual({
+      amounts: [10n],
+      operation: "deposit",
+      requestedAmount: 10n,
+      strategies: [
+        "0x0000000000000000000000000000000000000000000000000000000000000aaa",
+      ],
+      vaultAddress:
+        "0x0000000000000000000000000000000000000000000000000000000000000abc",
+    });
+  });
+
+  it("builds rewards payloads and parses rewards views", async () => {
+    const client = createMovementMock({
+      "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3::multi_rewards::get_earned":
+        ["42"],
+      "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3::multi_rewards::get_pool_info":
+        [{ inner: "0xa" }, [{ inner: "0xb" }, { inner: "0xc" }], "7"],
+      "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3::multi_rewards::is_user_subscribed":
+        (args: unknown[]) => [String(args[1]).endsWith("000b")],
+    });
+    const sdk = new CanopySdk(client as never, { chain: "aptos-testnet" });
+    const rewards = sdk.rewards!;
+
+    expect(
+      rewards.buildStakeCoinPayload({
+        coinType: "0x1::aptos_coin::AptosCoin",
+        amount: 10n,
+      })
+    ).toEqual({
+      function:
+        "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3::router::stake",
+      typeArguments: ["0x1::aptos_coin::AptosCoin"],
+      functionArguments: ["10"],
+    });
+
+    expect(
+      rewards.buildStakeAndSubscribeAssetPayload({
+        stakingAsset: "0xA",
+        amount: 11n,
+        poolAddresses: ["0xB", "0xC"],
+      })
+    ).toEqual({
+      function:
+        "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3::router::stake_and_subscribe_fa",
+      typeArguments: [],
+      functionArguments: [
+        "0x000000000000000000000000000000000000000000000000000000000000000a",
+        "11",
+        [
+          "0x000000000000000000000000000000000000000000000000000000000000000b",
+          "0x000000000000000000000000000000000000000000000000000000000000000c",
+        ],
+      ],
+    });
+
+    expect(await rewards.getEarned({
+      userAddress: "0x1",
+      poolAddress: "0x2",
+      rewardTokenAddress: "0x3",
+    })).toBe(42n);
+
+    expect(await rewards.getPoolInfo("0x4")).toEqual({
+      stakingAsset: "0x000000000000000000000000000000000000000000000000000000000000000a",
+      rewardTokenAddresses: [
+        "0x000000000000000000000000000000000000000000000000000000000000000b",
+        "0x000000000000000000000000000000000000000000000000000000000000000c",
+      ],
+      totalStaked: 7n,
+    });
+
+    expect(await rewards.getUnsubscribedPools({
+      userAddress: "0x1",
+      poolAddresses: ["0xb", "0xc"],
+    })).toEqual([
+      "0x000000000000000000000000000000000000000000000000000000000000000c",
+    ]);
+  });
+
+  it("supports the missing rewards builders and staking views", async () => {
+    const client = createMovementMock({
+      "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3::multi_rewards::get_user_staked_balance":
+        ["21"],
+      "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3::multi_rewards::get_user_subscribed_pools":
+        [[{ inner: "0xa" }]],
+      "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3::multi_rewards::get_pool_info":
+        [{ inner: "0x123" }, [{ inner: "0xb" }], "7"],
+      "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3::multi_rewards::get_earned":
+        ["42"],
+      "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3::multi_rewards::get_reward_data":
+        ["0xc", "100", "200", "300", "400", "500"],
+      "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3::multi_rewards::get_unallocated_rewards":
+        ["600"],
+    });
+    const sdk = new CanopySdk(client as never, { chain: "aptos-testnet" });
+    const rewards = sdk.rewards!;
+
+    expect(rewards.buildSubscribePayload({ poolAddress: "0xA" })).toEqual({
+      function:
+        "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3::multi_rewards::subscribe",
+      typeArguments: [],
+      functionArguments: ["0x000000000000000000000000000000000000000000000000000000000000000a"],
+    });
+
+    expect(rewards.buildUnsubscribePayload({ poolAddress: "0xA" })).toEqual({
+      function:
+        "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3::multi_rewards::unsubscribe",
+      typeArguments: [],
+      functionArguments: ["0x000000000000000000000000000000000000000000000000000000000000000a"],
+    });
+
+    expect(
+      rewards.buildUnsubscribeAndWithdrawAssetPayload({
+        stakingAsset: "0x123",
+        amount: 5n,
+        poolAddresses: ["0xA"],
+      })
+    ).toEqual({
+      function:
+        "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3::router::unsubscribe_and_withdraw_fa",
+      typeArguments: [],
+      functionArguments: [
+        "0x0000000000000000000000000000000000000000000000000000000000000123",
+        "5",
+        ["0x000000000000000000000000000000000000000000000000000000000000000a"],
+      ],
+    });
+
+    expect(
+      rewards.buildCreateStakingPoolPayload({
+        coinType: "0x1::aptos_coin::AptosCoin",
+      })
+    ).toEqual({
+      function:
+        "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3::router::create_staking_pool",
+      typeArguments: ["0x1::aptos_coin::AptosCoin"],
+      functionArguments: [],
+    });
+
+    expect(
+      rewards.buildStakeTokenPayload({
+        amount: 5n,
+        tokenCreator: "0x123",
+        tokenName: "Vault Share",
+        tokenSymbol: "VSHARE",
+        tokenDecimals: 8,
+        poolAddresses: ["0xA"],
+      })
+    ).toEqual({
+      function:
+        "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3::router::stake_and_subscribe_token",
+      typeArguments: [],
+      functionArguments: [
+        ["0x000000000000000000000000000000000000000000000000000000000000000a"],
+        "5",
+        "0x0000000000000000000000000000000000000000000000000000000000000123",
+        "Vault Share",
+        "VSHARE",
+        "8",
+      ],
+    });
+
+    await expect(
+      rewards.getUserStakedBalance({
+        userAddress: "0x111",
+        stakingAsset: "0x123",
+      })
+    ).resolves.toBe(21n);
+
+    await expect(
+      rewards.getUserSubscribedPools({
+        userAddress: "0x111",
+        stakingAsset: "0x123",
+      })
+    ).resolves.toEqual([
+      "0x000000000000000000000000000000000000000000000000000000000000000a",
+    ]);
+
+    await expect(rewards.getRewardData("0xA", "0xB")).resolves.toEqual({
+      lastUpdateTime: 300n,
+      periodFinish: 200n,
+      rewardPerTokenStored: 500n,
+      rewardRate: 400n,
+      rewardsDistributor:
+        "0x000000000000000000000000000000000000000000000000000000000000000c",
+      rewardsDuration: 100n,
+      unallocatedRewards: 600n,
+    });
+
+    await expect(
+      rewards.getUserStakingPosition({
+        userAddress: "0x111",
+        stakingAsset: "0x123",
+      })
+    ).resolves.toEqual({
+      pendingRewards: [
+        {
+          amount: 42n,
+          poolAddress:
+            "0x000000000000000000000000000000000000000000000000000000000000000a",
+          rewardTokenAddress:
+            "0x000000000000000000000000000000000000000000000000000000000000000b",
+        },
+      ],
+      stakingAsset:
+        "0x0000000000000000000000000000000000000000000000000000000000000123",
+      subscribedPools: [
+        "0x000000000000000000000000000000000000000000000000000000000000000a",
+      ],
+      totalStaked: 21n,
+    });
+  });
+
+  it("adds off-chain metadata and sentio pool discovery support", async () => {
+    const originalFetch = global.fetch;
+    const client = createMovementMock({
+      "0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::is_user_subscribed":
+        [false],
+    });
+
+    global.fetch = jest.fn(async (_url: string, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body));
+
+      if (body.operationName === "GetCanopyMetadata") {
+        return {
+          ok: true,
+          json: async () => ({
+            data: {
+              listCanopyMetadata: {
+                items: [
+                  {
+                    chainId: 126,
+                    networkAddress: "0xabc",
+                    displayName: "Canopy MOVE Vault",
+                    investmentType: "lending",
+                    networkType: "movement",
+                    riskScore: 2,
+                    isHidden: false,
+                    description: "Test vault",
+                    iconURL: "https://example.com/icon.png",
+                    labels: ["featured"],
+                    rewardPools: ["0xaaa"],
+                    additionalMetadata: [{ key: "platform", item: "echelon" }],
+                    paused: false,
+                    token0: "MOVE",
+                    token1: "USDC",
+                    tvl: "1000",
+                    totalSupply: "500",
+                    token0Balance: "100",
+                    token1Balance: "200",
+                    decimals0: 8,
+                    decimals1: 6,
+                    apr: "0.12",
+                    rewardApr: "0.03",
+                  },
+                ],
+              },
+            },
+          }),
+        } as Response;
+      }
+
+      if (body.operationName === "GetMRStakingPoolsByToken") {
+        return {
+          ok: true,
+          json: async () => ({
+            data: {
+              mrstakingPools: [
+                {
+                  id: "0x123",
+                  creator: "0x456",
+                  staking_token: "0x789",
+                  reward_tokens: ["0xabc"],
+                  reward_datas: [],
+                  subscriber_count: 1,
+                  total_subscribed: "50",
+                  created_at: "2025-01-01T00:00:00Z",
+                },
+              ],
+            },
+          }),
+        } as Response;
+      }
+
+      throw new Error(`Unexpected fetch ${JSON.stringify(body)}`);
+    }) as typeof fetch;
+
+    const sdk = new CanopySdk(client as never, {
+      chain: "movement-mainnet",
+      offchain: {
+        sentioApiKey: "test-key",
+      },
+    });
+
+    await expect(sdk.data.canopyMetadata.listVaultMetadata()).resolves.toEqual([
+      expect.objectContaining({
+        address: "0x0000000000000000000000000000000000000000000000000000000000000abc",
+        displayName: "Canopy MOVE Vault",
+        rewardPools: [
+          "0x0000000000000000000000000000000000000000000000000000000000000aaa",
+        ],
+      }),
+    ]);
+
+    await expect(
+      sdk.data.rewardsDiscovery.findPoolAddressesByStakingAsset("0x789")
+    ).resolves.toEqual([
+      "0x0000000000000000000000000000000000000000000000000000000000000123",
+    ]);
+
+    await expect(
+      sdk.rewards?.buildStakeVaultSharesPayload({
+        stakingAsset: "0x789",
+        amount: 11n,
+        userAddress: "0x111",
+      })
+    ).resolves.toEqual({
+      function:
+        "0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::router::stake_and_subscribe_fa",
+      typeArguments: [],
+      functionArguments: [
+        "0x0000000000000000000000000000000000000000000000000000000000000789",
+        "11",
+        ["0x0000000000000000000000000000000000000000000000000000000000000123"],
+      ],
+    });
+
+    global.fetch = originalFetch;
+  });
+
+  it("finds user fungible-asset deposits from transaction results", () => {
+    expect(
+      findFungibleAssetDeposit(
+        {
+          events: [
+            {
+              type: "0x1::fungible_asset::Deposit",
+              data: {
+                store: "0x777",
+                amount: "1234",
+              },
+            },
+          ],
+          changes: [
+            {
+              address:
+                "0x0000000000000000000000000000000000000000000000000000000000000777",
+              data: {
+                type: "0x1::object::ObjectCore",
+                data: {
+                  owner:
+                    "0x0000000000000000000000000000000000000000000000000000000000000abc",
+                },
+              },
+            },
+            {
+              address:
+                "0x0000000000000000000000000000000000000000000000000000000000000777",
+              data: {
+                type: "0x1::fungible_asset::FungibleStore",
+                data: {
+                  metadata: {
+                    inner:
+                      "0x0000000000000000000000000000000000000000000000000000000000000123",
+                  },
+                },
+              },
+            },
+          ],
+        },
+        "0xabc",
+        "0x123"
+      )
+    ).toEqual({
+      amount: 1234n,
+      metadataAddress:
+        "0x0000000000000000000000000000000000000000000000000000000000000123",
+      ownerAddress:
+        "0x0000000000000000000000000000000000000000000000000000000000000abc",
+      storeAddress:
+        "0x0000000000000000000000000000000000000000000000000000000000000777",
+    });
+  });
+
+  it("exports movement testnet moveposition config for manual use", () => {
+    expect(movementTestnetMovePositionConfig.apiUrl).toBe("https://api.moveposition.xyz");
+    expect(movementTestnetMovePositionConfig.nameMap["0x1::aptos_coin::AptosCoin"]).toBe(
+      "movement-move-fa"
+    );
+    expect(
+      movementTestnetMovePositionConfig.virtualCoinMap[
+        "0xea1cc97dea8f5c75a5eff35d7ece118f1b43adb9bd34ed7a05560823acb3dbdc"
+      ]
+    ).toBe(
+      "0x3e472d6bbcf4d1651e01430eb758ebeb955f26792134e96ca8da5722a85dc995::coins::TruAPT"
+    );
+  });
+
+  it("builds meridian payloads and reads meridian views", async () => {
+    const client = createMovementMock({
+      "0xae645c9ef6a7d68d64e2beb1c6896f73f189ab609e650ace8bdeeac390b0dd38::vaults_registry::get_paginated_vaults":
+        [[{ inner: "0x111" }, { inner: "0x222" }]],
+      "0xae645c9ef6a7d68d64e2beb1c6896f73f189ab609e650ace8bdeeac390b0dd38::vaults_registry::get_recognized_vault_count":
+        ["2"],
+      "0xeb57695cd494c59ea7b1356580f1e7d5666fd84827322369e21d712e22397b54::ichi_vault_thala::get_shares_price_e18":
+        ["99"],
+      "0xeb57695cd494c59ea7b1356580f1e7d5666fd84827322369e21d712e22397b54::ichi_vault_thala::get_total_vault_holdings":
+        ["12", "34"],
+      "0xeb57695cd494c59ea7b1356580f1e7d5666fd84827322369e21d712e22397b54::ichi_vault_thala::get_vault_deposit_and_quote_assets":
+        [{ inner: "0xa" }, { inner: "0xb" }],
+      "0xeb57695cd494c59ea7b1356580f1e7d5666fd84827322369e21d712e22397b54::ichi_vault_thala::get_underlying_pool":
+        [{ inner: "0xc" }],
+      "0xeb57695cd494c59ea7b1356580f1e7d5666fd84827322369e21d712e22397b54::ichi_vault_thala::is_asset_0_deposit":
+        [true],
+      "0xeb57695cd494c59ea7b1356580f1e7d5666fd84827322369e21d712e22397b54::ichi_vault_thala::get_user_vault_balance":
+        ["5", "66"],
+      "0xeb57695cd494c59ea7b1356580f1e7d5666fd84827322369e21d712e22397b54::ichi_vault_thala::get_shares_withdrawal_amounts":
+        ["7", "8"],
+    });
+    const sdk = new CanopySdk(client as never, { chain: "aptos-mainnet" });
+    const meridian = sdk.alm.meridian!;
+
+    expect(await meridian.listVaults()).toEqual([
+      "0x0000000000000000000000000000000000000000000000000000000000000111",
+      "0x0000000000000000000000000000000000000000000000000000000000000222",
+    ]);
+    expect(await meridian.getVaultCount()).toBe(2n);
+    expect(await meridian.getVaultSummary("0x111")).toEqual({
+      vaultAddress: "0x0000000000000000000000000000000000000000000000000000000000000111",
+      depositAssetAddress: "0x000000000000000000000000000000000000000000000000000000000000000a",
+      quoteAssetAddress: "0x000000000000000000000000000000000000000000000000000000000000000b",
+      underlyingPoolAddress:
+        "0x000000000000000000000000000000000000000000000000000000000000000c",
+      depositIsAsset0: true,
+      sharePriceE18: 99n,
+      totalHoldings: {
+        asset0: 12n,
+        asset1: 34n,
+      },
+    });
+    expect(await meridian.getUserVaultPosition("0x111", "0x222")).toEqual({
+      vaultAddress: "0x0000000000000000000000000000000000000000000000000000000000000111",
+      shares: 5n,
+      valueE18: 66n,
+    });
+    expect(await meridian.previewWithdraw("0x111", 9n)).toEqual({
+      vaultAddress: "0x0000000000000000000000000000000000000000000000000000000000000111",
+      asset0: 7n,
+      asset1: 8n,
+    });
+
+    expect(
+      meridian.buildDepositPayload({
+        vaultAddress: "0x111",
+        amount: 10n,
+        minSharesOut: 2n,
+      })
+    ).toEqual({
+      function:
+        "0xeb57695cd494c59ea7b1356580f1e7d5666fd84827322369e21d712e22397b54::router::deposit",
+      typeArguments: [],
+      functionArguments: [
+        "0x0000000000000000000000000000000000000000000000000000000000000111",
+        "10",
+        "2",
+      ],
+    });
+    expect(
+      meridian.buildWithdrawPayload({
+        vaultAddress: "0x111",
+        shares: 10n,
+        maxLossBps: 50n,
+        minAmountOut: 3n,
+      })
+    ).toEqual({
+      function:
+        "0xeb57695cd494c59ea7b1356580f1e7d5666fd84827322369e21d712e22397b54::router::withdraw",
+      typeArguments: [],
+      functionArguments: [
+        "0x0000000000000000000000000000000000000000000000000000000000000111",
+        "10",
+        "50",
+        "3",
+      ],
+    });
+  });
+});

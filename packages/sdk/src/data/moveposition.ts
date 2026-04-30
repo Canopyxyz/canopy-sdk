@@ -1,0 +1,104 @@
+import type { MovePositionConfig } from "../canopy/moveposition";
+
+const DEFAULT_MOVEPOSITION_API_URL = "https://api.moveposition.xyz";
+
+const APTOS_TESTNET_TRU_APT_FA =
+  "0xea1cc97dea8f5c75a5eff35d7ece118f1b43adb9bd34ed7a05560823acb3dbdc";
+const APTOS_TESTNET_USDT_FA =
+  "0xe57344b75ab1502c735b6a863bcc5baad43b1ce1a46f4171d56afe5e57182f22";
+const APTOS_TESTNET_TRU_APT_VIRTUAL =
+  "0x3e472d6bbcf4d1651e01430eb758ebeb955f26792134e96ca8da5722a85dc995::coins::TruAPT";
+const APTOS_TESTNET_USDT_VIRTUAL =
+  "0x3e472d6bbcf4d1651e01430eb758ebeb955f26792134e96ca8da5722a85dc995::coins::USDt";
+
+const MOVEMENT_TESTNET_USDT_VIRTUAL =
+  "0x275f508689de8756169d1ee02d889c777de1cebda3a7bbcce63ba8a27c563c6f::tokens::USDT";
+const MOVEMENT_TESTNET_USDC_VIRTUAL =
+  "0x275f508689de8756169d1ee02d889c777de1cebda3a7bbcce63ba8a27c563c6f::tokens::USDC";
+const MOVEMENT_TESTNET_WETH_VIRTUAL =
+  "0x275f508689de8756169d1ee02d889c777de1cebda3a7bbcce63ba8a27c563c6f::tokens::WETH";
+const MOVEMENT_TESTNET_WBTC_VIRTUAL =
+  "0x275f508689de8756169d1ee02d889c777de1cebda3a7bbcce63ba8a27c563c6f::tokens::WBTC";
+const MOVEMENT_TESTNET_MOVE_VIRTUAL = "0x1::aptos_coin::AptosCoin";
+const MOVEMENT_TESTNET_MBTC_VIRTUAL =
+  "0xccd2621d2897d407e06d18e6ebe3be0e6d9b61f1e809dd49360522b9105812cf::coins::MBTC";
+
+const MOVEMENT_MAINNET_MOVE_VIRTUAL =
+  "0xccd2621d2897d407e06d18e6ebe3be0e6d9b61f1e809dd49360522b9105812cf::coins::MOVE";
+const MOVEMENT_MAINNET_USDC_VIRTUAL =
+  "0xccd2621d2897d407e06d18e6ebe3be0e6d9b61f1e809dd49360522b9105812cf::coins::USDC";
+const MOVEMENT_MAINNET_USDT_VIRTUAL =
+  "0xccd2621d2897d407e06d18e6ebe3be0e6d9b61f1e809dd49360522b9105812cf::coins::USDt";
+const MOVEMENT_MAINNET_WETH_VIRTUAL =
+  "0xccd2621d2897d407e06d18e6ebe3be0e6d9b61f1e809dd49360522b9105812cf::coins::WETH";
+const MOVEMENT_MAINNET_WBTC_VIRTUAL =
+  "0xccd2621d2897d407e06d18e6ebe3be0e6d9b61f1e809dd49360522b9105812cf::coins::WBTC";
+const MOVEMENT_MAINNET_EZETH_VIRTUAL =
+  "0xccd2621d2897d407e06d18e6ebe3be0e6d9b61f1e809dd49360522b9105812cf::coins::EZETH";
+const MOVEMENT_MAINNET_RSETH_VIRTUAL =
+  "0xccd2621d2897d407e06d18e6ebe3be0e6d9b61f1e809dd49360522b9105812cf::coins::RSETH";
+const MOVEMENT_MAINNET_STBTC_VIRTUAL =
+  "0xccd2621d2897d407e06d18e6ebe3be0e6d9b61f1e809dd49360522b9105812cf::coins::STBTC";
+
+export const aptosTestnetMovePositionConfig: MovePositionConfig = {
+  apiUrl: DEFAULT_MOVEPOSITION_API_URL,
+  nameMap: {
+    [APTOS_TESTNET_TRU_APT_VIRTUAL]: "truapt",
+    [APTOS_TESTNET_USDT_VIRTUAL]: "usdt-fa",
+  },
+  virtualCoinMap: {
+    [APTOS_TESTNET_TRU_APT_FA]: APTOS_TESTNET_TRU_APT_VIRTUAL,
+    [APTOS_TESTNET_USDT_FA]: APTOS_TESTNET_USDT_VIRTUAL,
+  },
+};
+
+export const movementTestnetMovePositionConfig: MovePositionConfig = {
+  apiUrl: DEFAULT_MOVEPOSITION_API_URL,
+  nameMap: {
+    [MOVEMENT_TESTNET_USDT_VIRTUAL]: "movement-usdt",
+    [MOVEMENT_TESTNET_USDC_VIRTUAL]: "movement-usdc",
+    [MOVEMENT_TESTNET_WETH_VIRTUAL]: "movement-weth",
+    [MOVEMENT_TESTNET_WBTC_VIRTUAL]: "movement-wbtc",
+    [MOVEMENT_TESTNET_MOVE_VIRTUAL]: "movement-move-fa",
+    [MOVEMENT_TESTNET_MBTC_VIRTUAL]: "movement-mbtc",
+  },
+  // The app currently reuses the Aptos testnet FA -> virtual coin map for Movement
+  // testnet/Porto. We expose the same config here for parity, but callers can
+  // override it if/when a canonical Porto-specific mapping is confirmed.
+  virtualCoinMap: {
+    [APTOS_TESTNET_TRU_APT_FA]: APTOS_TESTNET_TRU_APT_VIRTUAL,
+    [APTOS_TESTNET_USDT_FA]: APTOS_TESTNET_USDT_VIRTUAL,
+  },
+};
+
+export const movementMainnetMovePositionConfig: MovePositionConfig = {
+  apiUrl: DEFAULT_MOVEPOSITION_API_URL,
+  nameMap: {
+    [MOVEMENT_MAINNET_MOVE_VIRTUAL]: "movement-move-fa",
+    [MOVEMENT_MAINNET_USDC_VIRTUAL]: "movement-usdc",
+    [MOVEMENT_MAINNET_USDT_VIRTUAL]: "movement-usdt",
+    [MOVEMENT_MAINNET_WETH_VIRTUAL]: "movement-weth",
+    [MOVEMENT_MAINNET_WBTC_VIRTUAL]: "movement-wbtc",
+    [MOVEMENT_MAINNET_EZETH_VIRTUAL]: "movement-ezeth",
+    [MOVEMENT_MAINNET_RSETH_VIRTUAL]: "movement-rseth",
+    [MOVEMENT_MAINNET_STBTC_VIRTUAL]: "movement-stbtc",
+  },
+  virtualCoinMap: {
+    "0x000000000000000000000000000000000000000000000000000000000000000a":
+      MOVEMENT_MAINNET_MOVE_VIRTUAL,
+    "0x83121c9f9b0527d1f056e21a950d6bf3b9e9e2e8353d0e95ccea726713cbea39":
+      MOVEMENT_MAINNET_USDC_VIRTUAL,
+    "0x447721a30109c662dde9c73a0c2c9c9c459fb5e5a9c92f03c50fa69737f5d08d":
+      MOVEMENT_MAINNET_USDT_VIRTUAL,
+    "0x908828f4fb0213d4034c3ded1630bbd904e8a3a6bf3c63270887f0b06653a376":
+      MOVEMENT_MAINNET_WETH_VIRTUAL,
+    "0xb06f29f24dde9c6daeec1f930f14a441a8d6c0fbea590725e88b340af3e1939c":
+      MOVEMENT_MAINNET_WBTC_VIRTUAL,
+    "0x2f6af255328fe11b88d840d1e367e946ccd16bd7ebddd6ee7e2ef9f7ae0c53ef":
+      MOVEMENT_MAINNET_EZETH_VIRTUAL,
+    "0x51ffc9885233adf3dd411078cad57535ed1982013dc82d9d6c433a55f2e0035d":
+      MOVEMENT_MAINNET_RSETH_VIRTUAL,
+    "0x95c0fd13373299ada1b9f09ff62473ab8b3908e6a30011730210c141dffdc990":
+      MOVEMENT_MAINNET_STBTC_VIRTUAL,
+  },
+};
