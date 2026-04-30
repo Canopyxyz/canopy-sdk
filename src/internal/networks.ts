@@ -1,5 +1,5 @@
-import VAULT_ABI from "../abis/mainnet/satay_vault.json";
-import ROUTER_ABI from "../abis/mainnet/satay_router.json";
+import { movementMainnetAbis } from "../../packages/bindings/src";
+import { getDeployment } from "../../packages/deployments/src";
 import {
   MAINNET_MOVEVEPOSITION_NAMES_MAP,
   MAINNET_MOVEVEPOSITION_VIRTUAL_COIN_MAP,
@@ -15,10 +15,18 @@ export interface NetworkConfig {
   movepositionVirtualCoinMap?: Record<string, string>;
 }
 
+const MOVEMENT_MAINNET_DEPLOYMENT = getDeployment("movement-mainnet");
+const VAULT_ADDRESS =
+  MOVEMENT_MAINNET_DEPLOYMENT.canopy?.core ??
+  movementMainnetAbis.canopyVault.address;
+const ROUTER_ADDRESS =
+  MOVEMENT_MAINNET_DEPLOYMENT.canopy?.router ??
+  movementMainnetAbis.canopyRouter.address;
+
 const NETWORK_CONFIGS: Record<NetworkType, NetworkConfig> = {
   [NETWORK_TYPES.MOVEMENT_MAINNET]: {
-    vaultModule: VAULT_ABI.address,
-    routerModule: ROUTER_ABI.address,
+    vaultModule: VAULT_ADDRESS,
+    routerModule: ROUTER_ADDRESS,
     movepositionApiUrl: "https://api.moveposition.xyz",
     movepositionNameMap: MAINNET_MOVEVEPOSITION_NAMES_MAP,
     movepositionVirtualCoinMap: MAINNET_MOVEVEPOSITION_VIRTUAL_COIN_MAP,
@@ -36,5 +44,4 @@ export function getNetworkConfig(network?: NetworkType): NetworkConfig {
   return NETWORK_CONFIGS[NETWORK_TYPES.MOVEMENT_MAINNET]!;
 }
 
-export const VAULT_ADDRESS = VAULT_ABI.address;
-export const ROUTER_ADDRESS = ROUTER_ABI.address;
+export { ROUTER_ADDRESS, VAULT_ADDRESS };

@@ -1,5 +1,5 @@
-import type { Aptos } from "@aptos-labs/ts-sdk";
-import VAULT_ABI from "../abis/mainnet/satay_vault.json";
+import type { Movement } from "@moveindustries/ts-sdk";
+import { movementMainnetAbis } from "../../packages/bindings/src";
 import type {
   VaultView,
   VaultBaseStrategyView,
@@ -21,6 +21,8 @@ import {
   MERIDIAN_SIMPLE_CONCRETE_ADDRESS,
   MOVEPOSITION_SIMPLE_CONCRETE_ADDRESS,
 } from "../constants";
+
+const VAULT_ABI = movementMainnetAbis.canopyVault;
 
 /**
  * Internal vault type information
@@ -45,7 +47,7 @@ export class VaultDetector {
   private chainId: number = DEFAULT_CHAIN_ID;
 
   constructor(
-    private aptos: Aptos,
+    private aptos: Movement,
     graphqlEndpoint?: string,
     chainId?: number
   ) {

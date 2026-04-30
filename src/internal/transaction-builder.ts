@@ -1,5 +1,5 @@
-import { Aptos, type InputEntryFunctionData } from "@aptos-labs/ts-sdk";
-import ROUTER_ABI from "../abis/mainnet/satay_router.json";
+import type { InputEntryFunctionData, Movement } from "@moveindustries/ts-sdk";
+import { movementMainnetAbis } from "../../packages/bindings/src";
 import { VaultDetector } from "./vault-detector";
 import { StrategyAllocator, type AllocationMap } from "./strategy-allocator";
 import {
@@ -25,6 +25,8 @@ import {
 import { getNetworkConfig } from "./networks";
 import type { MovePositionConfig } from "./moveposition-types";
 
+const ROUTER_ABI = movementMainnetAbis.canopyRouter;
+
 /**
  * Builds transaction payloads
  * Automatically handles vault type detection, strategy allocation, packet generation
@@ -37,7 +39,7 @@ export class TransactionBuilder {
   private movepositionConfig?: MovePositionConfig;
 
   constructor(
-    private aptos: Aptos,
+    private aptos: Movement,
     options?: {
       network?: NetworkType;
       movepositionConfig?: MovePositionConfig;

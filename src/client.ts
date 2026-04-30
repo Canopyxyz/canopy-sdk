@@ -1,4 +1,4 @@
-import { Aptos, type InputEntryFunctionData } from "@aptos-labs/ts-sdk";
+import type { InputEntryFunctionData, Movement } from "@moveindustries/ts-sdk";
 import { TransactionBuilder } from "./internal/transaction-builder";
 import { VaultDetector } from "./internal/vault-detector";
 import { MultiRewardsClient } from "./internal/multi-rewards-client";
@@ -28,7 +28,7 @@ export class CanopyClient {
   private multiRewardsClient: MultiRewardsClient;
   private network: NetworkType;
 
-  constructor(private aptos: Aptos, options?: CanopyClientOptions) {
+  constructor(private aptos: Movement, options?: CanopyClientOptions) {
     if (!aptos) {
       throw new CanopyError(
         ERROR_MESSAGES.APTOS_CLIENT_REQUIRED,

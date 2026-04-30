@@ -1,6 +1,5 @@
-import { Aptos, type InputEntryFunctionData } from "@aptos-labs/ts-sdk";
-import MULTI_REWARDS_ABI from "../abis/mainnet/multi_rewards.json";
-import MULTI_REWARDS_ROUTER_ABI from "../abis/mainnet/multi_rewards_router.json";
+import type { InputEntryFunctionData, Movement } from "@moveindustries/ts-sdk";
+import { movementMainnetAbis } from "../../packages/bindings/src";
 import { CanopyError, CanopyErrorCode } from "../types";
 import { ERROR_MESSAGES } from "../constants";
 import { MultiRewardsGQLClient } from "./multi-rewards-gql-client";
@@ -17,6 +16,9 @@ import type {
 } from "./multi-rewards-types";
 import type { MRStakingPool } from "./multi-rewards-gql-types";
 
+const MULTI_REWARDS_ABI = movementMainnetAbis.multiRewards;
+const MULTI_REWARDS_ROUTER_ABI = movementMainnetAbis.multiRewardsRouter;
+
 /**
  * Client for interacting with multi-rewards staking pools
  */
@@ -27,7 +29,7 @@ export interface MultiRewardsClientOptions {
 export class MultiRewardsClient {
   private gqlClient: MultiRewardsGQLClient;
 
-  constructor(private aptos: Aptos, options?: MultiRewardsClientOptions) {
+  constructor(private aptos: Movement, options?: MultiRewardsClientOptions) {
     this.gqlClient = new MultiRewardsGQLClient(options?.sentioApiKey);
   }
 

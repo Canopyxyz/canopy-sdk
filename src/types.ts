@@ -1,4 +1,4 @@
-import type { InputEntryFunctionData } from "@aptos-labs/ts-sdk";
+import type { InputEntryFunctionData } from "@moveindustries/ts-sdk";
 
 export enum CanopyErrorCode {
   VAULT_PAUSED = "VAULT_PAUSED",

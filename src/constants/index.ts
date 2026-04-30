@@ -97,7 +97,7 @@ export const GQL_OPERATIONS = {
  * Error Messages
  */
 export const ERROR_MESSAGES = {
-  APTOS_CLIENT_REQUIRED: "Aptos client is required",
+  APTOS_CLIENT_REQUIRED: "Movement client is required",
   VAULT_ADDRESS_REQUIRED: "Vault address is required and must be a string",
   VAULT_ADDRESS_FORMAT: "Vault address must start with 0x",
   STRATEGY_ADDRESS_REQUIRED:

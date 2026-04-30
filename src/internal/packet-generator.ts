@@ -1,4 +1,4 @@
-import { Aptos, Hex, Network } from "@aptos-labs/ts-sdk";
+import { Hex, Network, type Movement } from "@moveindustries/ts-sdk";
 import type { AllocationMap } from "./strategy-allocator";
 import type {
   PortfolioData,
@@ -32,7 +32,7 @@ export interface PacketGeneratorOptions {
 
 export class PacketGenerator {
   constructor(
-    private aptos: Aptos,
+    private aptos: Movement,
     private network: NetworkType = NETWORK_TYPES.MOVEMENT_MAINNET
   ) {}
 

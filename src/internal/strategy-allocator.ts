@@ -1,7 +1,9 @@
-import type { Aptos } from "@aptos-labs/ts-sdk";
-import DEPOSIT_ABI from "../abis/mainnet/satay_router_deposit.json";
-import WITHDRAW_ABI from "../abis/mainnet/satay_router_withdraw.json";
+import type { Movement } from "@moveindustries/ts-sdk";
+import { movementMainnetAbis } from "../../packages/bindings/src";
 import { CanopyError, CanopyErrorCode } from "../types";
+
+const DEPOSIT_ABI = movementMainnetAbis.canopyRouterDeposit;
+const WITHDRAW_ABI = movementMainnetAbis.canopyRouterWithdraw;
 
 /**
  * Internal allocation map for strategies
@@ -12,7 +14,7 @@ export interface AllocationMap {
 }
 
 export class StrategyAllocator {
-  constructor(private aptos: Aptos) {}
+  constructor(private aptos: Movement) {}
 
   async getOptimalAllocation(
     vaultAddress: string,

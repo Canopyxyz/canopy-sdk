@@ -1,9 +1,12 @@
-import { AccountAddress } from "@aptos-labs/ts-sdk";
+import {
+  isMoveAddress,
+  normalizeMoveAddress,
+} from "../../packages/core/src";
 import { CanopyError, CanopyErrorCode } from "../types";
 import { ERROR_MESSAGES } from "../constants";
 
 /**
- * Validates if a string is a valid Aptos address
+ * Validates if a string is a valid Move account address
  * Accepts addresses with or without "0x" prefix
  * Validates hex content and length (1-64 hex chars)
  * @param address The address to validate
@@ -14,12 +17,7 @@ export function isValidAddress(address: unknown): boolean {
     return false;
   }
   
-  try {
-    AccountAddress.from(address);
-    return true;
-  } catch {
-    return false;
-  }
+  return isMoveAddress(address);
 }
 
 /**
@@ -155,8 +153,7 @@ function getErrorCodeForAddressType(
  */
 export function normalizeAddress(address: string): string | null {
   try {
-    const accountAddress = AccountAddress.from(address);
-    return accountAddress.toString();
+    return normalizeMoveAddress(address);
   } catch {
     return null;
   }
