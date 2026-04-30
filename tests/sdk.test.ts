@@ -1163,15 +1163,28 @@ describe("CanopySdk", () => {
     global.fetch = originalFetch;
   });
 
-  it("uses the local fallback pool mapping before sentio discovery", async () => {
+  it("uses the local fallback pool mapping when sentio returns no match", async () => {
     const originalFetch = global.fetch;
     const client = createMovementMock({
       "0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::is_user_subscribed":
         [false],
     });
 
-    global.fetch = jest.fn(async () => {
-      throw new Error("Sentio should not be queried when a local fallback mapping exists");
+    global.fetch = jest.fn(async (_url: string, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body));
+
+      if (body.operationName === "GetMRStakingPoolsByToken") {
+        return {
+          ok: true,
+          json: async () => ({
+            data: {
+              mrstakingPools: [],
+            },
+          }),
+        } as Response;
+      }
+
+      throw new Error(`Unexpected fetch ${JSON.stringify(body)}`);
     }) as typeof fetch;
 
     const sdk = new CanopySdk(client as never, {
@@ -1207,7 +1220,13 @@ describe("CanopySdk", () => {
       ],
     });
 
-    expect(global.fetch).not.toHaveBeenCalled();
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        method: "POST",
+      })
+    );
 
     global.fetch = originalFetch;
   });

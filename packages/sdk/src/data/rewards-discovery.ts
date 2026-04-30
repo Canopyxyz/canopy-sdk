@@ -169,12 +169,21 @@ export class RewardsDiscoveryClient {
       return input.explicitPoolAddresses.map(normalizeMoveAddress);
     }
 
-    const staticPools = this.getStaticPoolAddresses(input.stakingAsset);
-    if (staticPools.length > 0) {
-      return staticPools;
+    try {
+      const sentioPools = await this.findPoolAddressesByStakingAsset(input.stakingAsset);
+      if (sentioPools.length > 0) {
+        return sentioPools;
+      }
+    } catch (error) {
+      const staticPools = this.getStaticPoolAddresses(input.stakingAsset);
+      if (staticPools.length > 0) {
+        return staticPools;
+      }
+
+      throw error;
     }
 
-    return this.findPoolAddressesByStakingAsset(input.stakingAsset);
+    return this.getStaticPoolAddresses(input.stakingAsset);
   }
 
   async listPools(): Promise<SentioStakingPool[]> {

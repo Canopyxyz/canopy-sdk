@@ -1,6 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
 import { AptosWalletAdapterProvider } from "@aptos-labs/wallet-adapter-react";
-import { Network } from "@aptos-labs/ts-sdk";
 import { Movement, MovementConfig, Network as MovementNetwork } from "@moveindustries/ts-sdk";
 import { CanopySdk, type CanopyVaultView, type MeridianVaultSummary } from "@canopyhub/canopy-sdk";
 import { getDeployment } from "@canopyhub/canopy-sdk/deployments";
@@ -121,7 +120,7 @@ export default function App() {
     <AptosWalletAdapterProvider
       autoConnect={true}
       dappConfig={{
-        network: Network.MAINNET,
+        network: MovementNetwork.MAINNET,
         mizuwallet: {
           manifestURL:
             "https://assets.mz.xyz/static/config/mizuwallet-connect-manifest.json",
