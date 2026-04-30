@@ -14,7 +14,7 @@ import aptosTestnetMultiRewardsAbi from "../../abis/aptos-testnet/multi_rewards.
 import aptosTestnetMultiRewardsBatcherEntryAbi from "../../abis/aptos-testnet/multi_rewards_batcher_entry.json";
 import aptosTestnetMultiRewardsBatcherViewAbi from "../../abis/aptos-testnet/multi_rewards_batcher_view.json";
 import aptosTestnetMultiRewardsRouterAbi from "../../abis/aptos-testnet/multi_rewards_router.json";
-import { defineChainAbis } from "./define";
+import { defineChainAbis } from "./define-chain-abis";
 
 export const aptosTestnetAbis = defineChainAbis("aptos-testnet", {
   aptosFrameworkObject: aptosTestnetFrameworkObjectAbi,

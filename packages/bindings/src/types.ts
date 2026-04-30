@@ -51,10 +51,15 @@ export interface MeridianAbiSet {
   meridianMedianStableV2Entry?: MoveModuleAbi;
 }
 
-export type AbiChainName = "movement-mainnet" | "aptos-mainnet" | "aptos-testnet";
+export type AbiChainName =
+  | "movement-mainnet"
+  | "movement-testnet"
+  | "aptos-mainnet"
+  | "aptos-testnet";
 
 export type ChainAbiSet = {
   "movement-mainnet": FrameworkAbiSet & CanopyAbiSet & MeridianAbiSet;
+  "movement-testnet": FrameworkAbiSet;
   "aptos-mainnet": FrameworkAbiSet & MeridianAbiSet; // Canopy is not deployed on Aptos mainnet
   "aptos-testnet": FrameworkAbiSet & CanopyAbiSet; // Meridian is not deployed on Aptos testnet
 };

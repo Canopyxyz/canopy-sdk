@@ -24,7 +24,7 @@ import multiRewardsBatcherEntryAbi from "../../abis/movement-mainnet/multi_rewar
 import multiRewardsBatcherViewAbi from "../../abis/movement-mainnet/multi_rewards_batcher_view.json";
 import multiRewardsRouterAbi from "../../abis/movement-mainnet/multi_rewards_router.json";
 import multiRewardsStdViewsAbi from "../../abis/movement-mainnet/multi_rewards_std_views.json";
-import { defineChainAbis } from "./define";
+import { defineChainAbis } from "./define-chain-abis";
 
 export const movementMainnetAbis = defineChainAbis("movement-mainnet", {
   aptosFrameworkObject: frameworkObjectAbi,

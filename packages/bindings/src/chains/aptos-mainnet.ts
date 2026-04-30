@@ -7,7 +7,7 @@ import aptosMainnetMeridianRegularV4Abi from "../../abis/aptos-mainnet/meridian_
 import aptosMainnetMeridianRegularV4EntryAbi from "../../abis/aptos-mainnet/meridian_regular_v4_entry.json";
 import aptosMainnetMeridianRouterAbi from "../../abis/aptos-mainnet/meridian_router.json";
 import aptosMainnetMeridianVaultAbi from "../../abis/aptos-mainnet/meridian_vault.json";
-import { defineChainAbis } from "./define";
+import { defineChainAbis } from "./define-chain-abis";
 
 export const aptosMainnetAbis = defineChainAbis("aptos-mainnet", {
   aptosFrameworkObject: aptosMainnetFrameworkObjectAbi,

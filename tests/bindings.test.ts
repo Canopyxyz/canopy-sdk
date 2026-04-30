@@ -2,6 +2,7 @@ import {
   abisByChain,
   getAbisForChain,
   movementMainnetAbis,
+  movementTestnetAbis,
 } from "../packages/bindings/src";
 
 describe("ABI bindings", () => {
@@ -29,12 +30,17 @@ describe("ABI bindings", () => {
 
   it("keeps ABI sets scoped by chain", () => {
     const movementMainnet = getAbisForChain("movement-mainnet");
+    const movementTestnet = getAbisForChain("movement-testnet");
     const aptosMainnet = getAbisForChain("aptos-mainnet");
     const aptosTestnet = getAbisForChain("aptos-testnet");
 
     expect(movementMainnet).toBe(abisByChain["movement-mainnet"]);
+    expect(movementTestnet).toBe(abisByChain["movement-testnet"]);
     expect(aptosMainnet).toBe(abisByChain["aptos-mainnet"]);
     expect(aptosTestnet).toBe(abisByChain["aptos-testnet"]);
+    expect(movementTestnet).toBe(movementTestnetAbis);
+    expect(movementTestnet.aptosFrameworkCoin.address).toBe("0x1");
+    expect(movementTestnet.aptosFrameworkObject.name).toBe("object");
     expect(aptosMainnet.meridianVault.address).toBe(
       "0xeb57695cd494c59ea7b1356580f1e7d5666fd84827322369e21d712e22397b54"
     );

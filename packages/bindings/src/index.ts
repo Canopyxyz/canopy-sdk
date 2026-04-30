@@ -1,7 +1,7 @@
 import { aptosMainnetAbis } from "./chains/aptos-mainnet";
 import { aptosTestnetAbis } from "./chains/aptos-testnet";
 import { movementMainnetAbis } from "./chains/movement-mainnet";
-import type { AbiChainName, ChainAbiSet } from "./types";
+import { movementTestnetAbis } from "./chains/movement-testnet";
 
 export type {
   AbiChainName,
@@ -13,16 +13,17 @@ export type {
   MoveModuleAbi,
 } from "./types";
 
-export { aptosMainnetAbis, aptosTestnetAbis, movementMainnetAbis };
+export { aptosMainnetAbis, aptosTestnetAbis, movementMainnetAbis, movementTestnetAbis };
 
 export const abisByChain = {
   "movement-mainnet": movementMainnetAbis,
+  "movement-testnet": movementTestnetAbis,
   "aptos-mainnet": aptosMainnetAbis,
   "aptos-testnet": aptosTestnetAbis,
-} as const satisfies ChainAbiSet;
+};
 
-export function getAbisForChain<Chain extends AbiChainName>(
+export function getAbisForChain<Chain extends keyof typeof abisByChain>(
   chain: Chain
-): ChainAbiSet[Chain] {
+): (typeof abisByChain)[Chain] {
   return abisByChain[chain];
 }
