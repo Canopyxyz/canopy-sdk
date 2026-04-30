@@ -1163,6 +1163,55 @@ describe("CanopySdk", () => {
     global.fetch = originalFetch;
   });
 
+  it("uses the local fallback pool mapping before sentio discovery", async () => {
+    const originalFetch = global.fetch;
+    const client = createMovementMock({
+      "0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::is_user_subscribed":
+        [false],
+    });
+
+    global.fetch = jest.fn(async () => {
+      throw new Error("Sentio should not be queried when a local fallback mapping exists");
+    }) as typeof fetch;
+
+    const sdk = new CanopySdk(client as never, {
+      chain: "movement-mainnet",
+    });
+
+    await expect(
+      sdk.data.rewardsDiscovery.resolvePoolAddresses({
+        stakingAsset: "0xe005014fbdd053aebf97b9a36dfeed790d337f571fa9d37690f527acb3015e02",
+      })
+    ).resolves.toEqual([
+      "0x7bf3653bf8b02d19b56916daaf959b95b4564ecd35d9abdb323d0690d5fdd0e7",
+      "0xc1d2493f1ecc4ce35726fb0a48719752ce573f6aead45f35703193c021af3001",
+    ]);
+
+    await expect(
+      sdk.rewards?.buildStakeVaultSharesPayload({
+        stakingAsset: "0xe005014fbdd053aebf97b9a36dfeed790d337f571fa9d37690f527acb3015e02",
+        amount: 11n,
+        userAddress: "0x111",
+      })
+    ).resolves.toEqual({
+      function:
+        "0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::router::stake_and_subscribe_fa",
+      typeArguments: [],
+      functionArguments: [
+        "0xe005014fbdd053aebf97b9a36dfeed790d337f571fa9d37690f527acb3015e02",
+        "11",
+        [
+          "0x7bf3653bf8b02d19b56916daaf959b95b4564ecd35d9abdb323d0690d5fdd0e7",
+          "0xc1d2493f1ecc4ce35726fb0a48719752ce573f6aead45f35703193c021af3001",
+        ],
+      ],
+    });
+
+    expect(global.fetch).not.toHaveBeenCalled();
+
+    global.fetch = originalFetch;
+  });
+
   it("finds user fungible-asset deposits from transaction results", () => {
     expect(
       findFungibleAssetDeposit(
