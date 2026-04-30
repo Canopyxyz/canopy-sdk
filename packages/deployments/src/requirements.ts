@@ -18,6 +18,10 @@ export const CANOPY_REQUIRED = {
       "meridianRewards",
     ],
   },
+  "movement-testnet": {
+    blocks: [],
+    strategies: [],
+  },
   "aptos-mainnet": {
     blocks: [],
     strategies: [],

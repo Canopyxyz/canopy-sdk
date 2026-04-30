@@ -9,9 +9,23 @@ describe("deployment registry", () => {
   it("loads initial chain deployments", () => {
     expect(listDeployments().map((deployment) => deployment.chain)).toEqual([
       "movement-mainnet",
+      "movement-testnet",
       "aptos-mainnet",
       "aptos-testnet",
     ]);
+  });
+
+  it("exposes Movement testnet as a framework-only chain", () => {
+    const deployment = getDeployment("movement-testnet");
+
+    expect(deployment.chainId).toBe(250);
+    expect(deployment.fullnode).toBe("https://testnet.movementnetwork.xyz/v1");
+    expect(deployment.features?.canopy).toBe(false);
+    expect(deployment.features?.rewards).toBe(false);
+    expect(deployment.features?.almMeridian).toBe(false);
+    expect(deployment.canopy).toBeUndefined();
+    expect(deployment.rewards).toBeUndefined();
+    expect(deployment.alm).toBeUndefined();
   });
 
   it("exposes Movement mainnet Canopy and rewards addresses", () => {

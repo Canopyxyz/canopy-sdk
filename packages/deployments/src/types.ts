@@ -1,4 +1,8 @@
-export type ChainName = "movement-mainnet" | "aptos-mainnet" | "aptos-testnet";
+export type ChainName =
+  | "movement-mainnet"
+  | "movement-testnet"
+  | "aptos-mainnet"
+  | "aptos-testnet";
 
 export interface StrategyDeploymentMap {
   [strategyName: string]: string;

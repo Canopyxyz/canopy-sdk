@@ -1,13 +1,15 @@
 import aptosMainnet from "../addresses/aptos-mainnet.json";
 import aptosTestnet from "../addresses/aptos-testnet.json";
 import movementMainnet from "../addresses/movement-mainnet.json";
+import movementTestnet from "../addresses/movement-testnet.json";
 import { CHAIN_IDS, FULLNODE_DEFAULTS } from "./chains";
 import { DeploymentError } from "./errors";
-import { CANOPY_REQUIRED, MERIDIAN_REQUIRED_STRATEGIES } from "./schema";
+import { CANOPY_REQUIRED, MERIDIAN_REQUIRED_STRATEGIES } from "./requirements";
 import type { ChainDeployment, ChainDeploymentInput, ChainName } from "./types";
 
 const DEPLOYMENTS = {
   "movement-mainnet": movementMainnet as ChainDeploymentInput,
+  "movement-testnet": movementTestnet as ChainDeploymentInput,
   "aptos-mainnet": aptosMainnet as ChainDeploymentInput,
   "aptos-testnet": aptosTestnet as ChainDeploymentInput,
 } as const satisfies Record<ChainName, ChainDeploymentInput>;
