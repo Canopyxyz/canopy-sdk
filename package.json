@@ -49,7 +49,7 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "test": "jest",
-    "lint": "eslint \"src/**/*.ts\" \"packages/**/*.ts\"",
+    "lint": "eslint \"packages/**/*.ts\"",
     "typecheck": "tsc --noEmit",
     "abi:fetch": "node scripts/abi/fetch-abis.mjs",
     "abi:check": "node scripts/abi/fetch-abis.mjs --check",

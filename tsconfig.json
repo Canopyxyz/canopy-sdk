@@ -26,6 +26,6 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": true
   },
-  "include": ["src/**/*", "packages/**/*", "tests/**/*"],
+  "include": ["packages/**/*", "tests/**/*"],
   "exclude": ["node_modules", "dist", "examples"]
 }
