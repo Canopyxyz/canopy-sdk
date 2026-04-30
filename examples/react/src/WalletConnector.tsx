@@ -2,12 +2,10 @@ import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { formatAddress } from "./utils";
 
 export function WalletConnector() {
-  const { connected, account, connect, disconnect, wallet, wallets } =
-    useWallet();
+  const { connected, account, connect, disconnect, wallet, wallets } = useWallet();
 
   const handleConnect = async () => {
     if (wallets && wallets.length > 0) {
-      // Connect to first available wallet
       try {
         await connect(wallets[0].name);
       } catch (error) {
