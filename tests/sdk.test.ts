@@ -1319,6 +1319,24 @@ describe("CanopySdk", () => {
         ["5", "66"],
       "0xeb57695cd494c59ea7b1356580f1e7d5666fd84827322369e21d712e22397b54::ichi_vault_thala::get_shares_withdrawal_amounts":
         ["7", "8"],
+      "0x0000000000000000000000000000000000000000000000000000000000000001::fungible_asset::decimals":
+        (args: unknown[]) => {
+          const [address] = args as [string];
+
+          if (address === "0x000000000000000000000000000000000000000000000000000000000000000a") {
+            return ["6"];
+          }
+
+          if (address === "0x000000000000000000000000000000000000000000000000000000000000000b") {
+            return ["9"];
+          }
+
+          if (address === "0x0000000000000000000000000000000000000000000000000000000000000111") {
+            return ["8"];
+          }
+
+          throw new Error(`Unexpected decimals lookup for ${address}`);
+        },
     });
     const sdk = new CanopySdk(client as never, { chain: "aptos-mainnet" });
     const meridian = sdk.alm.meridian!;
@@ -1331,10 +1349,13 @@ describe("CanopySdk", () => {
     expect(await meridian.getVaultSummary("0x111")).toEqual({
       vaultAddress: "0x0000000000000000000000000000000000000000000000000000000000000111",
       depositAssetAddress: "0x000000000000000000000000000000000000000000000000000000000000000a",
+      depositAssetDecimals: 6,
       quoteAssetAddress: "0x000000000000000000000000000000000000000000000000000000000000000b",
+      quoteAssetDecimals: 9,
       underlyingPoolAddress:
         "0x000000000000000000000000000000000000000000000000000000000000000c",
       depositIsAsset0: true,
+      shareDecimals: 8,
       sharePriceE18: 99n,
       totalHoldings: {
         asset0: 12n,

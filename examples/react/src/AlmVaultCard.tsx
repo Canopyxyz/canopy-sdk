@@ -4,8 +4,6 @@ import type { Movement } from "@moveindustries/ts-sdk";
 import type { CanopySdk, MeridianVaultSummary } from "@canopyhub/canopy-sdk";
 import { scaleToDecimals, scaleFromDecimals } from "./utils";
 
-const DECIMALS = 8;
-
 interface Props {
   sdk: CanopySdk;
   movementClient: Movement;
@@ -80,7 +78,7 @@ export default function AlmVaultCard({ sdk, movementClient, vault }: Props) {
       Promise.resolve(
         sdk.alm.meridian!.buildDepositPayload({
           vaultAddress: vault.vaultAddress,
-          amount: scaleToDecimals(depositAmount, DECIMALS),
+          amount: scaleToDecimals(depositAmount, vault.depositAssetDecimals),
           minSharesOut: 0n,
         })
       )
@@ -91,7 +89,7 @@ export default function AlmVaultCard({ sdk, movementClient, vault }: Props) {
       Promise.resolve(
         sdk.alm.meridian!.buildWithdrawPayload({
           vaultAddress: vault.vaultAddress,
-          shares: scaleToDecimals(sharesAmount, DECIMALS),
+          shares: scaleToDecimals(sharesAmount, vault.shareDecimals),
           maxLossBps: 0n,
           minAmountOut: 0n,
         })
@@ -117,8 +115,12 @@ export default function AlmVaultCard({ sdk, movementClient, vault }: Props) {
 
       {account && balances && (
         <div style={gridStyle}>
-          <Stat label="Wallet" value={scaleFromDecimals(balances.depositAssetWallet, DECIMALS)} unit="deposit" />
-          <Stat label="Shares" value={scaleFromDecimals(balances.shares, DECIMALS)} />
+          <Stat
+            label="Wallet"
+            value={scaleFromDecimals(balances.depositAssetWallet, vault.depositAssetDecimals)}
+            unit="deposit"
+          />
+          <Stat label="Shares" value={scaleFromDecimals(balances.shares, vault.shareDecimals)} />
           <Stat label="Price" value={(Number(vault.sharePriceE18) / 1e18).toFixed(6)} unit="e18" />
         </div>
       )}

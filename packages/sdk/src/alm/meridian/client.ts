@@ -8,6 +8,7 @@ import {
 import {
   readMoveAddress,
   readMoveAddressVector,
+  readMoveBool,
   readMoveU128,
   readMoveU64,
 } from "../../internal/move-readers";
@@ -105,11 +106,21 @@ export class MeridianClient {
           }
         ),
       ]);
+    const depositAssetAddress = readMoveAddress(depositAndQuoteAssets[0]);
+    const quoteAssetAddress = readMoveAddress(depositAndQuoteAssets[1]);
+    const [depositAssetDecimals, quoteAssetDecimals, shareDecimals] = await Promise.all([
+      getFungibleAssetDecimals(this.context, depositAssetAddress),
+      getFungibleAssetDecimals(this.context, quoteAssetAddress),
+      getFungibleAssetDecimals(this.context, normalizedVault),
+    ]);
 
     return {
-      depositAssetAddress: readMoveAddress(depositAndQuoteAssets[0]),
-      depositIsAsset0: Boolean(depositIsAsset0),
-      quoteAssetAddress: readMoveAddress(depositAndQuoteAssets[1]),
+      depositAssetAddress,
+      depositAssetDecimals,
+      depositIsAsset0: readMoveBool(depositIsAsset0),
+      quoteAssetAddress,
+      quoteAssetDecimals,
+      shareDecimals,
       sharePriceE18: readMoveU128(sharePriceE18),
       totalHoldings: {
         asset0: readMoveU64(totalHoldings[0]),
@@ -194,4 +205,21 @@ export class MeridianClient {
       ],
     });
   }
+}
+
+async function getFungibleAssetDecimals(
+  context: SdkContext<"movement-mainnet" | "aptos-mainnet">,
+  metadataAddress: string
+): Promise<number> {
+  const decimals = await callSingleViewResult(
+    context.client,
+    {
+      moduleAddress: "0x1",
+      moduleName: "fungible_asset",
+      functionName: "decimals",
+      functionArguments: [normalizeMoveAddress(metadataAddress)],
+    }
+  );
+
+  return Number(readMoveU64(decimals));
 }

@@ -1,7 +1,10 @@
 export interface MeridianVaultSummary {
   depositAssetAddress: string;
+  depositAssetDecimals: number;
   depositIsAsset0: boolean;
   quoteAssetAddress: string;
+  quoteAssetDecimals: number;
+  shareDecimals: number;
   sharePriceE18: bigint;
   totalHoldings: {
     asset0: bigint;
