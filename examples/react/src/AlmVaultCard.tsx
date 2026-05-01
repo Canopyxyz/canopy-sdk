@@ -64,8 +64,9 @@ export default function AlmVaultCard({ sdk, movementClient, vault }: Props) {
     try {
       const payload = await buildPayload();
       // @ts-expect-error
-      const response = await signAndSubmitTransaction({ data: payload });
-      setStatus(`${label} successful! TX: ${response.hash}`);
+      const pending = await signAndSubmitTransaction({ data: payload });
+      await movementClient.waitForTransaction({ transactionHash: pending.hash });
+      setStatus(`${label} successful! TX: ${pending.hash}`);
       setTimeout(fetchBalances, 2000);
     } catch (error: unknown) {
       setStatus(`${label} failed: ${error instanceof Error ? error.message : String(error)}`);
