@@ -39,6 +39,9 @@ const sdk = new CanopySdk(client, {
 });
 ```
 
+On `movement-mainnet`, all three protocol clients are available:
+`sdk.canopy`, `sdk.rewards`, and `sdk.alm.meridian`.
+
 ## Canopy Vaults
 
 ```typescript
@@ -112,6 +115,7 @@ const addresses = await sdk.alm.meridian.listVaults({ limit: 50, offset: 0 });
 // Get vault details
 const vault = await sdk.alm.meridian.getVaultSummary(vaultAddress);
 // vault: { vaultAddress, depositAssetAddress, quoteAssetAddress,
+//          depositAssetDecimals, quoteAssetDecimals, shareDecimals,
 //          sharePriceE18, totalHoldings, depositIsAsset0 }
 
 // Get user position
@@ -176,7 +180,7 @@ const deployment = getDeployment("movement-mainnet");
 ## Error Handling
 
 ```typescript
-import { CanopyError, CanopyErrorCode } from "@canopyhub/canopy-sdk";
+import { CanopyError, CanopyErrorCode } from "@canopyhub/canopy-sdk/core";
 
 try {
   await sdk.canopy.buildDepositPayload({ ... });
@@ -219,6 +223,12 @@ function scaleFromDecimals(amount: bigint, decimals: number): string {
   return fraction ? `${whole}.${fraction}` : whole;
 }
 ```
+
+## Chain-Gated Modules
+
+`CanopySdk` exposes protocol clients only when the selected chain supports them. On
+`movement-mainnet`, all three are available together: `sdk.canopy`, `sdk.rewards`,
+and `sdk.alm.meridian`.
 
 ## Development
 
