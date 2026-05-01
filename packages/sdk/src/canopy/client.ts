@@ -6,7 +6,7 @@ import {
   moveUintArgument,
   normalizeMoveAddress,
   normalizeMoveTypeTag,
-} from "../../../core";
+} from "@canopyhub/canopy-sdk/core";
 import type { SdkContext, TransactionPayload } from "../types";
 import {
   readMoveAddress,

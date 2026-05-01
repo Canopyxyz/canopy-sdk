@@ -1,9 +1,10 @@
 import type { Movement } from "@moveindustries/ts-sdk";
-import { getAbisForChain } from "../../bindings";
-import { getDeployment, type ChainName } from "../../deployments";
+import { getAbisForChain } from "@canopyhub/canopy-sdk/bindings";
+import { getDeployment, type ChainName } from "@canopyhub/canopy-sdk/deployments";
 import {
   aptosTestnetMovePositionConfig,
   movementMainnetMovePositionConfig,
+  movementTestnetMovePositionConfig,
 } from "./data/moveposition";
 import type { SdkContext } from "./types";
 import type { MovePositionConfig } from "./canopy/moveposition";
@@ -31,9 +32,11 @@ function resolveMovePositionConfig(
   const base =
     chain === "movement-mainnet"
       ? movementMainnetMovePositionConfig
-      : chain === "aptos-testnet"
-        ? aptosTestnetMovePositionConfig
-        : undefined;
+      : chain === "movement-testnet"
+        ? movementTestnetMovePositionConfig
+        : chain === "aptos-testnet"
+          ? aptosTestnetMovePositionConfig
+          : undefined;
 
   if (!base && !override) {
     return undefined;

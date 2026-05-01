@@ -6,7 +6,7 @@ import {
   entryFunctionPayload,
   moveUintArgument,
   normalizeMoveAddress,
-} from "../../../core";
+} from "@canopyhub/canopy-sdk/core";
 import type { SdkContext, TransactionPayload } from "../types";
 import {
   readMoveAddress,

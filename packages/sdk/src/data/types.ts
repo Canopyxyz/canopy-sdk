@@ -1,4 +1,4 @@
-import type { ChainName } from "../../../deployments";
+import type { ChainName } from "@canopyhub/canopy-sdk/deployments";
 
 export interface CanopyVaultMetadata {
   address: string;

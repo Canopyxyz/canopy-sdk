@@ -4,7 +4,7 @@ import {
   entryFunctionPayload,
   moveUintArgument,
   normalizeMoveAddress,
-} from "../../../../core";
+} from "@canopyhub/canopy-sdk/core";
 import {
   readMoveAddress,
   readMoveAddressVector,

@@ -11,6 +11,11 @@ export default defineConfig({
   dts: {
     resolve: false,
   },
+  alias: {
+    "@canopyhub/canopy-sdk/core": "./packages/core/src/index.ts",
+    "@canopyhub/canopy-sdk/bindings": "./packages/bindings/src/index.ts",
+    "@canopyhub/canopy-sdk/deployments": "./packages/deployments/src/index.ts",
+  },
   splitting: false,
   sourcemap: true,
   clean: true,

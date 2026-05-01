@@ -5,7 +5,7 @@ import {
   callSingleViewResult,
   moveUintArgument,
   normalizeMoveAddress,
-} from "../../../core";
+} from "@canopyhub/canopy-sdk/core";
 import type { SdkContext } from "../types";
 import { readMoveU64 } from "../internal/move-readers";
 import type { CanopyVaultAllocation, CanopyVaultView } from "./types";

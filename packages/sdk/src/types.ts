@@ -1,6 +1,6 @@
 import type { InputEntryFunctionData, Movement } from "@moveindustries/ts-sdk";
-import type { ChainAbiSet } from "../../bindings";
-import type { ChainDeployment, ChainName } from "../../deployments";
+import type { ChainAbiSet } from "@canopyhub/canopy-sdk/bindings";
+import type { ChainDeployment, ChainName } from "@canopyhub/canopy-sdk/deployments";
 import type { MovePositionConfig } from "./canopy/moveposition";
 
 export type SdkChainName = ChainName;

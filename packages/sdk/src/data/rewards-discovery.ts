@@ -1,4 +1,4 @@
-import { CanopyError, CanopyErrorCode, normalizeMoveAddress } from "../../../core";
+import { CanopyError, CanopyErrorCode, normalizeMoveAddress } from "@canopyhub/canopy-sdk/core";
 import type {
   ResolveRewardPoolsInput,
   RewardsDiscoveryClientOptions,
