@@ -45,6 +45,9 @@ jobs:
       - name: Check Package Exports
         run: pnpm run check:exports
 
+      - name: Check Package Imports
+        run: pnpm run check:imports
+
       - name: Check Local ABI Files
         run: pnpm run abi:check-local
 
