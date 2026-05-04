@@ -1,9 +1,13 @@
+import type { ChainName } from "@canopyhub/canopy-sdk-deployments";
+
+export type HexString = `0x${string}`;
+
 export interface MoveModuleAbi {
-  address: string;
+  address: HexString;
   name: string;
   friends?: string[];
   exposed_functions?: MoveExposedFunction[];
-  structs?: unknown[];
+  structs: unknown[];
 }
 
 export interface MoveExposedFunction {
@@ -23,11 +27,20 @@ export interface FrameworkAbiSet {
   aptosFrameworkMultisigAccount: MoveModuleAbi;
 }
 
+export type FrameworkAbiId =
+  | "aptosFrameworkObject"
+  | "aptosFrameworkPrimaryFungibleStore"
+  | "aptosFrameworkCoin"
+  | "aptosFrameworkMultisigAccount";
+
 export interface CanopyAbiSet {
   canopyVault: MoveModuleAbi;
   canopyRouter: MoveModuleAbi;
   canopyRouterDeposit: MoveModuleAbi;
   canopyRouterWithdraw: MoveModuleAbi;
+  canopySatay: MoveModuleAbi;
+  canopyProtocol: MoveModuleAbi;
+  canopyBaseStrategy: MoveModuleAbi;
   multiRewards: MoveModuleAbi;
   multiRewardsRouter: MoveModuleAbi;
   multiRewardsBatcherView: MoveModuleAbi;
@@ -51,11 +64,7 @@ export interface MeridianAbiSet {
   meridianMedianStableV2Entry?: MoveModuleAbi;
 }
 
-export type AbiChainName =
-  | "movement-mainnet"
-  | "movement-testnet"
-  | "aptos-mainnet"
-  | "aptos-testnet";
+export type AbiChainName = ChainName;
 
 export type ChainAbiSet = {
   "movement-mainnet": FrameworkAbiSet & CanopyAbiSet & MeridianAbiSet;

@@ -2,6 +2,9 @@ import aptosTestnetFrameworkCoinAbi from "../../abis/aptos-testnet/aptos_framewo
 import aptosTestnetFrameworkMultisigAccountAbi from "../../abis/aptos-testnet/aptos_framework_multisig_account.json";
 import aptosTestnetFrameworkObjectAbi from "../../abis/aptos-testnet/aptos_framework_object.json";
 import aptosTestnetFrameworkPrimaryFungibleStoreAbi from "../../abis/aptos-testnet/aptos_framework_primary_fungible_store.json";
+import { ABI as canopyBaseStrategyAbiSource } from "../canopy-common/base_strategy";
+import { ABI as canopyProtocolAbiSource } from "../canopy-common/protocol";
+import { ABI as canopySatayAbiSource } from "../canopy-common/satay";
 import aptosTestnetCanopyRouterAbi from "../../abis/aptos-testnet/canopy_router.json";
 import aptosTestnetCanopyRouterDepositAbi from "../../abis/aptos-testnet/canopy_router_deposit.json";
 import aptosTestnetCanopyRouterWithdrawAbi from "../../abis/aptos-testnet/canopy_router_withdraw.json";
@@ -14,7 +17,7 @@ import aptosTestnetMultiRewardsAbi from "../../abis/aptos-testnet/multi_rewards.
 import aptosTestnetMultiRewardsBatcherEntryAbi from "../../abis/aptos-testnet/multi_rewards_batcher_entry.json";
 import aptosTestnetMultiRewardsBatcherViewAbi from "../../abis/aptos-testnet/multi_rewards_batcher_view.json";
 import aptosTestnetMultiRewardsRouterAbi from "../../abis/aptos-testnet/multi_rewards_router.json";
-import { defineChainAbis } from "./define-chain-abis";
+import { defineChainAbis, retargetMoveModuleAbi } from "./define-chain-abis";
 
 export const aptosTestnetAbis = defineChainAbis("aptos-testnet", {
   aptosFrameworkObject: aptosTestnetFrameworkObjectAbi,
@@ -25,6 +28,18 @@ export const aptosTestnetAbis = defineChainAbis("aptos-testnet", {
   canopyRouter: aptosTestnetCanopyRouterAbi,
   canopyRouterDeposit: aptosTestnetCanopyRouterDepositAbi,
   canopyRouterWithdraw: aptosTestnetCanopyRouterWithdrawAbi,
+  canopySatay: retargetMoveModuleAbi(
+    canopySatayAbiSource,
+    aptosTestnetCanopyVaultAbi.address
+  ),
+  canopyProtocol: retargetMoveModuleAbi(
+    canopyProtocolAbiSource,
+    aptosTestnetCanopyVaultAbi.address
+  ),
+  canopyBaseStrategy: retargetMoveModuleAbi(
+    canopyBaseStrategyAbiSource,
+    aptosTestnetCanopyVaultAbi.address
+  ),
   multiRewards: aptosTestnetMultiRewardsAbi,
   multiRewardsRouter: aptosTestnetMultiRewardsRouterAbi,
   multiRewardsBatcherView: aptosTestnetMultiRewardsBatcherViewAbi,

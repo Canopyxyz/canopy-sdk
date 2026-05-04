@@ -1,6 +1,9 @@
 import {
+  getAbi,
   abisByChain,
   getAbisForChain,
+  getFrameworkAbi,
+  requireFrameworkAbi,
   movementMainnetAbis,
   movementTestnetAbis,
 } from "../packages/bindings/src";
@@ -11,9 +14,13 @@ describe("ABI bindings", () => {
       "0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d"
     );
     expect(movementMainnetAbis.canopyRouter.exposed_functions?.length).toBeGreaterThan(0);
+    expect(movementMainnetAbis.canopySatay.name).toBe("satay");
+    expect(movementMainnetAbis.canopyProtocol.name).toBe("protocol");
+    expect(movementMainnetAbis.canopyBaseStrategy.name).toBe("base_strategy");
     expect(
       movementMainnetAbis.multiRewardsRouter.exposed_functions?.length
     ).toBeGreaterThan(0);
+    expect(movementMainnetAbis.canopyRouter.structs).toEqual([]);
     expect(movementMainnetAbis.multiRewardsBatcherEntry.name).toBe("batcher_entry");
     expect(movementMainnetAbis.multiRewardsBatcherView.name).toBe("batcher_view");
     expect(movementMainnetAbis.multiRewardsStdViews?.name).toBe("std_views");
@@ -72,6 +79,12 @@ describe("ABI bindings", () => {
     expect(aptosTestnet.multiRewards.address).toBe(
       "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3"
     );
+    expect(aptosTestnet.canopyProtocol.address).toBe(
+      "0xe5ec58845afb1cb164d1c260f2a284b2f1311318973e13355b9e4dc2908eed5a"
+    );
+    expect(aptosTestnet.canopyBaseStrategy.friends).toContain(
+      "0xe5ec58845afb1cb164d1c260f2a284b2f1311318973e13355b9e4dc2908eed5a::satay"
+    );
     expect(aptosTestnet.multiRewardsBatcherEntry.name).toBe(
       "batcher_entry"
     );
@@ -83,6 +96,31 @@ describe("ABI bindings", () => {
     ).toBe("ticket");
     expect(aptosTestnet.aptosFrameworkObject.name).toBe(
       "object"
+    );
+  });
+
+  it("exposes nullable ABI lookup with normalized structs", () => {
+    expect(getAbi("movement-mainnet", "canopy.router")?.structs).toEqual([]);
+    expect(getAbi("movement-testnet", "canopy.router")).toBeUndefined();
+  });
+
+  it("exposes named framework ABI helpers", () => {
+    expect(
+      getFrameworkAbi("movement-mainnet", "aptosFrameworkPrimaryFungibleStore").name
+    ).toBe("primary_fungible_store");
+    expect(
+      requireFrameworkAbi("aptos-mainnet", "aptosFrameworkMultisigAccount").name
+    ).toBe("multisig_account");
+    expect(
+      getFrameworkAbi("aptos-testnet", "aptosFrameworkCoin").address
+    ).toBe("0x1");
+  });
+
+  it("throws a specific error for unsupported ABI chains", () => {
+    expect(() =>
+      getAbi("aptos-devnet" as never, "canopy.router")
+    ).toThrow(
+      'Unknown chain "aptos-devnet". Supported ABI chains: movement-mainnet, movement-testnet, aptos-mainnet, aptos-testnet'
     );
   });
 });

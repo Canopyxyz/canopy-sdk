@@ -8,10 +8,10 @@ import { CANOPY_REQUIRED, MERIDIAN_REQUIRED_STRATEGIES } from "./requirements";
 import type { ChainDeployment, ChainDeploymentInput, ChainName } from "./types";
 
 const DEPLOYMENTS = {
-  "movement-mainnet": movementMainnet as ChainDeploymentInput,
-  "movement-testnet": movementTestnet as ChainDeploymentInput,
-  "aptos-mainnet": aptosMainnet as ChainDeploymentInput,
-  "aptos-testnet": aptosTestnet as ChainDeploymentInput,
+  "movement-mainnet": movementMainnet as unknown as ChainDeploymentInput,
+  "movement-testnet": movementTestnet as unknown as ChainDeploymentInput,
+  "aptos-mainnet": aptosMainnet as unknown as ChainDeploymentInput,
+  "aptos-testnet": aptosTestnet as unknown as ChainDeploymentInput,
 } as const satisfies Record<ChainName, ChainDeploymentInput>;
 
 export function listDeployments(): ChainDeployment[] {
@@ -19,7 +19,7 @@ export function listDeployments(): ChainDeployment[] {
 }
 
 export function getDeployment(chain: ChainName): ChainDeployment {
-  return validateDeployment(DEPLOYMENTS[chain]);
+  return validateDeployment(resolveDeploymentInput(chain));
 }
 
 export function validateDeployment(input: ChainDeploymentInput): ChainDeployment {
@@ -160,6 +160,22 @@ function withDeploymentDefaults(input: ChainDeploymentInput): ChainDeployment {
     ...input,
     fullnode: input.fullnode ?? FULLNODE_DEFAULTS[input.chain],
   };
+}
+
+function resolveDeploymentInput(chain: ChainName): ChainDeploymentInput {
+  const deployment = DEPLOYMENTS[chain];
+
+  if (deployment === undefined) {
+    throw new DeploymentError(
+      `Unknown chain "${chain}". Supported deployment chains: ${Object.keys(DEPLOYMENTS).join(", ")}`,
+      {
+        chain,
+        supportedChains: Object.keys(DEPLOYMENTS),
+      }
+    );
+  }
+
+  return deployment;
 }
 
 function isMoveAddress(address: string): boolean {

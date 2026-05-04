@@ -4,30 +4,55 @@ export type ChainName =
   | "aptos-mainnet"
   | "aptos-testnet";
 
+export type HexString = `0x${string}`;
+
+export type ContractId =
+  | "canopy.core"
+  | "canopy.vault"
+  | "canopy.router"
+  | "canopy.satay"
+  | "canopy.protocol"
+  | "canopy.baseStrategy"
+  | "canopy.strategy.echelonSimple"
+  | "canopy.strategy.layerbankSimple"
+  | "canopy.strategy.movepositionSimple"
+  | "canopy.strategy.placeholderSimple"
+  | "canopy.strategy.meridianRewards"
+  | "rewards.module"
+  | "rewards.router"
+  | "rewards.batcher"
+  | "meridian.router"
+  | "meridian.vault"
+  | "meridian.registry"
+  | "meridian.strategy.regularV4"
+  | "meridian.strategy.regularV4Entry"
+  | "meridian.strategy.medianStableV2"
+  | "meridian.strategy.medianStableV2Entry";
+
 export interface StrategyDeploymentMap {
-  [strategyName: string]: string;
+  [strategyName: string]: HexString;
 }
 
 export interface CanopyDeployment {
-  core: string;
-  router: string;
+  core: HexString;
+  router: HexString;
   blocks?: StrategyDeploymentMap;
   strategies: StrategyDeploymentMap;
-  helpers?: string;
-  views?: string;
+  helpers?: HexString;
+  views?: HexString;
 }
 
 export interface RewardsDeployment {
-  module: string;
-  router: string;
-  batcher?: string;
-  stdBatcher?: string;
+  module: HexString;
+  router: HexString;
+  batcher?: HexString;
+  stdBatcher?: HexString;
 }
 
 export interface MeridianAlmDeployment {
-  vaults: string;
-  standard: string;
-  registry: string;
+  vaults: HexString;
+  standard: HexString;
+  registry: HexString;
   strategies: StrategyDeploymentMap;
 }
 
@@ -36,7 +61,7 @@ export interface AlmDeployment {
 }
 
 export interface SharedPackagesDeployment {
-  largePackages?: string;
+  largePackages?: HexString;
 }
 
 export interface DeploymentFeatures {

@@ -1,7 +1,9 @@
 import { CanopyErrorCode, isCanopyError } from "../packages/core/src";
 import {
+  getContractAddress,
   getDeployment,
   listDeployments,
+  requireContractAddress,
   validateDeployment,
 } from "../packages/deployments/src";
 
@@ -131,6 +133,25 @@ describe("deployment registry", () => {
     );
     expect(validateDeployment(withoutFullnode).fullnode).toBe(
       "https://api.testnet.aptoslabs.com/v1"
+    );
+  });
+
+  it("distinguishes nullable and required contract address lookup", () => {
+    expect(getContractAddress("movement-testnet", "canopy.router")).toBeUndefined();
+    expect(getContractAddress("movement-mainnet", "canopy.protocol")).toBe(
+      "0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d"
+    );
+    expect(requireContractAddress("aptos-mainnet", "meridian.vault")).toBe(
+      "0xeb57695cd494c59ea7b1356580f1e7d5666fd84827322369e21d712e22397b54"
+    );
+    expect(() =>
+      requireContractAddress("movement-testnet", "canopy.router")
+    ).toThrow('Contract "canopy.router" is not deployed on "movement-testnet"');
+  });
+
+  it("throws a specific error for unsupported deployment chains", () => {
+    expect(() => getDeployment("aptos-devnet" as never)).toThrow(
+      'Unknown chain "aptos-devnet". Supported deployment chains: movement-mainnet, movement-testnet, aptos-mainnet, aptos-testnet'
     );
   });
 });

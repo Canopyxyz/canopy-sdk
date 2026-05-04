@@ -2,6 +2,9 @@ import {
   CanopySdk,
   createCanopySdk,
   findFungibleAssetDeposit,
+  getContract,
+  getCanopyStrategyContract,
+  requireContract,
   movementTestnetMovePositionConfig,
 } from "../packages/sdk/src";
 
@@ -68,6 +71,26 @@ describe("CanopySdk", () => {
     expect(movementTestnetSdk.canopy).toBeUndefined();
     expect(movementTestnetSdk.rewards).toBeUndefined();
     expect(movementTestnetSdk.alm.meridian).toBeUndefined();
+  });
+
+  it("exposes nullable and required resolved contract helpers", () => {
+    expect(getContract("movement-testnet", "canopy.router")).toBeNull();
+    expect(requireContract("aptos-testnet", "canopy.protocol")).toMatchObject({
+      id: "canopy.protocol",
+      chain: "aptos-testnet",
+      address: "0xe5ec58845afb1cb164d1c260f2a284b2f1311318973e13355b9e4dc2908eed5a",
+      moduleName: "protocol",
+    });
+    expect(requireContract("aptos-mainnet", "meridian.vault")).toMatchObject({
+      id: "meridian.vault",
+      chain: "aptos-mainnet",
+      address: "0xeb57695cd494c59ea7b1356580f1e7d5666fd84827322369e21d712e22397b54",
+      moduleName: "ichi_vault_thala",
+    });
+    expect(getCanopyStrategyContract("movement-mainnet", "layerbank")).toMatchObject({
+      id: "canopy.strategy.layerbankSimple",
+      chain: "movement-mainnet",
+    });
   });
 
   it("parses canopy vault views", async () => {

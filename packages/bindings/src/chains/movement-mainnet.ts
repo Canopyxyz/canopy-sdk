@@ -2,6 +2,9 @@ import frameworkCoinAbi from "../../abis/movement-mainnet/aptos_framework_coin.j
 import frameworkMultisigAccountAbi from "../../abis/movement-mainnet/aptos_framework_multisig_account.json";
 import frameworkObjectAbi from "../../abis/movement-mainnet/aptos_framework_object.json";
 import frameworkPrimaryFungibleStoreAbi from "../../abis/movement-mainnet/aptos_framework_primary_fungible_store.json";
+import { ABI as canopyBaseStrategyAbiSource } from "../canopy-common/base_strategy";
+import { ABI as canopyProtocolAbiSource } from "../canopy-common/protocol";
+import { ABI as canopySatayAbiSource } from "../canopy-common/satay";
 import canopyRouterAbi from "../../abis/movement-mainnet/canopy_router.json";
 import canopyRouterDepositAbi from "../../abis/movement-mainnet/canopy_router_deposit.json";
 import canopyRouterWithdrawAbi from "../../abis/movement-mainnet/canopy_router_withdraw.json";
@@ -24,7 +27,7 @@ import multiRewardsBatcherEntryAbi from "../../abis/movement-mainnet/multi_rewar
 import multiRewardsBatcherViewAbi from "../../abis/movement-mainnet/multi_rewards_batcher_view.json";
 import multiRewardsRouterAbi from "../../abis/movement-mainnet/multi_rewards_router.json";
 import multiRewardsStdViewsAbi from "../../abis/movement-mainnet/multi_rewards_std_views.json";
-import { defineChainAbis } from "./define-chain-abis";
+import { defineChainAbis, retargetMoveModuleAbi } from "./define-chain-abis";
 
 export const movementMainnetAbis = defineChainAbis("movement-mainnet", {
   aptosFrameworkObject: frameworkObjectAbi,
@@ -35,6 +38,12 @@ export const movementMainnetAbis = defineChainAbis("movement-mainnet", {
   canopyRouter: canopyRouterAbi,
   canopyRouterDeposit: canopyRouterDepositAbi,
   canopyRouterWithdraw: canopyRouterWithdrawAbi,
+  canopySatay: retargetMoveModuleAbi(canopySatayAbiSource, canopyVaultAbi.address),
+  canopyProtocol: retargetMoveModuleAbi(canopyProtocolAbiSource, canopyVaultAbi.address),
+  canopyBaseStrategy: retargetMoveModuleAbi(
+    canopyBaseStrategyAbiSource,
+    canopyVaultAbi.address
+  ),
   multiRewards: multiRewardsAbi,
   multiRewardsRouter: multiRewardsRouterAbi,
   multiRewardsBatcherView: multiRewardsBatcherViewAbi,
