@@ -43,6 +43,8 @@ function resolveAddress(
     case "meridian.strategy.medianStableV2":
     case "meridian.strategy.medianStableV2Entry":
       return deployment.alm?.meridian?.strategies["medianStableV2"];
+    default:
+      return assertUnreachable(contractId);
   }
 }
 
@@ -65,4 +67,8 @@ export function requireContractAddress(
     );
   }
   return address;
+}
+
+function assertUnreachable(value: never): never {
+  throw new Error(`Unhandled contract id: ${String(value)}`);
 }

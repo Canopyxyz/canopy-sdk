@@ -73,8 +73,7 @@
     "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
-    "@moveindustries/ts-sdk": "^5.1.7",
-    "got": "^11.8.6"
+    "@moveindustries/ts-sdk": "^5.1.7"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",

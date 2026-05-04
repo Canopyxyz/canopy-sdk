@@ -3,7 +3,6 @@ import {
   abisByChain,
   getAbisForChain,
   getFrameworkAbi,
-  requireFrameworkAbi,
   movementMainnetAbis,
   movementTestnetAbis,
 } from "../packages/bindings/src";
@@ -109,7 +108,7 @@ describe("ABI bindings", () => {
       getFrameworkAbi("movement-mainnet", "aptosFrameworkPrimaryFungibleStore").name
     ).toBe("primary_fungible_store");
     expect(
-      requireFrameworkAbi("aptos-mainnet", "aptosFrameworkMultisigAccount").name
+      getFrameworkAbi("aptos-mainnet", "aptosFrameworkMultisigAccount").name
     ).toBe("multisig_account");
     expect(
       getFrameworkAbi("aptos-testnet", "aptosFrameworkCoin").address

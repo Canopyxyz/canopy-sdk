@@ -127,6 +127,7 @@ export const ABI_MANIFEST = {
       moduleName: "median_stable_v2_entry",
     },
   ],
+  "movement-testnet": [],
   "aptos-testnet": [
     {
       key: "canopyVault",

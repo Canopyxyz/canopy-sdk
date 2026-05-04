@@ -54,6 +54,9 @@ jobs:
       - name: Check Movement Mainnet ABI Drift
         run: pnpm run abi:check -- --chain=movement-mainnet
 
+      - name: Check Movement Testnet ABI Drift
+        run: pnpm run abi:check -- --chain=movement-testnet
+
       - name: Check Aptos Testnet ABI Drift
         run: pnpm run abi:check -- --chain=aptos-testnet
 

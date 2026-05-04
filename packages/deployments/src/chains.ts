@@ -1,4 +1,4 @@
-import type { ChainDeployment, ChainName } from "./types";
+import type { ChainName } from "./types";
 
 export const CHAINS = {
   MOVEMENT_MAINNET: "movement-mainnet",
@@ -20,14 +20,3 @@ export const FULLNODE_DEFAULTS = {
   [CHAINS.APTOS_MAINNET]: "https://api.mainnet.aptoslabs.com/v1",
   [CHAINS.APTOS_TESTNET]: "https://api.testnet.aptoslabs.com/v1",
 } as const satisfies Record<ChainName, string>;
-
-export const CHAIN_DEFAULTS = Object.fromEntries(
-  Object.values(CHAINS).map((chain) => [
-    chain,
-    {
-      chain,
-      chainId: CHAIN_IDS[chain],
-      fullnode: FULLNODE_DEFAULTS[chain],
-    },
-  ])
-) as Record<ChainName, Pick<ChainDeployment, "chain" | "chainId" | "fullnode">>;

@@ -51,18 +51,18 @@ export class CanopySdk<Chain extends SdkChainName = SdkChainName> {
       }),
     };
 
-    if (context.deployment.features?.canopy && context.chain !== "aptos-mainnet") {
+    if (context.deployment.features.canopy) {
       this.canopy = new CanopyProtocolClientImpl(context as unknown as CanopyContext);
     }
 
-    if (context.deployment.features?.rewards && context.chain !== "aptos-mainnet") {
+    if (context.deployment.features.rewards) {
       this.rewards = new RewardsClient(
         context as unknown as CanopyContext,
         this.data.rewardsDiscovery
       );
     }
 
-    if (context.deployment.features?.almMeridian && context.chain !== "aptos-testnet") {
+    if (context.deployment.features.almMeridian) {
       this.alm.meridian = new MeridianClient(context as unknown as MeridianContext);
     }
   }

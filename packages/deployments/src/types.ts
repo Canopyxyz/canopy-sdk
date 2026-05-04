@@ -65,9 +65,9 @@ export interface SharedPackagesDeployment {
 }
 
 export interface DeploymentFeatures {
-  canopy?: boolean;
-  rewards?: boolean;
-  almMeridian?: boolean;
+  canopy: boolean;
+  rewards: boolean;
+  almMeridian: boolean;
 }
 
 export interface ChainDeployment {
@@ -78,9 +78,10 @@ export interface ChainDeployment {
   rewards?: RewardsDeployment;
   alm?: AlmDeployment;
   sharedPackages?: SharedPackagesDeployment;
-  features?: DeploymentFeatures;
+  features: DeploymentFeatures;
 }
 
-export type ChainDeploymentInput = Omit<ChainDeployment, "fullnode"> & {
+export type ChainDeploymentInput = Omit<ChainDeployment, "fullnode" | "features"> & {
   fullnode?: string;
+  features?: Partial<DeploymentFeatures>;
 };

@@ -11,9 +11,6 @@ importers:
       '@moveindustries/ts-sdk':
         specifier: ^5.1.7
         version: 5.1.7(got@11.8.6)
-      got:
-        specifier: ^11.8.6
-        version: 11.8.6
     devDependencies:
       '@types/jest':
         specifier: ^30.0.0

@@ -1,63 +1,63 @@
 import type { ChainName, ContractId } from "@canopyhub/canopy-sdk-deployments";
 import { getAbisForChain } from "./index";
-import type { FrameworkAbiId, MoveModuleAbi } from "./types";
+import type { CanopyAbiSet, FrameworkAbiId, FrameworkAbiSet, MeridianAbiSet, MoveModuleAbi } from "./types";
 
-function resolveAbi(
-  abis: Record<string, MoveModuleAbi | undefined>,
-  contractId: ContractId
-): MoveModuleAbi | undefined {
+type AbiLookupKey = keyof (FrameworkAbiSet & CanopyAbiSet & MeridianAbiSet);
+
+function resolveAbiKey(contractId: ContractId): AbiLookupKey {
   switch (contractId) {
     case "canopy.core":
     case "canopy.vault":
-      return abis["canopyVault"];
+      return "canopyVault";
     case "canopy.router":
-      return abis["canopyRouter"];
+      return "canopyRouter";
     case "canopy.satay":
-      return abis["canopySatay"];
+      return "canopySatay";
     case "canopy.protocol":
-      return abis["canopyProtocol"];
+      return "canopyProtocol";
     case "canopy.baseStrategy":
-      return abis["canopyBaseStrategy"];
+      return "canopyBaseStrategy";
     case "canopy.strategy.echelonSimple":
-      return abis["canopyStrategyEchelonSimple"];
+      return "canopyStrategyEchelonSimple";
     case "canopy.strategy.layerbankSimple":
-      return abis["canopyStrategyLayerbankSimple"];
+      return "canopyStrategyLayerbankSimple";
     case "canopy.strategy.movepositionSimple":
-      return abis["canopyStrategyMovepositionSimple"];
+      return "canopyStrategyMovepositionSimple";
     case "canopy.strategy.placeholderSimple":
-      return abis["canopyStrategyPlaceholderSimple"];
+      return "canopyStrategyPlaceholderSimple";
     case "canopy.strategy.meridianRewards":
-      return abis["canopyStrategyMeridianRewards"];
+      return "canopyStrategyMeridianRewards";
     case "rewards.module":
-      return abis["multiRewards"];
+      return "multiRewards";
     case "rewards.router":
-      return abis["multiRewardsRouter"];
+      return "multiRewardsRouter";
     case "rewards.batcher":
-      return abis["multiRewardsBatcherEntry"];
+      return "multiRewardsBatcherEntry";
     case "meridian.router":
-      return abis["meridianRouter"];
+      return "meridianRouter";
     case "meridian.vault":
-      return abis["meridianVault"];
+      return "meridianVault";
     case "meridian.registry":
-      return abis["meridianRegistry"];
+      return "meridianRegistry";
     case "meridian.strategy.regularV4":
-      return abis["meridianRegularV4"];
+      return "meridianRegularV4";
     case "meridian.strategy.regularV4Entry":
-      return abis["meridianRegularV4Entry"];
+      return "meridianRegularV4Entry";
     case "meridian.strategy.medianStableV2":
-      return abis["meridianMedianStableV2"];
+      return "meridianMedianStableV2";
     case "meridian.strategy.medianStableV2Entry":
-      return abis["meridianMedianStableV2Entry"];
+      return "meridianMedianStableV2Entry";
+    default:
+      return assertUnreachable(contractId);
   }
-  return undefined;
 }
 
 export function getAbi(
   chain: ChainName,
   contractId: ContractId
 ): MoveModuleAbi | undefined {
-  const abis = getAbisForChain(chain) as unknown as Record<string, MoveModuleAbi | undefined>;
-  return resolveAbi(abis, contractId);
+  const abis = getAbisForChain(chain) as Partial<Record<AbiLookupKey, MoveModuleAbi>>;
+  return abis[resolveAbiKey(contractId)];
 }
 
 export function requireAbi(
@@ -80,9 +80,8 @@ export function getFrameworkAbi(
   return getAbisForChain(chain)[abiId];
 }
 
-export function requireFrameworkAbi(
-  chain: ChainName,
-  abiId: FrameworkAbiId
-): MoveModuleAbi {
-  return getFrameworkAbi(chain, abiId);
+export const requireFrameworkAbi = getFrameworkAbi;
+
+function assertUnreachable(value: never): never {
+  throw new Error(`Unhandled contract id: ${String(value)}`);
 }

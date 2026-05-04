@@ -5,7 +5,12 @@ import movementTestnet from "../addresses/movement-testnet.json";
 import { CHAIN_IDS, FULLNODE_DEFAULTS } from "./chains";
 import { DeploymentError } from "./errors";
 import { CANOPY_REQUIRED, MERIDIAN_REQUIRED_STRATEGIES } from "./requirements";
-import type { ChainDeployment, ChainDeploymentInput, ChainName } from "./types";
+import type {
+  ChainDeployment,
+  ChainDeploymentInput,
+  ChainName,
+  DeploymentFeatures,
+} from "./types";
 
 const DEPLOYMENTS = {
   "movement-mainnet": movementMainnet as unknown as ChainDeploymentInput,
@@ -76,7 +81,7 @@ export function validateDeployment(input: ChainDeploymentInput): ChainDeployment
 }
 
 function validateFeatureRequirements(deployment: ChainDeployment): void {
-  if (deployment.features?.canopy) {
+  if (deployment.features.canopy) {
     requireAddress(deployment.canopy?.core, "canopy.core");
     requireAddress(deployment.canopy?.router, "canopy.router");
     requireAddressMapEntries(
@@ -91,13 +96,13 @@ function validateFeatureRequirements(deployment: ChainDeployment): void {
     );
   }
 
-  if (deployment.features?.rewards) {
+  if (deployment.features.rewards) {
     requireAddress(deployment.rewards?.module, "rewards.module");
     requireAddress(deployment.rewards?.router, "rewards.router");
     requireAddress(deployment.rewards?.batcher, "rewards.batcher");
   }
 
-  if (deployment.features?.almMeridian) {
+  if (deployment.features.almMeridian) {
     requireAddress(deployment.alm?.meridian?.vaults, "alm.meridian.vaults");
     requireAddress(deployment.alm?.meridian?.standard, "alm.meridian.standard");
     requireAddress(deployment.alm?.meridian?.registry, "alm.meridian.registry");
@@ -159,6 +164,7 @@ function withDeploymentDefaults(input: ChainDeploymentInput): ChainDeployment {
   return {
     ...input,
     fullnode: input.fullnode ?? FULLNODE_DEFAULTS[input.chain],
+    features: withFeatureDefaults(input.features),
   };
 }
 
@@ -178,6 +184,18 @@ function resolveDeploymentInput(chain: ChainName): ChainDeploymentInput {
   return deployment;
 }
 
+function withFeatureDefaults(
+  input: Partial<DeploymentFeatures> | undefined
+): DeploymentFeatures {
+  return {
+    canopy: input?.canopy ?? false,
+    rewards: input?.rewards ?? false,
+    almMeridian: input?.almMeridian ?? false,
+  };
+}
+
+// Keep this in sync with `packages/core/src/address.ts#isMoveAddress`.
+// Deployments stays independent from core so the package can be consumed standalone.
 function isMoveAddress(address: string): boolean {
   const input = address.startsWith("0x") ? address.slice(2) : address;
   return /^[0-9a-fA-F]{1,64}$/.test(input);

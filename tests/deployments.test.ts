@@ -22,9 +22,9 @@ describe("deployment registry", () => {
 
     expect(deployment.chainId).toBe(250);
     expect(deployment.fullnode).toBe("https://testnet.movementnetwork.xyz/v1");
-    expect(deployment.features?.canopy).toBe(false);
-    expect(deployment.features?.rewards).toBe(false);
-    expect(deployment.features?.almMeridian).toBe(false);
+    expect(deployment.features.canopy).toBe(false);
+    expect(deployment.features.rewards).toBe(false);
+    expect(deployment.features.almMeridian).toBe(false);
     expect(deployment.canopy).toBeUndefined();
     expect(deployment.rewards).toBeUndefined();
     expect(deployment.alm).toBeUndefined();
@@ -63,9 +63,9 @@ describe("deployment registry", () => {
   it("exposes Aptos testnet Canopy and rewards addresses", () => {
     const deployment = getDeployment("aptos-testnet");
 
-    expect(deployment.features?.canopy).toBe(true);
-    expect(deployment.features?.rewards).toBe(true);
-    expect(deployment.features?.almMeridian).toBe(false);
+    expect(deployment.features.canopy).toBe(true);
+    expect(deployment.features.rewards).toBe(true);
+    expect(deployment.features.almMeridian).toBe(false);
     expect(deployment.canopy?.router).toBe(
       "0x6db956973bb73aff8b6c3712a7b4fff18bfefd850cce81c558d20a7ab1fc37d9"
     );
@@ -86,9 +86,9 @@ describe("deployment registry", () => {
   it("exposes Aptos mainnet Meridian addresses", () => {
     const deployment = getDeployment("aptos-mainnet");
 
-    expect(deployment.features?.canopy).toBe(false);
-    expect(deployment.features?.rewards).toBe(false);
-    expect(deployment.features?.almMeridian).toBe(true);
+    expect(deployment.features.canopy).toBe(false);
+    expect(deployment.features.rewards).toBe(false);
+    expect(deployment.features.almMeridian).toBe(true);
     expect(deployment.alm?.meridian?.vaults).toBe(
       "0xeb57695cd494c59ea7b1356580f1e7d5666fd84827322369e21d712e22397b54"
     );
@@ -134,6 +134,17 @@ describe("deployment registry", () => {
     expect(validateDeployment(withoutFullnode).fullnode).toBe(
       "https://api.testnet.aptoslabs.com/v1"
     );
+  });
+
+  it("defaults missing feature flags to false", () => {
+    const withoutFeatures = structuredClone(getDeployment("aptos-testnet"));
+    delete (withoutFeatures as Partial<typeof withoutFeatures>).features;
+
+    expect(validateDeployment(withoutFeatures).features).toEqual({
+      canopy: false,
+      rewards: false,
+      almMeridian: false,
+    });
   });
 
   it("distinguishes nullable and required contract address lookup", () => {
