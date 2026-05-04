@@ -13,6 +13,19 @@
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "core": [
+        "dist/core.d.ts"
+      ],
+      "deployments": [
+        "dist/deployments.d.ts"
+      ],
+      "bindings": [
+        "dist/bindings.d.ts"
+      ]
+    }
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -46,7 +59,7 @@
     "registry": "https://registry.npmjs.org"
   },
   "scripts": {
-    "build": "tsup",
+    "build": "pnpm --filter @canopyhub/canopy-sdk-core run build && pnpm --filter @canopyhub/canopy-sdk-deployments run build && pnpm --filter @canopyhub/canopy-sdk-bindings run build && tsup",
     "dev": "tsup --watch",
     "test": "jest",
     "lint": "eslint \"packages/**/*.ts\"",
@@ -55,6 +68,7 @@
     "abi:check": "node scripts/abi/fetch-abis.mjs --check",
     "abi:check-local": "node scripts/abi/check-local-abis.mjs",
     "check:exports": "node scripts/ci/check-exports.mjs",
+    "check:imports": "node scripts/ci/check-imports.mjs",
     "validate:deployments": "node -e \"import('./dist/deployments.mjs').then(({listDeployments})=>{listDeployments(); console.log('deployments ok')})\"",
     "prepublishOnly": "pnpm run build"
   },

@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const [sdk, core, deployments, bindings] = await Promise.all([
   import("@canopyhub/canopy-sdk"),
@@ -10,6 +13,10 @@ const [sdk, core, deployments, bindings] = await Promise.all([
 
 assert.equal(typeof sdk.CanopySdk, "function");
 assert.equal(typeof sdk.createCanopySdk, "function");
+assert.equal(typeof sdk.getContract, "function");
+assert.equal(typeof sdk.requireContract, "function");
+assert.equal(typeof sdk.getCanopyStrategyContract, "function");
+assert.equal(typeof sdk.requireCanopyStrategyContract, "function");
 assert.equal(
   core.normalizeMoveAddress("0x1"),
   "0x0000000000000000000000000000000000000000000000000000000000000001"
@@ -37,5 +44,41 @@ assert.equal(
   bindings.getAbisForChain("movement-mainnet").meridianMedianStableV2.name,
   "median_stable_v2"
 );
+assert.deepEqual(bindings.getAbisForChain("movement-mainnet").canopyRouter.structs, []);
+
+const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const leafPackages = [
+  "packages/core/package.json",
+  "packages/deployments/package.json",
+  "packages/bindings/package.json",
+];
+
+for (const packagePath of leafPackages) {
+  const absolutePackagePath = path.join(rootDir, packagePath);
+  const packageDir = path.dirname(absolutePackagePath);
+  const manifest = JSON.parse(fs.readFileSync(absolutePackagePath, "utf8"));
+  const exportMap = manifest.exports["."];
+
+  assert.equal(
+    fs.existsSync(path.join(packageDir, manifest.main)),
+    true,
+    `${manifest.name} main target must exist`
+  );
+  assert.equal(
+    fs.existsSync(path.join(packageDir, manifest.module)),
+    true,
+    `${manifest.name} module target must exist`
+  );
+  assert.equal(
+    fs.existsSync(path.join(packageDir, exportMap.import)),
+    true,
+    `${manifest.name} import target must exist`
+  );
+  assert.equal(
+    fs.existsSync(path.join(packageDir, exportMap.require)),
+    true,
+    `${manifest.name} require target must exist`
+  );
+}
 
 console.log("package exports ok");
