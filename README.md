@@ -177,6 +177,99 @@ const deployment = getDeployment("movement-mainnet");
 // deployment.canopy.core, deployment.canopy.router, deployment.rewards.module, ...
 ```
 
+## Contract And ABI Lookup
+
+```typescript
+import {
+  getContract,
+  requireContract,
+  type ContractId,
+} from "@canopyhub/canopy-sdk";
+import { getContractAddress } from "@canopyhub/canopy-sdk/deployments";
+import { requireAbi } from "@canopyhub/canopy-sdk/bindings";
+
+const chain = "movement-mainnet";
+const contractId: ContractId = "canopy.router";
+
+const maybeAddress = getContractAddress(chain, contractId);
+const abi = requireAbi(chain, contractId);
+const resolved = requireContract(chain, contractId);
+const maybeResolved = getContract("movement-testnet", contractId);
+
+// resolved: { id, chain, address, abi, moduleName }
+// maybeResolved: null when the contract is not deployed on that supported chain
+```
+
+## Strategy Helpers
+
+```typescript
+import {
+  getCanopyStrategyContract,
+  getCanopyStrategyContractId,
+  getCanopyStrategyDisplayName,
+  inferCanopyStrategyProtocol,
+  requireCanopyStrategyContract,
+} from "@canopyhub/canopy-sdk";
+
+const protocol = inferCanopyStrategyProtocol(
+  "movement-mainnet",
+  "0xad1b34939f164ec6f6c0157da3a30bf9e5d408250978691872a79aa584852b85"
+);
+
+if (protocol) {
+  const contractId = getCanopyStrategyContractId(protocol);
+  const displayName = getCanopyStrategyDisplayName(protocol);
+  const maybeContract = getCanopyStrategyContract("movement-mainnet", protocol);
+  const contract = requireCanopyStrategyContract("movement-mainnet", protocol);
+}
+```
+
+## Shared Address Type
+
+```typescript
+import type { HexString } from "@canopyhub/canopy-sdk/core";
+import { normalizeMoveAddress } from "@canopyhub/canopy-sdk/core";
+
+const userAddress: HexString = normalizeMoveAddress("0x1");
+```
+
+## Missing Deployment Semantics
+
+Lookup-style APIs follow one rule consistently:
+
+- `get*` returns `undefined` or `null` when the chain is supported but the deployment or ABI is missing
+- `require*` throws when the chain is supported but the deployment or ABI is missing
+- unsupported chain names throw explicit errors rather than silently returning empty values
+
+```typescript
+import { getContractAddress, requireContractAddress } from "@canopyhub/canopy-sdk/deployments";
+
+const maybeRouter = getContractAddress("movement-testnet", "canopy.router");
+// undefined: movement-testnet is supported, but Canopy is not deployed there
+
+try {
+  requireContractAddress("movement-testnet", "canopy.router");
+} catch (error) {
+  console.error(error);
+}
+```
+
+## CLI-Style Consumption
+
+```typescript
+import type { HexString } from "@canopyhub/canopy-sdk/core";
+import { requireContract, inferCanopyStrategyProtocol } from "@canopyhub/canopy-sdk";
+import { getContractAddress } from "@canopyhub/canopy-sdk/deployments";
+import { requireAbi } from "@canopyhub/canopy-sdk/bindings";
+
+const vaultAddress = getContractAddress("movement-mainnet", "canopy.vault");
+const vaultContract = requireContract("movement-mainnet", "canopy.vault");
+const vaultAbi = requireAbi("movement-mainnet", "canopy.vault");
+
+const strategyAddress = "0xad1b34939f164ec6f6c0157da3a30bf9e5d408250978691872a79aa584852b85" as HexString;
+const strategyProtocol = inferCanopyStrategyProtocol("movement-mainnet", strategyAddress);
+```
+
 ## Error Handling
 
 ```typescript
