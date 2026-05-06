@@ -1395,7 +1395,6 @@ describe("CanopySdk", () => {
       asset0: 7n,
       asset1: 8n,
     });
-
     expect(
       meridian.buildDepositPayload({
         vaultAddress: "0x111",
@@ -1430,5 +1429,656 @@ describe("CanopySdk", () => {
         "3",
       ],
     });
+  });
+
+  it("uses movement helper modules for rewards and meridian batch views", async () => {
+    const client = createMovementMock({
+      "0x93c6d4852a37be13ec1487a60d32433e396b048ce634b4e8b9f60ff0dac365d2::helpers::batch_get_fa_balance":
+        (args: unknown[]) => {
+          expect(args).toEqual([
+            [
+              "0x0000000000000000000000000000000000000000000000000000000000000aaa",
+              "0x0000000000000000000000000000000000000000000000000000000000000bbb",
+            ],
+            "0x0000000000000000000000000000000000000000000000000000000000000111",
+          ]);
+
+          return [["5", "6"]];
+        },
+      "0x93c6d4852a37be13ec1487a60d32433e396b048ce634b4e8b9f60ff0dac365d2::helpers::batch_get_vault_balance":
+        (args: unknown[]) => {
+          expect(args).toEqual([
+            [
+              "0x0000000000000000000000000000000000000000000000000000000000000123",
+              "0x0000000000000000000000000000000000000000000000000000000000000456",
+            ],
+            "0x0000000000000000000000000000000000000000000000000000000000000111",
+          ]);
+
+          return [["7", "8"]];
+        },
+      "0x93c6d4852a37be13ec1487a60d32433e396b048ce634b4e8b9f60ff0dac365d2::helpers::batch_get_vault_base_metadata_and_balance":
+        (args: unknown[]) => {
+          expect(args).toEqual([
+            [
+              "0x0000000000000000000000000000000000000000000000000000000000000123",
+              "0x0000000000000000000000000000000000000000000000000000000000000456",
+            ],
+            "0x0000000000000000000000000000000000000000000000000000000000000111",
+          ]);
+
+          return [
+            ["0xaaa", "0xbbb"],
+            ["9", "10"],
+          ];
+        },
+      "0x93c6d4852a37be13ec1487a60d32433e396b048ce634b4e8b9f60ff0dac365d2::helpers::batch_get_vault_shares_metadata_and_balance":
+        (args: unknown[]) => {
+          expect(args).toEqual([
+            [
+              "0x0000000000000000000000000000000000000000000000000000000000000123",
+              "0x0000000000000000000000000000000000000000000000000000000000000456",
+            ],
+            "0x0000000000000000000000000000000000000000000000000000000000000111",
+          ]);
+
+          return [
+            ["0xccc", "0xddd"],
+            ["11", "12"],
+          ];
+        },
+      "0x93c6d4852a37be13ec1487a60d32433e396b048ce634b4e8b9f60ff0dac365d2::helpers::batch_get_vault_all_metadata_and_balance":
+        (args: unknown[]) => {
+          expect(args).toEqual([
+            [
+              "0x0000000000000000000000000000000000000000000000000000000000000123",
+              "0x0000000000000000000000000000000000000000000000000000000000000456",
+            ],
+            "0x0000000000000000000000000000000000000000000000000000000000000111",
+          ]);
+
+          return [
+            ["0xaaa", "0xbbb"],
+            ["13", "14"],
+            ["0xccc", "0xddd"],
+            ["15", "16"],
+          ];
+        },
+      "0x707462571715301b063d79c2cdb57c3bd1cfe2189889793b00077ceed86e0219::rewards_view::get_rewards_snapshot":
+        (args: unknown[]) => {
+          expect(args).toEqual([
+            { vec: ["0"] },
+            { vec: ["10"] },
+            {
+              vec: [
+                "0x0000000000000000000000000000000000000000000000000000000000000111",
+              ],
+            },
+          ]);
+
+          return [
+            [
+              {
+                staking_token: { inner: "0xaaa" },
+                reward_tokens: [{ inner: "0xbbb" }],
+                total_subscribed: "12",
+                staking_token_supply: { vec: ["34"] },
+                owner: "0x123",
+                pool_address: "0x456",
+              },
+            ],
+            {
+              vec: [[
+                {
+                  pool: { inner: "0x456" },
+                  is_subscribed: true,
+                  pool_staking_token: { inner: "0xaaa" },
+                  effective_staked_amount: "9",
+                  rewards: [
+                    {
+                      reward_token: { inner: "0xbbb" },
+                      earned_amount: "5",
+                      reward_per_token_paid: "7",
+                    },
+                  ],
+                },
+              ]],
+            },
+          ];
+        },
+      "0x707462571715301b063d79c2cdb57c3bd1cfe2189889793b00077ceed86e0219::rewards_view::get_pool_details":
+        (args: unknown[]) => {
+          expect(args).toEqual([
+            "0x0000000000000000000000000000000000000000000000000000000000000456",
+          ]);
+
+          return [
+            {
+              staking_token: { inner: "0xaaa" },
+              reward_tokens: [{ inner: "0xbbb" }, { inner: "0xccc" }],
+              total_subscribed: "12",
+              staking_token_supply: { vec: ["34"] },
+              owner: "0x123",
+              pool_address: "0x456",
+            },
+          ];
+        },
+      "0x707462571715301b063d79c2cdb57c3bd1cfe2189889793b00077ceed86e0219::rewards_view::get_reward_token_details":
+        (args: unknown[]) => {
+          expect(args).toEqual([
+            "0x0000000000000000000000000000000000000000000000000000000000000456",
+          ]);
+
+          return [[
+            {
+              distributor: "0x789",
+              duration: "259200",
+              last_update_time: "1741531542",
+              period_finish: "1741531543",
+              remaining_rewards: "11",
+              reward_per_token: "12",
+              reward_rate: "13",
+              token: { inner: "0xbbb" },
+              unallocated_rewards: "14",
+            },
+          ]];
+        },
+      "0x707462571715301b063d79c2cdb57c3bd1cfe2189889793b00077ceed86e0219::rewards_view::get_user_pool_positions_by_tokens":
+        (args: unknown[]) => {
+          expect(args).toEqual([
+            "0x0000000000000000000000000000000000000000000000000000000000000111",
+            [
+              "0x0000000000000000000000000000000000000000000000000000000000000aaa",
+              "0x0000000000000000000000000000000000000000000000000000000000000ccc",
+            ],
+            { vec: [] },
+            { vec: ["5"] },
+          ]);
+
+          return [[
+            {
+              pool: { inner: "0x456" },
+              is_subscribed: false,
+              pool_staking_token: { inner: "0xaaa" },
+              effective_staked_amount: "15",
+              rewards: [
+                {
+                  reward_token: { inner: "0xbbb" },
+                  earned_amount: "2",
+                  reward_per_token_paid: "3",
+                },
+              ],
+            },
+          ]];
+        },
+      "0x707462571715301b063d79c2cdb57c3bd1cfe2189889793b00077ceed86e0219::rewards_view::get_user_pool_positions":
+        (args: unknown[]) => {
+          expect(args).toEqual([
+            "0x0000000000000000000000000000000000000000000000000000000000000111",
+            { vec: ["1"] },
+            { vec: ["2"] },
+          ]);
+
+          return [[
+            {
+              pool: { inner: "0x999" },
+              is_subscribed: true,
+              pool_staking_token: { inner: "0xddd" },
+              effective_staked_amount: "21",
+              rewards: [],
+            },
+          ]];
+        },
+      "0x707462571715301b063d79c2cdb57c3bd1cfe2189889793b00077ceed86e0219::rewards_view::get_registry_overview":
+        (args: unknown[]) => {
+          expect(args).toEqual([{ vec: ["1"] }, { vec: ["2"] }, false]);
+
+          return [
+            "1778006540",
+            true,
+            false,
+            false,
+            { vec: [] },
+          ];
+        },
+      "0x707462571715301b063d79c2cdb57c3bd1cfe2189889793b00077ceed86e0219::rewards_view::get_registered_pool_count":
+        (args: unknown[]) => {
+          expect(args).toEqual([]);
+          return ["42"];
+        },
+      "0x707462571715301b063d79c2cdb57c3bd1cfe2189889793b00077ceed86e0219::rewards_view::get_user_pool_positions_by_token":
+        (args: unknown[]) => {
+          expect(args).toEqual([
+            "0x0000000000000000000000000000000000000000000000000000000000000111",
+            "0x0000000000000000000000000000000000000000000000000000000000000aaa",
+            { vec: ["3"] },
+            { vec: ["4"] },
+          ]);
+
+          return [[
+            {
+              pool: { inner: "0x777" },
+              is_subscribed: true,
+              pool_staking_token: { inner: "0xaaa" },
+              effective_staked_amount: "33",
+              rewards: [
+                {
+                  reward_token: { inner: "0xbbb" },
+                  earned_amount: "8",
+                  reward_per_token_paid: "9",
+                },
+              ],
+            },
+          ]];
+        },
+      "0xc5f874798691b514476ed1c3c6dd2a4931066f86ba70bd56820da586a84a8b0a::batch_views::batch_get_vault_info":
+        (args: unknown[]) => {
+          expect(args).toEqual([[
+            "0x0000000000000000000000000000000000000000000000000000000000000111",
+            "0x0000000000000000000000000000000000000000000000000000000000000222",
+          ]]);
+
+          return [[
+            {
+              vec: [
+                {
+                  total_0: "10",
+                  total_1: "20",
+                  total_shares: "30",
+                  share_price_e18: "40",
+                  share_name: "Meridian Vault Share",
+                  share_symbol: "MVS",
+                  share_decimals: "8",
+                  deposit_asset: { inner: "0xaaa" },
+                  quote_asset: { inner: "0xbbb" },
+                },
+              ],
+            },
+            { vec: [] },
+          ]];
+        },
+      "0xc5f874798691b514476ed1c3c6dd2a4931066f86ba70bd56820da586a84a8b0a::batch_views::batch_get_user_balances":
+        (args: unknown[]) => {
+          expect(args).toEqual([
+            [
+              "0x0000000000000000000000000000000000000000000000000000000000000111",
+              "0x0000000000000000000000000000000000000000000000000000000000000222",
+            ],
+            "0x0000000000000000000000000000000000000000000000000000000000000333",
+          ]);
+
+          return [[
+            {
+              vec: [
+                {
+                  share_balance: "99",
+                  value_in_deposit_asset_e18: "123456",
+                },
+              ],
+            },
+            { vec: [] },
+          ]];
+        },
+      "0xc5f874798691b514476ed1c3c6dd2a4931066f86ba70bd56820da586a84a8b0a::batch_views::batch_get_vault_positions":
+        (args: unknown[]) => {
+          expect(args).toEqual([[
+            "0x0000000000000000000000000000000000000000000000000000000000000111",
+            "0x0000000000000000000000000000000000000000000000000000000000000222",
+          ]]);
+
+          return [[
+            {
+              vec: [[
+                {
+                  lower_tick_neg: true,
+                  lower_tick_abs: "15",
+                  upper_tick_neg: false,
+                  upper_tick_abs: "25",
+                  liquidity: "100",
+                  amount_0: "7",
+                  amount_1: "8",
+                },
+              ]],
+            },
+            { vec: [] },
+          ]];
+        },
+      "0x707462571715301b063d79c2cdb57c3bd1cfe2189889793b00077ceed86e0219::rewards_view::is_pool_registered":
+        (args: unknown[]) => {
+          expect(args).toEqual([
+            "0x0000000000000000000000000000000000000000000000000000000000000456",
+          ]);
+
+          return [true];
+        },
+    });
+    const sdk = new CanopySdk(client as never, { chain: "movement-mainnet" });
+
+    await expect(
+      sdk.canopy?.getBatchFungibleAssetBalances(["0xaaa", "0xbbb"], "0x111")
+    ).resolves.toEqual([
+      {
+        metadataAddress:
+          "0x0000000000000000000000000000000000000000000000000000000000000aaa",
+        balance: 5n,
+      },
+      {
+        metadataAddress:
+          "0x0000000000000000000000000000000000000000000000000000000000000bbb",
+        balance: 6n,
+      },
+    ]);
+
+    await expect(
+      sdk.canopy?.getBatchVaultSharesBalances(["0x123", "0x456"], "0x111")
+    ).resolves.toEqual([
+      {
+        vaultAddress:
+          "0x0000000000000000000000000000000000000000000000000000000000000123",
+        balance: 7n,
+      },
+      {
+        vaultAddress:
+          "0x0000000000000000000000000000000000000000000000000000000000000456",
+        balance: 8n,
+      },
+    ]);
+
+    await expect(
+      sdk.canopy?.getBatchVaultBaseMetadataAndBalances(["0x123", "0x456"], "0x111")
+    ).resolves.toEqual([
+      {
+        vaultAddress:
+          "0x0000000000000000000000000000000000000000000000000000000000000123",
+        metadataAddress:
+          "0x0000000000000000000000000000000000000000000000000000000000000aaa",
+        balance: 9n,
+      },
+      {
+        vaultAddress:
+          "0x0000000000000000000000000000000000000000000000000000000000000456",
+        metadataAddress:
+          "0x0000000000000000000000000000000000000000000000000000000000000bbb",
+        balance: 10n,
+      },
+    ]);
+
+    await expect(
+      sdk.canopy?.getBatchVaultSharesMetadataAndBalances(["0x123", "0x456"], "0x111")
+    ).resolves.toEqual([
+      {
+        vaultAddress:
+          "0x0000000000000000000000000000000000000000000000000000000000000123",
+        metadataAddress:
+          "0x0000000000000000000000000000000000000000000000000000000000000ccc",
+        balance: 11n,
+      },
+      {
+        vaultAddress:
+          "0x0000000000000000000000000000000000000000000000000000000000000456",
+        metadataAddress:
+          "0x0000000000000000000000000000000000000000000000000000000000000ddd",
+        balance: 12n,
+      },
+    ]);
+
+    await expect(
+      sdk.canopy?.getBatchVaultAllMetadataAndBalances(["0x123", "0x456"], "0x111")
+    ).resolves.toEqual([
+      {
+        vaultAddress:
+          "0x0000000000000000000000000000000000000000000000000000000000000123",
+        baseMetadataAddress:
+          "0x0000000000000000000000000000000000000000000000000000000000000aaa",
+        baseBalance: 13n,
+        sharesMetadataAddress:
+          "0x0000000000000000000000000000000000000000000000000000000000000ccc",
+        sharesBalance: 15n,
+      },
+      {
+        vaultAddress:
+          "0x0000000000000000000000000000000000000000000000000000000000000456",
+        baseMetadataAddress:
+          "0x0000000000000000000000000000000000000000000000000000000000000bbb",
+        baseBalance: 14n,
+        sharesMetadataAddress:
+          "0x0000000000000000000000000000000000000000000000000000000000000ddd",
+        sharesBalance: 16n,
+      },
+    ]);
+
+    await expect(
+      sdk.rewards?.getRewardsSnapshot({
+        offset: 0,
+        limit: 10,
+        userAddress: "0x111",
+      })
+    ).resolves.toEqual({
+      pools: [
+        {
+          owner: "0x0000000000000000000000000000000000000000000000000000000000000123",
+          poolAddress:
+            "0x0000000000000000000000000000000000000000000000000000000000000456",
+          rewardTokenAddresses: [
+            "0x0000000000000000000000000000000000000000000000000000000000000bbb",
+          ],
+          stakingAsset:
+            "0x0000000000000000000000000000000000000000000000000000000000000aaa",
+          stakingTokenSupply: 34n,
+          totalSubscribed: 12n,
+        },
+      ],
+      userPositions: [
+        {
+          effectiveStakedAmount: 9n,
+          isSubscribed: true,
+          poolAddress:
+            "0x0000000000000000000000000000000000000000000000000000000000000456",
+          rewards: [
+            {
+              earnedAmount: 5n,
+              rewardPerTokenPaid: 7n,
+              rewardTokenAddress:
+                "0x0000000000000000000000000000000000000000000000000000000000000bbb",
+            },
+          ],
+          stakingAsset:
+            "0x0000000000000000000000000000000000000000000000000000000000000aaa",
+        },
+      ],
+    });
+
+    await expect(
+      sdk.rewards?.getUserPoolPositionsByTokens({
+        userAddress: "0x111",
+        stakingAssets: ["0xaaa", "0xccc"],
+        limit: 5,
+      })
+    ).resolves.toEqual([
+      {
+        effectiveStakedAmount: 15n,
+        isSubscribed: false,
+        poolAddress:
+          "0x0000000000000000000000000000000000000000000000000000000000000456",
+        rewards: [
+          {
+            earnedAmount: 2n,
+            rewardPerTokenPaid: 3n,
+            rewardTokenAddress:
+              "0x0000000000000000000000000000000000000000000000000000000000000bbb",
+          },
+        ],
+        stakingAsset:
+          "0x0000000000000000000000000000000000000000000000000000000000000aaa",
+      },
+    ]);
+
+    await expect(sdk.rewards?.getPoolDetails("0x456")).resolves.toEqual({
+      owner: "0x0000000000000000000000000000000000000000000000000000000000000123",
+      poolAddress:
+        "0x0000000000000000000000000000000000000000000000000000000000000456",
+      rewardTokenAddresses: [
+        "0x0000000000000000000000000000000000000000000000000000000000000bbb",
+        "0x0000000000000000000000000000000000000000000000000000000000000ccc",
+      ],
+      stakingAsset:
+        "0x0000000000000000000000000000000000000000000000000000000000000aaa",
+      stakingTokenSupply: 34n,
+      totalSubscribed: 12n,
+    });
+
+    await expect(sdk.rewards?.getRewardTokenDetails("0x456")).resolves.toEqual([
+      {
+        distributor:
+          "0x0000000000000000000000000000000000000000000000000000000000000789",
+        duration: 259200n,
+        lastUpdateTime: 1741531542n,
+        periodFinish: 1741531543n,
+        remainingRewards: 11n,
+        rewardPerToken: 12n,
+        rewardRate: 13n,
+        rewardTokenAddress:
+          "0x0000000000000000000000000000000000000000000000000000000000000bbb",
+        unallocatedRewards: 14n,
+      },
+    ]);
+
+    await expect(sdk.rewards?.getRegisteredPoolCount()).resolves.toBe(42n);
+
+    await expect(
+      sdk.rewards?.getUserPoolPositions({
+        userAddress: "0x111",
+        offset: 1,
+        limit: 2,
+      })
+    ).resolves.toEqual([
+      {
+        effectiveStakedAmount: 21n,
+        isSubscribed: true,
+        poolAddress:
+          "0x0000000000000000000000000000000000000000000000000000000000000999",
+        rewards: [],
+        stakingAsset:
+          "0x0000000000000000000000000000000000000000000000000000000000000ddd",
+      },
+    ]);
+
+    await expect(
+      sdk.rewards?.getUserPoolPositionsByToken({
+        userAddress: "0x111",
+        stakingAsset: "0xaaa",
+        offset: 3,
+        limit: 4,
+      })
+    ).resolves.toEqual([
+      {
+        effectiveStakedAmount: 33n,
+        isSubscribed: true,
+        poolAddress:
+          "0x0000000000000000000000000000000000000000000000000000000000000777",
+        rewards: [
+          {
+            earnedAmount: 8n,
+            rewardPerTokenPaid: 9n,
+            rewardTokenAddress:
+              "0x0000000000000000000000000000000000000000000000000000000000000bbb",
+          },
+        ],
+        stakingAsset:
+          "0x0000000000000000000000000000000000000000000000000000000000000aaa",
+      },
+    ]);
+
+    await expect(
+      sdk.rewards?.getRegistryOverview({
+        offset: 1,
+        limit: 2,
+        includePools: false,
+      })
+    ).resolves.toEqual({
+      pools: null,
+      poolsIncluded: false,
+      snapshotTimestamp: 1778006540n,
+      statusFlags: [true, false],
+    });
+
+    await expect(
+      sdk.rewards?.getUserRewardsOverview({
+        userAddress: "0x111",
+        offset: 1,
+        limit: 2,
+        includePools: false,
+      })
+    ).resolves.toEqual({
+      pools: null,
+      poolsIncluded: false,
+      snapshotTimestamp: 1778006540n,
+      statusFlags: [true, false],
+      userPositions: [
+        {
+          effectiveStakedAmount: 21n,
+          isSubscribed: true,
+          poolAddress:
+            "0x0000000000000000000000000000000000000000000000000000000000000999",
+          rewards: [],
+          stakingAsset:
+            "0x0000000000000000000000000000000000000000000000000000000000000ddd",
+        },
+      ],
+    });
+
+    await expect(sdk.rewards?.isPoolRegistered("0x456")).resolves.toBe(true);
+
+    await expect(
+      sdk.alm.meridian?.getBatchVaultInfo(["0x111", "0x222"])
+    ).resolves.toEqual([
+      {
+        depositAssetAddress:
+          "0x0000000000000000000000000000000000000000000000000000000000000aaa",
+        quoteAssetAddress:
+          "0x0000000000000000000000000000000000000000000000000000000000000bbb",
+        shareDecimals: 8,
+        shareName: "Meridian Vault Share",
+        sharePriceE18: 40n,
+        shareSymbol: "MVS",
+        total0: 10n,
+        total1: 20n,
+        totalShares: 30n,
+        vaultAddress:
+          "0x0000000000000000000000000000000000000000000000000000000000000111",
+      },
+      null,
+    ]);
+
+    await expect(
+      sdk.alm.meridian?.getBatchUserVaultBalances(["0x111", "0x222"], "0x333")
+    ).resolves.toEqual([
+      {
+        shareBalance: 99n,
+        valueInDepositAssetE18: 123456n,
+        vaultAddress:
+          "0x0000000000000000000000000000000000000000000000000000000000000111",
+      },
+      null,
+    ]);
+
+    await expect(
+      sdk.alm.meridian?.getBatchVaultPositions(["0x111", "0x222"])
+    ).resolves.toEqual([
+      {
+        positions: [
+          {
+            amount0: 7n,
+            amount1: 8n,
+            liquidity: 100n,
+            lowerTick: -15n,
+            upperTick: 25n,
+          },
+        ],
+        vaultAddress:
+          "0x0000000000000000000000000000000000000000000000000000000000000111",
+      },
+      null,
+    ]);
   });
 });

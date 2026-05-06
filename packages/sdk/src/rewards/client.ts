@@ -12,6 +12,7 @@ import {
   readMoveAddress,
   readMoveAddressVector,
   readMoveBool,
+  readMoveOption,
   readMoveU128,
   readMoveU64,
 } from "../internal/move-readers";
@@ -30,11 +31,23 @@ import type {
   BuildVaultSharesStakePayloadInput,
   GetRewardsEarnedInput,
   GetUnsubscribedPoolsInput,
-  GetUserStakedBalanceInput,
   GetUserSubscribedPoolsInput,
+  GetUserStakedBalanceInput,
   PendingReward,
   RewardData,
+  RewardsRegistryOverview,
+  RewardsRegistryOverviewInput,
+  RewardsPoolDetails,
   RewardsPoolInfo,
+  RewardsRewardTokenDetails,
+  RewardsSnapshot,
+  RewardsSnapshotInput,
+  RewardsUserPoolPosition,
+  RewardsUserRewardsOverview,
+  RewardsUserRewardsOverviewInput,
+  RewardsUserPoolPositionsInput,
+  RewardsUserPoolPositionsByTokenInput,
+  RewardsUserPoolPositionsByTokensInput,
   UserStakingPosition,
 } from "./types";
 
@@ -273,6 +286,213 @@ export class RewardsClient {
     };
   }
 
+  async getPoolDetails(poolAddress: string): Promise<RewardsPoolDetails> {
+    const rewardsView = this.getRewardsViewAbi();
+    const pool = await callSingleViewResult(
+      this.context.client,
+      {
+        moduleAddress: rewardsView.address,
+        moduleName: rewardsView.name,
+        functionName: "get_pool_details",
+        functionArguments: [normalizeMoveAddress(poolAddress)],
+      }
+    );
+
+    return readPoolDetails(pool);
+  }
+
+  async getRewardTokenDetails(
+    poolAddress: string
+  ): Promise<RewardsRewardTokenDetails[]> {
+    const rewardsView = this.getRewardsViewAbi();
+    const rewardTokens = await callSingleViewResult(
+      this.context.client,
+      {
+        moduleAddress: rewardsView.address,
+        moduleName: rewardsView.name,
+        functionName: "get_reward_token_details",
+        functionArguments: [normalizeMoveAddress(poolAddress)],
+      }
+    );
+
+    return readRewardTokenDetailsVector(rewardTokens);
+  }
+
+  async getRewardsSnapshot(
+    input: RewardsSnapshotInput = {}
+  ): Promise<RewardsSnapshot> {
+    const rewardsView = this.getRewardsViewAbi();
+    const [pools, userPositions] = await callViewFunction<[unknown, unknown]>(
+      this.context.client,
+      {
+        moduleAddress: rewardsView.address,
+        moduleName: rewardsView.name,
+        functionName: "get_rewards_snapshot",
+        functionArguments: [
+          moveOptionU64Argument(input.offset),
+          moveOptionU64Argument(input.limit),
+          moveOptionAddressArgument(input.userAddress),
+        ] as never,
+      }
+    );
+
+    return {
+      pools: readPoolDetailsVector(pools),
+      userPositions: readMoveOption(userPositions, readUserPoolPositionVector),
+    };
+  }
+
+  async getRegistryOverview(
+    input: RewardsRegistryOverviewInput = {}
+  ): Promise<RewardsRegistryOverview> {
+    const rewardsView = this.getRewardsViewAbi();
+    const [snapshotTimestamp, statusFlag0, statusFlag1, poolsIncluded, pools] =
+      await callViewFunction<[unknown, unknown, unknown, unknown, unknown]>(
+        this.context.client,
+        {
+          moduleAddress: rewardsView.address,
+          moduleName: rewardsView.name,
+          functionName: "get_registry_overview",
+          functionArguments: [
+            moveOptionU64Argument(input.offset),
+            moveOptionU64Argument(input.limit),
+            input.includePools ?? true,
+          ] as never,
+        }
+      );
+
+    return {
+      pools: readMoveOption(pools, readPoolDetailsVector),
+      poolsIncluded: readMoveBool(poolsIncluded),
+      snapshotTimestamp: readMoveU64(snapshotTimestamp),
+      statusFlags: [
+        readMoveBool(statusFlag0),
+        readMoveBool(statusFlag1),
+      ] as const,
+    };
+  }
+
+  async getRegisteredPoolCount(): Promise<bigint> {
+    const rewardsView = this.getRewardsViewAbi();
+    const count = await callSingleViewResult(
+      this.context.client,
+      {
+        moduleAddress: rewardsView.address,
+        moduleName: rewardsView.name,
+        functionName: "get_registered_pool_count",
+      }
+    );
+
+    return readMoveU64(count);
+  }
+
+  async getUserPoolPositions(
+    input: RewardsUserPoolPositionsInput
+  ): Promise<RewardsUserPoolPosition[]> {
+    const rewardsView = this.getRewardsViewAbi();
+    const positions = await callSingleViewResult(
+      this.context.client,
+      {
+        moduleAddress: rewardsView.address,
+        moduleName: rewardsView.name,
+        functionName: "get_user_pool_positions",
+        functionArguments: [
+          normalizeMoveAddress(input.userAddress),
+          moveOptionU64Argument(input.offset),
+          moveOptionU64Argument(input.limit),
+        ] as never,
+      }
+    );
+
+    return readUserPoolPositionVector(positions);
+  }
+
+  async getUserPoolPositionsByToken(
+    input: RewardsUserPoolPositionsByTokenInput
+  ): Promise<RewardsUserPoolPosition[]> {
+    const rewardsView = this.getRewardsViewAbi();
+    const positions = await callSingleViewResult(
+      this.context.client,
+      {
+        moduleAddress: rewardsView.address,
+        moduleName: rewardsView.name,
+        functionName: "get_user_pool_positions_by_token",
+        functionArguments: [
+          normalizeMoveAddress(input.userAddress),
+          normalizeMoveAddress(input.stakingAsset),
+          moveOptionU64Argument(input.offset),
+          moveOptionU64Argument(input.limit),
+        ] as never,
+      }
+    );
+
+    return readUserPoolPositionVector(positions);
+  }
+
+  async getUserPoolPositionsByTokens(
+    input: RewardsUserPoolPositionsByTokensInput
+  ): Promise<RewardsUserPoolPosition[]> {
+    const rewardsView = this.getRewardsViewAbi();
+    const positions = await callSingleViewResult(
+      this.context.client,
+      {
+        moduleAddress: rewardsView.address,
+        moduleName: rewardsView.name,
+        functionName: "get_user_pool_positions_by_tokens",
+        functionArguments: [
+          normalizeMoveAddress(input.userAddress),
+          input.stakingAssets.map(normalizeMoveAddress),
+          moveOptionU64Argument(input.offset),
+          moveOptionU64Argument(input.limit),
+        ] as never,
+      }
+    );
+
+    return readUserPoolPositionVector(positions);
+  }
+
+  async isPoolRegistered(poolAddress: string): Promise<boolean> {
+    const rewardsView = this.getRewardsViewAbi();
+    const registered = await callSingleViewResult(
+      this.context.client,
+      {
+        moduleAddress: rewardsView.address,
+        moduleName: rewardsView.name,
+        functionName: "is_pool_registered",
+        functionArguments: [normalizeMoveAddress(poolAddress)],
+      }
+    );
+
+    return readMoveBool(registered);
+  }
+
+  async getUserRewardsOverview(
+    input: RewardsUserRewardsOverviewInput
+  ): Promise<RewardsUserRewardsOverview> {
+    const pagination =
+      input.limit === undefined && input.offset === undefined
+        ? {}
+        : {
+            ...(input.limit === undefined ? {} : { limit: input.limit }),
+            ...(input.offset === undefined ? {} : { offset: input.offset }),
+          };
+    const [registry, userPositions] = await Promise.all([
+      this.getRegistryOverview({
+        ...pagination,
+        ...(input.includePools === undefined ? {} : { includePools: input.includePools }),
+      }),
+      this.getUserPoolPositions({
+        userAddress: input.userAddress,
+        ...pagination,
+      }),
+    ]);
+
+    return {
+      ...registry,
+      userPositions,
+    };
+  }
+
   async getUnsubscribedPools(input: GetUnsubscribedPoolsInput): Promise<string[]> {
     const subscriptionResults = await Promise.all(
       input.poolAddresses.map(async (poolAddress) => {
@@ -461,4 +681,119 @@ export class RewardsClient {
         })
       : discoveredPools;
   }
+
+  private getRewardsViewAbi() {
+    const abi = this.context.abis.canopyRewardsView;
+
+    if (!abi) {
+      throw new CanopyError(
+        "Rewards batch views are not available on this chain",
+        CanopyErrorCode.InvalidDeployment,
+        { chain: this.context.chain }
+      );
+    }
+
+    return abi;
+  }
+}
+
+function readPoolDetailsVector(value: unknown): RewardsPoolDetails[] {
+  if (!Array.isArray(value)) {
+    throw new CanopyError("Expected pool details vector", CanopyErrorCode.ViewCallFailed, {
+      valueType: typeof value,
+    });
+  }
+
+  return value.map(readPoolDetails);
+}
+
+function readRewardTokenDetailsVector(value: unknown): RewardsRewardTokenDetails[] {
+  if (!Array.isArray(value)) {
+    throw new CanopyError(
+      "Expected reward token details vector",
+      CanopyErrorCode.ViewCallFailed,
+      { valueType: typeof value }
+    );
+  }
+
+  return value.map(readRewardTokenDetails);
+}
+
+function readPoolDetails(value: unknown): RewardsPoolDetails {
+  const pool = value as Record<string, unknown>;
+
+  return {
+    owner: readMoveAddress(pool.owner),
+    poolAddress: readMoveAddress(pool.pool_address),
+    rewardTokenAddresses: readMoveAddressVector(pool.reward_tokens),
+    stakingAsset: readMoveAddress(pool.staking_token),
+    stakingTokenSupply: readMoveOption(pool.staking_token_supply, readMoveU128),
+    totalSubscribed: readMoveU64(pool.total_subscribed),
+  };
+}
+
+function readRewardTokenDetails(value: unknown): RewardsRewardTokenDetails {
+  const reward = value as Record<string, unknown>;
+
+  return {
+    distributor: readMoveAddress(reward.distributor),
+    duration: readMoveU64(reward.duration),
+    lastUpdateTime: readMoveU64(reward.last_update_time),
+    periodFinish: readMoveU64(reward.period_finish),
+    remainingRewards: readMoveU128(reward.remaining_rewards),
+    rewardPerToken: readMoveU128(reward.reward_per_token),
+    rewardRate: readMoveU128(reward.reward_rate),
+    rewardTokenAddress: readMoveAddress(reward.token),
+    unallocatedRewards: readMoveU128(reward.unallocated_rewards),
+  };
+}
+
+function readUserPoolPositionVector(value: unknown): RewardsUserPoolPosition[] {
+  if (!Array.isArray(value)) {
+    throw new CanopyError(
+      "Expected user pool position vector",
+      CanopyErrorCode.ViewCallFailed,
+      { valueType: typeof value }
+    );
+  }
+
+  return value.map(readUserPoolPosition);
+}
+
+function readUserPoolPosition(value: unknown): RewardsUserPoolPosition {
+  const position = value as Record<string, unknown>;
+
+  return {
+    effectiveStakedAmount: readMoveU64(position.effective_staked_amount),
+    isSubscribed: readMoveBool(position.is_subscribed),
+    poolAddress: readMoveAddress(position.pool),
+    rewards: readUserRewardVector(position.rewards),
+    stakingAsset: readMoveAddress(position.pool_staking_token),
+  };
+}
+
+function readUserRewardVector(value: unknown): RewardsUserPoolPosition["rewards"] {
+  if (!Array.isArray(value)) {
+    throw new CanopyError("Expected user rewards vector", CanopyErrorCode.ViewCallFailed, {
+      valueType: typeof value,
+    });
+  }
+
+  return value.map((reward) => {
+    const item = reward as Record<string, unknown>;
+
+    return {
+      earnedAmount: readMoveU64(item.earned_amount),
+      rewardPerTokenPaid: readMoveU128(item.reward_per_token_paid),
+      rewardTokenAddress: readMoveAddress(item.reward_token),
+    };
+  });
+}
+
+function moveOptionU64Argument(value: bigint | number | undefined): { vec: string[] } {
+  return value === undefined ? { vec: [] } : { vec: [moveUintArgument(value)] };
+}
+
+function moveOptionAddressArgument(value: string | undefined): { vec: string[] } {
+  return value === undefined ? { vec: [] } : { vec: [normalizeMoveAddress(value)] };
 }

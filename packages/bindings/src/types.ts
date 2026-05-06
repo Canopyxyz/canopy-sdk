@@ -41,6 +41,8 @@ export interface CanopyAbiSet {
   canopySatay: MoveModuleAbi;
   canopyProtocol: MoveModuleAbi;
   canopyBaseStrategy: MoveModuleAbi;
+  canopyHelpers?: MoveModuleAbi;
+  canopyRewardsView?: MoveModuleAbi;
   multiRewards: MoveModuleAbi;
   multiRewardsRouter: MoveModuleAbi;
   multiRewardsBatcherView: MoveModuleAbi;
@@ -58,6 +60,7 @@ export interface MeridianAbiSet {
   meridianRouter: MoveModuleAbi;
   meridianVault: MoveModuleAbi;
   meridianRegistry: MoveModuleAbi;
+  meridianBatchViews?: MoveModuleAbi;
   meridianRegularV4?: MoveModuleAbi;
   meridianRegularV4Entry?: MoveModuleAbi;
   meridianMedianStableV2?: MoveModuleAbi;

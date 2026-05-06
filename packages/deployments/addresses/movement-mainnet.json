@@ -34,6 +34,7 @@
       "vaults": "0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83",
       "standard": "0xec1daab2836431755e13aadec864bccf552dfe7c846b5684b60238394dc91326",
       "registry": "0x3b0710d1a0a14a38e2059fc9562f875a1a275a580b7c43c019e68be5a8ae1741",
+      "batchViews": "0xc5f874798691b514476ed1c3c6dd2a4931066f86ba70bd56820da586a84a8b0a",
       "strategies": {
         "regularV4": "0x6360db298cb2068064ab89b4c27c1df3e26971994d40f2d7ccf6f8f8e6808607",
         "medianStableV2": "0xce4cb4a684e38346910686cf63fcbb9f3678c2b2fdd9d297bd375e617cee5cee"

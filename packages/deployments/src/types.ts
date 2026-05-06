@@ -53,6 +53,7 @@ export interface MeridianAlmDeployment {
   vaults: HexString;
   standard: HexString;
   registry: HexString;
+  batchViews?: HexString;
   strategies: StrategyDeploymentMap;
 }
 

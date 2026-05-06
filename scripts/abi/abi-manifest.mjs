@@ -55,6 +55,18 @@ export const ABI_MANIFEST = {
       moduleName: "std_views",
     },
     {
+      key: "canopyRewardsView",
+      file: "canopy_rewards_view.json",
+      addressPath: ["canopy", "views"],
+      moduleName: "rewards_view",
+    },
+    {
+      key: "canopyHelpers",
+      file: "canopy_helpers.json",
+      addressPath: ["canopy", "helpers"],
+      moduleName: "helpers",
+    },
+    {
       key: "canopyStrategyEchelonSimple",
       file: "canopy_strategy_echelon_simple.json",
       addressPath: ["canopy", "strategies", "echelonSimple"],
@@ -95,6 +107,12 @@ export const ABI_MANIFEST = {
       file: "meridian_router.json",
       addressPath: ["alm", "meridian", "vaults"],
       moduleName: "router",
+    },
+    {
+      key: "meridianBatchViews",
+      file: "meridian_batch_views.json",
+      addressPath: ["alm", "meridian", "batchViews"],
+      moduleName: "batch_views",
     },
     {
       key: "meridianVault",

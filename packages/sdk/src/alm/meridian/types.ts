@@ -43,3 +43,35 @@ export interface ListMeridianVaultsInput {
   limit?: bigint | number;
   offset?: bigint | number;
 }
+
+export interface MeridianBatchVaultInfo {
+  depositAssetAddress: string;
+  quoteAssetAddress: string;
+  shareDecimals: number;
+  shareName: string;
+  sharePriceE18: bigint;
+  shareSymbol: string;
+  total0: bigint;
+  total1: bigint;
+  totalShares: bigint;
+  vaultAddress: string;
+}
+
+export interface MeridianBatchUserVaultBalance {
+  shareBalance: bigint;
+  valueInDepositAssetE18: bigint;
+  vaultAddress: string;
+}
+
+export interface MeridianBatchPositionSummary {
+  amount0: bigint;
+  amount1: bigint;
+  liquidity: bigint;
+  lowerTick: bigint;
+  upperTick: bigint;
+}
+
+export interface MeridianBatchVaultPositions {
+  positions: MeridianBatchPositionSummary[];
+  vaultAddress: string;
+}

@@ -58,6 +58,30 @@ export interface CanopyUserVaultPosition {
   vaultAddress: string;
 }
 
+export interface CanopyBatchMetadataBalance {
+  balance: bigint;
+  metadataAddress: string;
+}
+
+export interface CanopyBatchVaultBalance {
+  balance: bigint;
+  vaultAddress: string;
+}
+
+export interface CanopyBatchVaultMetadataBalance {
+  balance: bigint;
+  metadataAddress: string;
+  vaultAddress: string;
+}
+
+export interface CanopyBatchVaultAllMetadataBalance {
+  baseBalance: bigint;
+  baseMetadataAddress: string;
+  sharesBalance: bigint;
+  sharesMetadataAddress: string;
+  vaultAddress: string;
+}
+
 export interface CanopyVaultAllocation {
   amounts: bigint[];
   operation: "deposit" | "withdraw";

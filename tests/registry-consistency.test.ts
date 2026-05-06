@@ -90,6 +90,18 @@ describe("deployment and ABI registry consistency", () => {
         deployment.rewards?.stdBatcher,
         `${deployment.chain}: rewards.stdBatcher`
       );
+      expectOptionalAbiAddress(
+        abis,
+        "canopyRewardsView",
+        deployment.canopy?.views,
+        `${deployment.chain}: canopy.views`
+      );
+      expectOptionalAbiAddress(
+        abis,
+        "canopyHelpers",
+        deployment.canopy?.helpers,
+        `${deployment.chain}: canopy.helpers`
+      );
 
       expectOptionalAbiAddress(
         abis,
@@ -152,6 +164,12 @@ describe("deployment and ABI registry consistency", () => {
         "meridianRegistry",
         meridian?.registry,
         `${deployment.chain}: alm.meridian.registry`
+      );
+      expectOptionalAbiAddress(
+        abis,
+        "meridianBatchViews",
+        meridian?.batchViews,
+        `${deployment.chain}: alm.meridian.batchViews`
       );
       expectOptionalAbiAddress(
         abis,

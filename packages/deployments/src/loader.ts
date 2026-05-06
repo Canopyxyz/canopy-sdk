@@ -70,6 +70,10 @@ export function validateDeployment(input: ChainDeploymentInput): ChainDeployment
     deployment.alm?.meridian?.registry,
     "alm.meridian.registry"
   );
+  validateOptionalAddress(
+    deployment.alm?.meridian?.batchViews,
+    "alm.meridian.batchViews"
+  );
   validateAddressMap(deployment.alm?.meridian?.strategies, "alm.meridian.strategies");
   validateOptionalAddress(
     deployment.sharedPackages?.largePackages,

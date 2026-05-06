@@ -1,4 +1,6 @@
 import {
+  CanopyError,
+  CanopyErrorCode,
   callSingleViewResult,
   callViewFunction,
   entryFunctionPayload,
@@ -9,11 +11,17 @@ import {
   readMoveAddress,
   readMoveAddressVector,
   readMoveBool,
+  readMoveOption,
+  readMoveString,
   readMoveU128,
   readMoveU64,
 } from "../../internal/move-readers";
 import type { SdkContext, TransactionPayload } from "../../types";
 import type {
+  MeridianBatchPositionSummary,
+  MeridianBatchUserVaultBalance,
+  MeridianBatchVaultPositions,
+  MeridianBatchVaultInfo,
   ListMeridianVaultsInput,
   MeridianDepositPayloadInput,
   MeridianUserVaultPosition,
@@ -205,6 +213,172 @@ export class MeridianClient {
       ],
     });
   }
+
+  async getBatchVaultInfo(
+    vaultAddresses: string[]
+  ): Promise<Array<MeridianBatchVaultInfo | null>> {
+    const batchViews = this.getBatchViewsAbi();
+    const normalizedVaults = vaultAddresses.map(normalizeMoveAddress);
+    const results = await callSingleViewResult(
+      this.context.client,
+      {
+        moduleAddress: batchViews.address,
+        moduleName: batchViews.name,
+        functionName: "batch_get_vault_info",
+        functionArguments: [normalizedVaults],
+      }
+    );
+
+    if (!Array.isArray(results)) {
+      throw new CanopyError("Expected vault info batch vector", CanopyErrorCode.ViewCallFailed, {
+        valueType: typeof results,
+      });
+    }
+
+    return results.map((result, index) =>
+      readMoveOption(result, (value) =>
+        readBatchVaultInfo(value, normalizedVaults[index] as string)
+      )
+    );
+  }
+
+  async getBatchUserVaultBalances(
+    vaultAddresses: string[],
+    userAddress: string
+  ): Promise<Array<MeridianBatchUserVaultBalance | null>> {
+    const batchViews = this.getBatchViewsAbi();
+    const normalizedVaults = vaultAddresses.map(normalizeMoveAddress);
+    const results = await callSingleViewResult(
+      this.context.client,
+      {
+        moduleAddress: batchViews.address,
+        moduleName: batchViews.name,
+        functionName: "batch_get_user_balances",
+        functionArguments: [normalizedVaults, normalizeMoveAddress(userAddress)],
+      }
+    );
+
+    if (!Array.isArray(results)) {
+      throw new CanopyError(
+        "Expected user vault balance batch vector",
+        CanopyErrorCode.ViewCallFailed,
+        { valueType: typeof results }
+      );
+    }
+
+    return results.map((result, index) =>
+      readMoveOption(result, (value) =>
+        readBatchUserVaultBalance(value, normalizedVaults[index] as string)
+      )
+    );
+  }
+
+  async getBatchVaultPositions(
+    vaultAddresses: string[]
+  ): Promise<Array<MeridianBatchVaultPositions | null>> {
+    const batchViews = this.getBatchViewsAbi();
+    const normalizedVaults = vaultAddresses.map(normalizeMoveAddress);
+    const results = await callSingleViewResult(
+      this.context.client,
+      {
+        moduleAddress: batchViews.address,
+        moduleName: batchViews.name,
+        functionName: "batch_get_vault_positions",
+        functionArguments: [normalizedVaults],
+      }
+    );
+
+    if (!Array.isArray(results)) {
+      throw new CanopyError(
+        "Expected vault positions batch vector",
+        CanopyErrorCode.ViewCallFailed,
+        { valueType: typeof results }
+      );
+    }
+
+    return results.map((result, index) =>
+      readMoveOption(result, (value) => ({
+        positions: readBatchPositionSummaryVector(value),
+        vaultAddress: normalizedVaults[index] as string,
+      }))
+    );
+  }
+
+  private getBatchViewsAbi() {
+    const abi = this.context.abis.meridianBatchViews;
+
+    if (!abi) {
+      throw new CanopyError(
+        "Meridian batch views are not available on this chain",
+        CanopyErrorCode.InvalidDeployment,
+        { chain: this.context.chain }
+      );
+    }
+
+    return abi;
+  }
+}
+
+function readBatchVaultInfo(
+  value: unknown,
+  vaultAddress: string
+): MeridianBatchVaultInfo {
+  const info = value as Record<string, unknown>;
+
+  return {
+    depositAssetAddress: readMoveAddress(info.deposit_asset),
+    quoteAssetAddress: readMoveAddress(info.quote_asset),
+    shareDecimals: Number(readMoveU64(info.share_decimals)),
+    shareName: readMoveString(info.share_name),
+    sharePriceE18: readMoveU128(info.share_price_e18),
+    shareSymbol: readMoveString(info.share_symbol),
+    total0: readMoveU64(info.total_0),
+    total1: readMoveU64(info.total_1),
+    totalShares: readMoveU128(info.total_shares),
+    vaultAddress,
+  };
+}
+
+function readBatchUserVaultBalance(
+  value: unknown,
+  vaultAddress: string
+): MeridianBatchUserVaultBalance {
+  const balance = value as Record<string, unknown>;
+
+  return {
+    shareBalance: readMoveU64(balance.share_balance),
+    valueInDepositAssetE18: readMoveU128(balance.value_in_deposit_asset_e18),
+    vaultAddress,
+  };
+}
+
+function readBatchPositionSummaryVector(value: unknown): MeridianBatchPositionSummary[] {
+  if (!Array.isArray(value)) {
+    throw new CanopyError(
+      "Expected vault position summary vector",
+      CanopyErrorCode.ViewCallFailed,
+      { valueType: typeof value }
+    );
+  }
+
+  return value.map(readBatchPositionSummary);
+}
+
+function readBatchPositionSummary(value: unknown): MeridianBatchPositionSummary {
+  const position = value as Record<string, unknown>;
+
+  return {
+    amount0: readMoveU64(position.amount_0),
+    amount1: readMoveU64(position.amount_1),
+    liquidity: readMoveU64(position.liquidity),
+    lowerTick: readSignedTick(position.lower_tick_neg, position.lower_tick_abs),
+    upperTick: readSignedTick(position.upper_tick_neg, position.upper_tick_abs),
+  };
+}
+
+function readSignedTick(isNegative: unknown, absoluteValue: unknown): bigint {
+  const value = readMoveU64(absoluteValue);
+  return readMoveBool(isNegative) ? -value : value;
 }
 
 async function getFungibleAssetDecimals(

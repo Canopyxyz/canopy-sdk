@@ -101,3 +101,90 @@ export interface GetUserSubscribedPoolsInput {
   stakingAsset: string;
   userAddress: string;
 }
+
+export interface RewardsSnapshotInput {
+  limit?: bigint | number;
+  offset?: bigint | number;
+  userAddress?: string;
+}
+
+export interface RewardsRegistryOverviewInput {
+  includePools?: boolean;
+  limit?: bigint | number;
+  offset?: bigint | number;
+}
+
+export interface RewardsPoolDetails {
+  owner: string;
+  poolAddress: string;
+  rewardTokenAddresses: string[];
+  stakingAsset: string;
+  stakingTokenSupply: bigint | null;
+  totalSubscribed: bigint;
+}
+
+export interface RewardsRewardTokenDetails {
+  distributor: string;
+  duration: bigint;
+  lastUpdateTime: bigint;
+  periodFinish: bigint;
+  remainingRewards: bigint;
+  rewardPerToken: bigint;
+  rewardRate: bigint;
+  rewardTokenAddress: string;
+  unallocatedRewards: bigint;
+}
+
+export interface RewardsUserRewardPosition {
+  earnedAmount: bigint;
+  rewardPerTokenPaid: bigint;
+  rewardTokenAddress: string;
+}
+
+export interface RewardsUserPoolPosition {
+  effectiveStakedAmount: bigint;
+  isSubscribed: boolean;
+  poolAddress: string;
+  rewards: RewardsUserRewardPosition[];
+  stakingAsset: string;
+}
+
+export interface RewardsSnapshot {
+  pools: RewardsPoolDetails[];
+  userPositions: RewardsUserPoolPosition[] | null;
+}
+
+export interface RewardsRegistryOverview {
+  pools: RewardsPoolDetails[] | null;
+  poolsIncluded: boolean;
+  snapshotTimestamp: bigint;
+  // The helper module currently returns two additional status booleans
+  // without ABI-level field names, so we preserve them as an ordered pair.
+  statusFlags: readonly [boolean, boolean];
+}
+
+export interface RewardsUserPoolPositionsInput {
+  limit?: bigint | number;
+  offset?: bigint | number;
+  userAddress: string;
+}
+
+export interface RewardsUserPoolPositionsByTokenInput
+  extends RewardsUserPoolPositionsInput {
+  stakingAsset: string;
+}
+
+export interface RewardsUserPoolPositionsByTokensInput {
+  limit?: bigint | number;
+  offset?: bigint | number;
+  stakingAssets: string[];
+  userAddress: string;
+}
+
+export interface RewardsUserRewardsOverviewInput
+  extends RewardsUserPoolPositionsInput,
+    RewardsRegistryOverviewInput {}
+
+export interface RewardsUserRewardsOverview extends RewardsRegistryOverview {
+  userPositions: RewardsUserPoolPosition[];
+}

@@ -36,6 +36,36 @@ export function readMoveAddressVector(values: unknown): string[] {
   return values.map(readMoveAddress);
 }
 
+export function readMoveOption<T>(
+  value: unknown,
+  readValue: (value: unknown) => T
+): T | null {
+  if (!value || typeof value !== "object" || !("vec" in value)) {
+    throw new CanopyError("Expected Move option", CanopyErrorCode.ViewCallFailed, {
+      valueType: typeof value,
+    });
+  }
+
+  const vec = (value as { vec?: unknown[] }).vec;
+  if (!Array.isArray(vec)) {
+    throw new CanopyError("Expected Move option vector", CanopyErrorCode.ViewCallFailed, {
+      valueType: typeof vec,
+    });
+  }
+
+  if (vec.length === 0) {
+    return null;
+  }
+
+  if (vec.length !== 1) {
+    throw new CanopyError("Expected Move option with at most one value", CanopyErrorCode.ViewCallFailed, {
+      length: vec.length,
+    });
+  }
+
+  return readValue(vec[0]);
+}
+
 export function readMoveU64(value: unknown): bigint {
   return parseU64(stringifyMoveScalar(value));
 }
