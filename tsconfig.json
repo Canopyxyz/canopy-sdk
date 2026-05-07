@@ -35,5 +35,11 @@
     }
   },
   "include": ["packages/**/*", "tests/**/*"],
-  "exclude": ["node_modules", "dist", "examples", "**/tsup.config.ts"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "examples",
+    "**/tsup.config.ts",
+    "tests/fixtures/import-smoke"
+  ]
 }
