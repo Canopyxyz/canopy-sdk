@@ -249,12 +249,11 @@ If you are using a wallet adapter, pass the same payload object into your wallet
 
 ## Offchain Helpers
 
-The SDK exposes two optional data clients under `sdk.data`:
+The SDK exposes one optional data client under `sdk.data`:
 
-- `sdk.data.canopyMetadata`
 - `sdk.data.rewardsDiscovery`
 
-These are useful for metadata hydration and rewards pool discovery.
+This is useful for rewards pool discovery.
 
 Rewards pool resolution for `buildStakeVaultSharesPayload(...)` uses:
 

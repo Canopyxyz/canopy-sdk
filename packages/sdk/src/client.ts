@@ -1,5 +1,5 @@
 import type { Movement } from "@moveindustries/ts-sdk";
-import { CanopyMetadataClient, RewardsDiscoveryClient } from "./data";
+import { RewardsDiscoveryClient } from "./data";
 import type { CanopyProtocolClient } from "./canopy";
 import { CanopyProtocolClient as CanopyProtocolClientImpl } from "./canopy";
 import { createSdkContext } from "./context";
@@ -17,7 +17,6 @@ export class CanopySdk<Chain extends SdkChainName = SdkChainName> {
   readonly canopy?: CanopyProtocolClient;
   readonly chain: Chain;
   readonly data: {
-    canopyMetadata: CanopyMetadataClient;
     rewardsDiscovery: RewardsDiscoveryClient;
   };
   readonly rewards?: RewardsClient;
@@ -32,15 +31,6 @@ export class CanopySdk<Chain extends SdkChainName = SdkChainName> {
 
     this.alm = {};
     this.data = {
-      canopyMetadata: new CanopyMetadataClient({
-        chainId: context.deployment.chainId,
-        ...(options.offchain?.canopyMetadataEndpoint
-          ? { endpoint: options.offchain.canopyMetadataEndpoint }
-          : {}),
-        ...(options.offchain?.cacheTimeoutMs !== undefined
-          ? { cacheTimeoutMs: options.offchain.cacheTimeoutMs }
-          : {}),
-      }),
       rewardsDiscovery: new RewardsDiscoveryClient({
         chain: context.chain,
         ...(options.offchain?.sentioEndpoint ? { endpoint: options.offchain.sentioEndpoint } : {}),

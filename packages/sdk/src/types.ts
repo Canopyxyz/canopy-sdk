@@ -7,7 +7,6 @@ export type SdkChainName = ChainName;
 
 export interface OffchainDataOptions {
   cacheTimeoutMs?: number;
-  canopyMetadataEndpoint?: string;
   sentioApiKey?: string;
   sentioEndpoint?: string;
 }

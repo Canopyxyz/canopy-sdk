@@ -1069,7 +1069,7 @@ describe("CanopySdk", () => {
     });
   });
 
-  it("adds off-chain metadata and sentio pool discovery support", async () => {
+  it("adds sentio pool discovery support", async () => {
     const originalFetch = global.fetch;
     const client = createMovementMock({
       "0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::is_user_subscribed":
@@ -1078,96 +1078,6 @@ describe("CanopySdk", () => {
 
     global.fetch = jest.fn(async (_url: string, init?: RequestInit) => {
       const body = JSON.parse(String(init?.body));
-
-      if (body.operationName === "GetCanopyMetadata") {
-        const nextToken = body.variables?.nextToken;
-
-        if (nextToken === "page-2") {
-          return {
-            ok: true,
-            json: async () => ({
-              data: {
-                listCanopyMetadata: {
-                  items: [
-                    {
-                      id: "vault-2",
-                      chainId: 126,
-                      networkAddress: "0xdef",
-                      displayName: "Hidden Vault",
-                      investmentType: "lending",
-                      networkType: "movement",
-                      riskScore: 4,
-                      priority: 9,
-                      isHidden: true,
-                      description: "Hidden test vault",
-                      iconURL: "https://example.com/hidden.png",
-                      labels: [],
-                      rewardPools: [],
-                      additionalMetadata: [],
-                      paused: true,
-                      token0: "MOVE",
-                      token1: "",
-                      allowToken0: true,
-                      allowToken1: false,
-                      tvl: "50",
-                      totalSupply: "10",
-                      token0Balance: "5",
-                      token1Balance: "0",
-                      decimals0: 8,
-                      decimals1: 0,
-                      apr: "0",
-                      rewardApr: "0",
-                    },
-                  ],
-                  nextToken: null,
-                },
-              },
-            }),
-          } as Response;
-        }
-
-        return {
-          ok: true,
-          json: async () => ({
-            data: {
-              listCanopyMetadata: {
-                items: [
-                  {
-                    id: "vault-1",
-                    chainId: 126,
-                    networkAddress: "0xabc",
-                    displayName: "Canopy MOVE Vault",
-                    investmentType: "lending",
-                    networkType: "movement",
-                    riskScore: 2,
-                    priority: 1,
-                    isHidden: false,
-                    description: "Test vault",
-                    iconURL: "https://example.com/icon.png",
-                    labels: ["featured"],
-                    rewardPools: ["0xaaa"],
-                    additionalMetadata: [{ key: "platform", item: "echelon" }],
-                    paused: false,
-                    token0: "MOVE",
-                    token1: "USDC",
-                    allowToken0: true,
-                    allowToken1: true,
-                    tvl: "1000",
-                    totalSupply: "500",
-                    token0Balance: "100",
-                    token1Balance: "200",
-                    decimals0: 8,
-                    decimals1: 6,
-                    apr: "0.12",
-                    rewardApr: "0.03",
-                  },
-                ],
-                nextToken: "page-2",
-              },
-            },
-          }),
-        } as Response;
-      }
 
       if (body.operationName === "GetMRStakingPoolsByToken") {
         return {
@@ -1200,58 +1110,6 @@ describe("CanopySdk", () => {
         sentioApiKey: "test-key",
       },
     });
-
-    await expect(sdk.data.canopyMetadata.listVaultMetadata()).resolves.toEqual([
-      expect.objectContaining({
-        id: "vault-1",
-        address: "0x0000000000000000000000000000000000000000000000000000000000000abc",
-        displayName: "Canopy MOVE Vault",
-        priority: 1,
-        allowToken0: true,
-        allowToken1: true,
-        isHidden: false,
-        rewardPools: [
-          "0x0000000000000000000000000000000000000000000000000000000000000aaa",
-        ],
-      }),
-      expect.objectContaining({
-        id: "vault-2",
-        address: "0x0000000000000000000000000000000000000000000000000000000000000def",
-        displayName: "Hidden Vault",
-        priority: 9,
-        allowToken0: true,
-        allowToken1: false,
-        isHidden: true,
-      }),
-    ]);
-
-    await expect(
-      sdk.data.canopyMetadata.listVaultMetadataPage({
-        limit: 1,
-        includeHidden: false,
-      })
-    ).resolves.toEqual({
-      items: [
-        expect.objectContaining({
-          id: "vault-1",
-          address:
-            "0x0000000000000000000000000000000000000000000000000000000000000abc",
-        }),
-      ],
-      nextToken: "page-2",
-    });
-
-    await expect(
-      sdk.data.canopyMetadata.getVaultMetadata("0xdef", { includeHidden: false })
-    ).resolves.toBeNull();
-
-    await expect(sdk.data.canopyMetadata.getVaultMetadata("0xdef")).resolves.toEqual(
-      expect.objectContaining({
-        id: "vault-2",
-        address: "0x0000000000000000000000000000000000000000000000000000000000000def",
-        isHidden: true,
-      })
-    );
 
     await expect(
       sdk.data.rewardsDiscovery.findPoolAddressesByStakingAsset("0x789")
