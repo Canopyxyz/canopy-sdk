@@ -357,7 +357,7 @@ export class CanopyProtocolClient {
   ): Promise<CanopyBatchVaultAllMetadataBalance[]> {
     const helpers = this.getHelpersAbi();
     const normalizedVaults = vaultAddresses.map(normalizeMoveAddress);
-    const [baseMetadata, baseBalances, sharesMetadata, sharesBalances] =
+    const [sharesMetadata, sharesBalances, baseMetadata, baseBalances] =
       await this.callHelpersViewFunction<[unknown, unknown, unknown, unknown]>(
         "batch_get_vault_all_metadata_and_balance",
         [normalizedVaults, normalizeMoveAddress(userAddress)]

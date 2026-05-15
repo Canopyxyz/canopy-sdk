@@ -152,6 +152,9 @@ describe("deployment registry", () => {
     expect(getContractAddress("movement-mainnet", "canopy.protocol")).toBe(
       "0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d"
     );
+    expect(getContractAddress("movement-mainnet", "meridian.router")).toBe(
+      "0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83"
+    );
     expect(requireContractAddress("aptos-mainnet", "meridian.vault")).toBe(
       "0xeb57695cd494c59ea7b1356580f1e7d5666fd84827322369e21d712e22397b54"
     );

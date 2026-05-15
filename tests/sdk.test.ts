@@ -1261,6 +1261,36 @@ describe("CanopySdk", () => {
     global.fetch = originalFetch;
   });
 
+  it("does not swallow sentio HTTP failures behind the static fallback", async () => {
+    const originalFetch = global.fetch;
+
+    global.fetch = jest.fn(async () => {
+      return {
+        ok: false,
+        status: 404,
+        json: async () => ({}),
+      } as Response;
+    }) as typeof fetch;
+
+    const sdk = new CanopySdk(createMovementMock({}) as never, {
+      chain: "movement-mainnet",
+    });
+
+    await expect(
+      sdk.data.rewardsDiscovery.resolvePoolAddresses({
+        stakingAsset: "0xe005014fbdd053aebf97b9a36dfeed790d337f571fa9d37690f527acb3015e02",
+      })
+    ).rejects.toMatchObject({
+      code: "NETWORK_ERROR",
+      details: expect.objectContaining({
+        reason: "http",
+        status: 404,
+      }),
+    });
+
+    global.fetch = originalFetch;
+  });
+
   it("finds user fungible-asset deposits from transaction results", () => {
     expect(
       findFungibleAssetDeposit(
@@ -1518,10 +1548,10 @@ describe("CanopySdk", () => {
           ]);
 
           return [
-            ["0xaaa", "0xbbb"],
-            ["13", "14"],
             ["0xccc", "0xddd"],
             ["15", "16"],
+            ["0xaaa", "0xbbb"],
+            ["13", "14"],
           ];
         },
       "0x707462571715301b063d79c2cdb57c3bd1cfe2189889793b00077ceed86e0219::rewards_view::get_rewards_snapshot":

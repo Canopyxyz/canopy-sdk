@@ -32,7 +32,7 @@ function resolveAddress(
     case "rewards.batcher":
       return deployment.rewards?.batcher;
     case "meridian.router":
-      return deployment.alm?.meridian?.standard;
+      return deployment.alm?.meridian?.vaults;
     case "meridian.vault":
       return deployment.alm?.meridian?.vaults;
     case "meridian.registry":

@@ -176,7 +176,7 @@ export class RewardsDiscoveryClient {
       }
     } catch (error) {
       const staticPools = this.getStaticPoolAddresses(input.stakingAsset);
-      if (staticPools.length > 0) {
+      if (staticPools.length > 0 && isTransportRewardsDiscoveryError(error)) {
         return staticPools;
       }
 
@@ -328,7 +328,7 @@ async function postSentioGraphql<TData>(
     throw new CanopyError(
       "Failed to fetch rewards discovery data",
       CanopyErrorCode.NetworkError,
-      { endpoint },
+      { endpoint, reason: "transport" },
       { cause: error }
     );
   }
@@ -336,6 +336,7 @@ async function postSentioGraphql<TData>(
   if (!response.ok) {
     throw new CanopyError("Failed to fetch rewards discovery data", CanopyErrorCode.NetworkError, {
       endpoint,
+      reason: "http",
       status: response.status,
     });
   }
@@ -344,9 +345,25 @@ async function postSentioGraphql<TData>(
   if (result.errors && result.errors.length > 0) {
     throw new CanopyError("Failed to fetch rewards discovery data", CanopyErrorCode.NetworkError, {
       endpoint,
+      reason: "graphql",
       errors: result.errors.map((error) => error.message),
     });
   }
 
-  return (result.data ?? {}) as TData;
+  if (result.data === undefined) {
+    throw new CanopyError("Failed to fetch rewards discovery data", CanopyErrorCode.NetworkError, {
+      endpoint,
+      reason: "invalid-response",
+    });
+  }
+
+  return result.data;
+}
+
+function isTransportRewardsDiscoveryError(error: unknown): error is CanopyError {
+  return (
+    error instanceof CanopyError &&
+    error.code === CanopyErrorCode.NetworkError &&
+    error.details?.reason === "transport"
+  );
 }
