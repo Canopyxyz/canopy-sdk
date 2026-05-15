@@ -22,7 +22,7 @@ describe("strategy helpers", () => {
         "movement-mainnet",
         "0xad1b34939f164ec6f6c0157da3a30bf9e5d408250978691872a79aa584852b85"
       )
-    ).toBe("layerbank");
+    ).toEqual({ kind: "known", protocol: "layerbank" });
     expect(
       inferCanopyStrategyContractId(
         "aptos-testnet",
@@ -31,9 +31,18 @@ describe("strategy helpers", () => {
     ).toBe("canopy.strategy.movepositionSimple");
   });
 
-  it("returns null for unknown or unavailable strategy addresses", () => {
+  it("returns an explicit unknown result for unknown or unavailable strategy addresses", () => {
     expect(
       inferCanopyStrategyProtocol(
+        "movement-testnet",
+        "0x0000000000000000000000000000000000000000000000000000000000000001"
+      )
+    ).toEqual({
+      kind: "unknown",
+      address: "0x0000000000000000000000000000000000000000000000000000000000000001",
+    });
+    expect(
+      inferCanopyStrategyContractId(
         "movement-testnet",
         "0x0000000000000000000000000000000000000000000000000000000000000001"
       )

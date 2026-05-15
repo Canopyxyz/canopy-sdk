@@ -136,15 +136,40 @@ describe("deployment registry", () => {
     );
   });
 
-  it("defaults missing feature flags to false", () => {
+  it("derives feature flags from deployed modules when omitted", () => {
     const withoutFeatures = structuredClone(getDeployment("aptos-testnet"));
     delete (withoutFeatures as Partial<typeof withoutFeatures>).features;
 
     expect(validateDeployment(withoutFeatures).features).toEqual({
-      canopy: false,
-      rewards: false,
+      canopy: true,
+      rewards: true,
       almMeridian: false,
     });
+  });
+
+  it("rejects feature flags that disagree with deployed modules", () => {
+    const deployment = structuredClone(getDeployment("aptos-testnet"));
+    deployment.features.canopy = false;
+
+    expect(() => validateDeployment(deployment)).toThrow(
+      "aptos-testnet: features.canopy does not match deployed modules"
+    );
+    try {
+      validateDeployment(deployment);
+      throw new Error("expected validateDeployment to fail");
+    } catch (error) {
+      expect(isCanopyError(error)).toBe(true);
+      expect(error).toMatchObject({
+        name: "DeploymentError",
+        code: CanopyErrorCode.InvalidDeployment,
+        details: expect.objectContaining({
+          chain: "aptos-testnet",
+          feature: "canopy",
+          configured: false,
+          inferred: true,
+        }),
+      });
+    }
   });
 
   it("distinguishes nullable and required contract address lookup", () => {

@@ -13,6 +13,7 @@ import type { SdkContext, TransactionPayload } from "../types";
 import {
   readMoveAddress,
   readMoveAddressVector,
+  readMoveU8,
   readMoveBool,
   readMoveString,
   readMoveU64,
@@ -617,7 +618,7 @@ function parseCanopyVaultView(rawView: unknown): CanopyVaultView {
   return {
     assetAddress: readMoveAddress(view.asset_address),
     assetName: readMoveString(view.asset_name),
-    decimals: Number(view.decimals ?? 0),
+    decimals: readMoveU8(view.decimals),
     ...(pairedCoinType ? { pairedCoinType } : {}),
     sharesAddress: readMoveAddress(view.shares_address),
     sharesName: readMoveString(view.shares_name),
@@ -642,7 +643,7 @@ function parseStrategies(rawStrategies: unknown): CanopyVaultStrategyView[] {
       concreteAddress: readMoveAddress(view.concrete_address),
       currentVaultDebt: readMoveU64(view.current_vault_debt),
       debtLimit: readMoveU64(view.debt_limit),
-      decimals: Number(view.decimals ?? 0),
+      decimals: readMoveU8(view.decimals),
       lastReport: readMoveU64(view.last_report),
       sharesAddress: readMoveAddress(view.shares_address),
       strategyAddress: readMoveAddress(view.strategy_address),
@@ -755,46 +756,47 @@ function parseAllocationMap(
   if (!rawMap || typeof rawMap !== "object") {
     throw new CanopyError(
       "Allocation map response is malformed",
-      CanopyErrorCode.ViewCallFailed
+      CanopyErrorCode.ViewCallFailed,
+      { valueType: typeof rawMap }
     );
   }
 
-  const entries = Array.isArray((rawMap as { data?: unknown[] }).data)
-    ? (rawMap as { data: unknown[] }).data
-    : Array.isArray(rawMap)
-      ? rawMap
-      : [];
+  const entries = (rawMap as { data?: unknown }).data;
+  if (!Array.isArray(entries)) {
+    throw new CanopyError(
+      "Allocation map response is malformed",
+      CanopyErrorCode.ViewCallFailed,
+      { expected: "data array", valueType: typeof entries }
+    );
+  }
 
   const strategies: string[] = [];
   const amounts: bigint[] = [];
 
   for (const entry of entries) {
-    if (Array.isArray(entry) && entry.length >= 2) {
-      const strategy = readMoveAddress(entry[0]);
-      const value = readMoveU64(entry[1]);
-      if (value > 0n) {
-        strategies.push(strategy);
-        amounts.push(value);
-      }
-      continue;
+    if (!entry || typeof entry !== "object") {
+      throw new CanopyError(
+        "Allocation map entry has an unexpected shape",
+        CanopyErrorCode.ViewCallFailed,
+        { entry }
+      );
     }
 
     const record = entry as { key?: unknown; value?: unknown };
-    if (record.key !== undefined && record.value !== undefined) {
-      const strategy = readMoveAddress(record.key);
-      const value = readMoveU64(record.value);
-      if (value > 0n) {
-        strategies.push(strategy);
-        amounts.push(value);
-      }
-      continue;
+    if (record.key === undefined || record.value === undefined) {
+      throw new CanopyError(
+        "Allocation map entry has an unexpected shape",
+        CanopyErrorCode.ViewCallFailed,
+        { entry }
+      );
     }
 
-    throw new CanopyError(
-      "Allocation map entry has an unexpected shape",
-      CanopyErrorCode.ViewCallFailed,
-      { entry }
-    );
+    const strategy = readMoveAddress(record.key);
+    const value = readMoveU64(record.value);
+    if (value > 0n) {
+      strategies.push(strategy);
+      amounts.push(value);
+    }
   }
 
   return { amounts, strategies };

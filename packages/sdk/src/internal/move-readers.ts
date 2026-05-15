@@ -74,8 +74,19 @@ export function readMoveU128(value: unknown): bigint {
   return parseU128(stringifyMoveScalar(value));
 }
 
+export function readMoveU8(value: unknown): number {
+  const parsed = readMoveU64(value);
+  if (parsed > 255n) {
+    throw new CanopyError("Expected Move u8", CanopyErrorCode.ViewCallFailed, {
+      value: parsed.toString(),
+    });
+  }
+
+  return Number(parsed);
+}
+
 export function stringifyMoveScalar(value: unknown): string {
-  if (typeof value === "string" || typeof value === "number" || typeof value === "bigint") {
+  if (typeof value === "string" || typeof value === "bigint") {
     return String(value);
   }
 

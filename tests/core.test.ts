@@ -4,6 +4,7 @@ import {
   callViewFunction,
   CanopyError,
   CanopyErrorCode,
+  extractMoveAbortDetails,
   entryFunctionPayload,
   formatUnits,
   isCanopyError,
@@ -64,6 +65,12 @@ describe("core helpers", () => {
     expect(formatUnits(1230000n, { decimals: 6, trimTrailingZeros: false })).toBe(
       "1.230000"
     );
+  });
+
+  it("rejects unsafe number scalars in Move readers", async () => {
+    const { readMoveU64 } = await import("../packages/sdk/src/internal/move-readers");
+
+    expect(() => readMoveU64(42)).toThrow("Expected Move scalar");
   });
 
   it("builds entry and view payloads", () => {
@@ -130,6 +137,69 @@ describe("core helpers", () => {
       message: "bad input",
       code: CanopyErrorCode.InvalidInput,
       details: { label: "amount" },
+    });
+  });
+
+  it("surfaces structured move abort details from view failures", async () => {
+    const input = {
+      moduleAddress: "0x1",
+      moduleName: "vault",
+      functionName: "deposit",
+    };
+    const originalError = Object.assign(
+      new Error(
+        "Transaction Executor encountered VM error: Move abort in 0x1::vault::deposit: abort code 117"
+      ),
+      {
+        error_code: "vm_error",
+        vm_error_code: 10,
+      }
+    );
+    const client = {
+      view: jest.fn(async () => {
+        throw originalError;
+      }),
+    };
+
+    await expect(callViewFunction(client, input)).rejects.toMatchObject({
+      code: CanopyErrorCode.MoveAbort,
+      cause: originalError,
+      details: {
+        function:
+          "0x0000000000000000000000000000000000000000000000000000000000000001::vault::deposit",
+        moveAbort: {
+          abortCode: 117,
+          abortName: "EVAULT_PAUSED",
+          functionName: "deposit",
+          module:
+            "0x0000000000000000000000000000000000000000000000000000000000000001::vault",
+          moduleName: "vault",
+          vmErrorCode: 10,
+        },
+      },
+    });
+  });
+
+  it("extracts move abort details from nested API-style errors", () => {
+    expect(
+      extractMoveAbortDetails({
+        error_code: "vm_error",
+        vm_error_code: 42,
+        data: {
+          message:
+            "Transaction failed: Move abort in 0xabc::router::withdraw: abort code 4",
+        },
+      })
+    ).toMatchObject({
+      abortCode: 4,
+      abortName: "ESLIPPAGE_ASSETS_OUT",
+      errorCode: "vm_error",
+      function:
+        "0x0000000000000000000000000000000000000000000000000000000000000abc::router::withdraw",
+      functionName: "withdraw",
+      module: "0x0000000000000000000000000000000000000000000000000000000000000abc::router",
+      moduleName: "router",
+      vmErrorCode: 42,
     });
   });
 });

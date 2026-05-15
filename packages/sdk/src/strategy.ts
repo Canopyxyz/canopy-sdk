@@ -40,6 +40,9 @@ const CANOPY_STRATEGIES = {
 >;
 
 export type CanopyStrategyProtocol = keyof typeof CANOPY_STRATEGIES;
+export type CanopyStrategyProtocolMatch =
+  | { kind: "known"; protocol: CanopyStrategyProtocol }
+  | { kind: "unknown"; address: string };
 
 const CANOPY_STRATEGY_PROTOCOLS = Object.keys(
   CANOPY_STRATEGIES
@@ -60,18 +63,18 @@ export function getCanopyStrategyDisplayName(
 export function inferCanopyStrategyProtocol(
   chain: ChainName,
   address: string
-): CanopyStrategyProtocol | null {
+): CanopyStrategyProtocolMatch {
   for (const protocol of CANOPY_STRATEGY_PROTOCOLS) {
     const deployed = getContractAddress(
       chain,
       getCanopyStrategyContractId(protocol)
     );
     if (deployed !== undefined && sameMoveAddress(deployed, address)) {
-      return protocol;
+      return { kind: "known", protocol };
     }
   }
 
-  return null;
+  return { kind: "unknown", address };
 }
 
 export function inferCanopyStrategyContractId(
@@ -79,7 +82,7 @@ export function inferCanopyStrategyContractId(
   address: string
 ): ContractId | null {
   const protocol = inferCanopyStrategyProtocol(chain, address);
-  return protocol === null ? null : getCanopyStrategyContractId(protocol);
+  return protocol.kind === "known" ? getCanopyStrategyContractId(protocol.protocol) : null;
 }
 
 export function getCanopyStrategyContract(

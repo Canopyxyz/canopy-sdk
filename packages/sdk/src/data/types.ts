@@ -31,6 +31,12 @@ export interface RewardsDiscoveryClientOptions {
   endpoint?: string;
 }
 
+export interface RewardsDiscoveryStatus {
+  chain: ChainName;
+  endpoint: string | null;
+  endpointConfigured: boolean;
+}
+
 export interface ResolveRewardPoolsInput {
   explicitPoolAddresses?: string[];
   stakingAsset: string;

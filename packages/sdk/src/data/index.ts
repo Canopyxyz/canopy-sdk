@@ -7,6 +7,7 @@ export { RewardsDiscoveryClient } from "./rewards-discovery";
 export type {
   ResolveRewardPoolsInput,
   RewardsDiscoveryClientOptions,
+  RewardsDiscoveryStatus,
   SentioRewardData,
   SentioStakingPool,
 } from "./types";

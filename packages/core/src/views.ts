@@ -1,5 +1,5 @@
 import type { InputViewFunctionData } from "@aptos-labs/ts-sdk";
-import { CanopyError, CanopyErrorCode } from "./errors";
+import { CanopyError, CanopyErrorCode, extractMoveAbortDetails } from "./errors";
 import { viewFunctionPayload, type ViewFunctionPayloadInput } from "./payloads";
 
 export interface ViewFunctionRequest {
@@ -40,6 +40,17 @@ export async function callViewPayloadFunction<Result extends unknown[] = unknown
   try {
     return (await client.view(request)) as Result;
   } catch (error) {
+    const moveAbort = extractMoveAbortDetails(error, request.payload.function);
+
+    if (moveAbort) {
+      throw new CanopyError(
+        "Move abort",
+        CanopyErrorCode.MoveAbort,
+        { function: request.payload.function, moveAbort },
+        { cause: error }
+      );
+    }
+
     throw new CanopyError(
       "View function call failed",
       CanopyErrorCode.ViewCallFailed,

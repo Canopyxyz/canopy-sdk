@@ -828,6 +828,65 @@ describe("CanopySdk", () => {
     });
   });
 
+  it("fails canopy packet allocation parsing loudly when the map is not a SimpleMap data vector", async () => {
+    const client = createMovementMock({
+      "0xb10bd32b3979c9d04272c769d9ef52afbc6edc4bf03982a9e326b96ac25e7f2d::vault::vault_view":
+        [
+          {
+            decimals: "8",
+            total_debt: "1",
+            total_idle: "2",
+            total_shares: "3",
+            total_asset: "4",
+            asset_name: "MOVE",
+            shares_name: "Canopy MOVE",
+            vault_address: "0xabc",
+            asset_address:
+              "0x000000000000000000000000000000000000000000000000000000000000000a",
+            shares_address: "0x123",
+            strategies: [
+              {
+                strategy_address: "0x555",
+                asset_address:
+                  "0x000000000000000000000000000000000000000000000000000000000000000a",
+                concrete_address:
+                  "0xd7c7b27e361434e18d2410fd02f7140a8c10d174c9be0efd5324578d243953bd",
+                current_vault_debt: "4",
+                debt_limit: "5",
+                decimals: "6",
+                last_report: "7",
+                shares_address: "0x8",
+                total_asset: "9",
+                total_debt: "10",
+                total_idle: "11",
+                total_loss: "12",
+                total_profit: "13",
+                total_shares: "14",
+                vault_address: "0xabc",
+              },
+            ],
+          },
+        ],
+      "0x717b417949cd5bfa6dc02822eacb727d820de2741f6ea90bf16be6c0ed46ff4b::deposit::get_allocations_view":
+        [[]],
+    });
+    const sdk = new CanopySdk(client as never, { chain: "movement-mainnet" });
+
+    await expect(
+      sdk.canopy?.buildDepositPayload({
+        vaultAddress: "0xabc",
+        amount: 10n,
+        minSharesOut: 8n,
+      })
+    ).rejects.toMatchObject({
+      code: "VIEW_CALL_FAILED",
+      message: "Allocation map response is malformed",
+      details: expect.objectContaining({
+        expected: "data array",
+      }),
+    });
+  });
+
   it("exposes canopy user position, strategy details, and allocation views", async () => {
     const client = createMovementMock({
       "0xe5ec58845afb1cb164d1c260f2a284b2f1311318973e13355b9e4dc2908eed5a::vault::vault_view":
@@ -912,6 +971,32 @@ describe("CanopySdk", () => {
       ],
       vaultAddress:
         "0x0000000000000000000000000000000000000000000000000000000000000abc",
+    });
+  });
+
+  it("fails canopy parsing loudly when vault decimals are missing", async () => {
+    const client = createMovementMock({
+      "0xe5ec58845afb1cb164d1c260f2a284b2f1311318973e13355b9e4dc2908eed5a::vault::vault_view":
+        [
+          {
+            total_debt: "1",
+            total_idle: "2",
+            total_shares: "3",
+            total_asset: "4",
+            asset_name: "USDC",
+            shares_name: "Canopy USDC",
+            vault_address: "0xabc",
+            asset_address: "0xdef",
+            shares_address: "0x123",
+            strategies: [],
+          },
+        ],
+    });
+    const sdk = new CanopySdk(client as never, { chain: "aptos-testnet" });
+
+    await expect(sdk.canopy?.getVault("0xabc")).rejects.toMatchObject({
+      code: "VIEW_CALL_FAILED",
+      message: "Expected Move scalar",
     });
   });
 
@@ -1192,12 +1277,31 @@ describe("CanopySdk", () => {
     global.fetch = originalFetch;
   });
 
-  it("uses the local fallback pool mapping when sentio returns no match", async () => {
-    const originalFetch = global.fetch;
-    const client = createMovementMock({
-      "0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::is_user_subscribed":
-        [false],
+  it("exposes rewards discovery status by chain", () => {
+    const movementSdk = new CanopySdk(createMovementMock({}) as never, {
+      chain: "movement-mainnet",
     });
+    const aptosTestnetSdk = new CanopySdk(createMovementMock({}) as never, {
+      chain: "aptos-testnet",
+    });
+
+    expect(movementSdk.data.rewardsDiscovery.getStatus()).toMatchObject({
+      chain: "movement-mainnet",
+      endpoint:
+        "https://app.sentio.xyz/api/v1/graphql/solo-labs/canopy-multi-rewards-movement",
+      endpointConfigured: true,
+    });
+
+    expect(aptosTestnetSdk.data.rewardsDiscovery.getStatus()).toEqual({
+      chain: "aptos-testnet",
+      endpoint: null,
+      endpointConfigured: false,
+    });
+  });
+
+  it("returns no pool addresses when sentio returns no match", async () => {
+    const originalFetch = global.fetch;
+    const client = createMovementMock({});
 
     global.fetch = jest.fn(async (_url: string, init?: RequestInit) => {
       const body = JSON.parse(String(init?.body));
@@ -1224,10 +1328,7 @@ describe("CanopySdk", () => {
       sdk.data.rewardsDiscovery.resolvePoolAddresses({
         stakingAsset: "0xe005014fbdd053aebf97b9a36dfeed790d337f571fa9d37690f527acb3015e02",
       })
-    ).resolves.toEqual([
-      "0x7bf3653bf8b02d19b56916daaf959b95b4564ecd35d9abdb323d0690d5fdd0e7",
-      "0xc1d2493f1ecc4ce35726fb0a48719752ce573f6aead45f35703193c021af3001",
-    ]);
+    ).resolves.toEqual([]);
 
     await expect(
       sdk.rewards?.buildStakeVaultSharesPayload({
@@ -1235,19 +1336,12 @@ describe("CanopySdk", () => {
         amount: 11n,
         userAddress: "0x111",
       })
-    ).resolves.toMatchObject({
-      function:
-        "0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::router::stake_and_subscribe_fa",
-      typeArguments: [],
-      functionArguments: [
-        "0xe005014fbdd053aebf97b9a36dfeed790d337f571fa9d37690f527acb3015e02",
-        "11",
-        [
-          "0x7bf3653bf8b02d19b56916daaf959b95b4564ecd35d9abdb323d0690d5fdd0e7",
-          "0xc1d2493f1ecc4ce35726fb0a48719752ce573f6aead45f35703193c021af3001",
-        ],
-      ],
-      abi: expect.any(Object),
+    ).rejects.toMatchObject({
+      code: "TRANSACTION_BUILD_FAILED",
+      details: {
+        stakingAsset:
+          "0xe005014fbdd053aebf97b9a36dfeed790d337f571fa9d37690f527acb3015e02",
+      },
     });
 
     expect(global.fetch).toHaveBeenCalledTimes(1);
@@ -1261,7 +1355,7 @@ describe("CanopySdk", () => {
     global.fetch = originalFetch;
   });
 
-  it("does not swallow sentio HTTP failures behind the static fallback", async () => {
+  it("surfaces sentio HTTP failures directly", async () => {
     const originalFetch = global.fetch;
 
     global.fetch = jest.fn(async () => {
@@ -1288,6 +1382,30 @@ describe("CanopySdk", () => {
       }),
     });
 
+    global.fetch = originalFetch;
+  });
+
+  it("does not use the movement sentio endpoint as a default for aptos-testnet", async () => {
+    const originalFetch = global.fetch;
+    global.fetch = jest.fn() as typeof fetch;
+
+    const sdk = new CanopySdk(createMovementMock({}) as never, {
+      chain: "aptos-testnet",
+    });
+
+    await expect(
+      sdk.data.rewardsDiscovery.resolvePoolAddresses({
+        stakingAsset: "0x789",
+      })
+    ).rejects.toMatchObject({
+      code: "INVALID_DEPLOYMENT",
+      details: {
+        chain: "aptos-testnet",
+        endpointConfigured: false,
+      },
+    });
+
+    expect(global.fetch).not.toHaveBeenCalled();
     global.fetch = originalFetch;
   });
 

@@ -14,6 +14,7 @@ import {
   readMoveBool,
   readMoveOption,
   readMoveString,
+  readMoveU8,
   readMoveU128,
   readMoveU64,
 } from "../../internal/move-readers";
@@ -343,7 +344,7 @@ function readBatchVaultInfo(
   return {
     depositAssetAddress: readMoveAddress(info.deposit_asset),
     quoteAssetAddress: readMoveAddress(info.quote_asset),
-    shareDecimals: Number(readMoveU64(info.share_decimals)),
+    shareDecimals: readMoveU8(info.share_decimals),
     shareName: readMoveString(info.share_name),
     sharePriceE18: readMoveU128(info.share_price_e18),
     shareSymbol: readMoveString(info.share_symbol),
@@ -427,5 +428,5 @@ async function getFungibleAssetDecimals(
     }
   );
 
-  return Number(readMoveU64(decimals));
+  return readMoveU8(decimals);
 }

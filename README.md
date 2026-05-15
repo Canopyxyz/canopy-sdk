@@ -258,8 +258,13 @@ This is useful for rewards pool discovery.
 Rewards pool resolution for `buildStakeVaultSharesPayload(...)` uses:
 
 1. explicit `poolAddresses`
-2. Sentio lookup, if configured
-3. built-in static fallback mappings
+2. Sentio lookup, if configured for the chain
+
+You can inspect the active discovery source with:
+
+```ts
+const status = sdk.data.rewardsDiscovery.getStatus();
+```
 
 ## Contract And ABI Lookup
 
@@ -318,6 +323,17 @@ canopy-sdk/
 │   ├── deployments/
 │   ├── bindings/
 │   └── sdk/
+```
+
+## Surf Follow-Ups
+
+Possible next improvements on top of the current Surf integration:
+
+- Add typed `simulate*` SDK helpers for common Canopy, Rewards, and Meridian transaction flows.
+- Use Surf `useABI(...).view` / `useABI(...).entry` selectively for the simplest internal module calls where it reduces SDK plumbing.
+- Consider exposing typed resource readers for useful account resources if a real consumer needs them.
+- Keep generated ABI files as the source of truth, but consider using Surf `fetchABI(...)` in internal diagnostics or ABI drift tooling.
+- Continue reducing custom view plumbing only where Surf return typing stays readable and does not make the SDK API worse.
 ├── scripts/
 ├── tests/
 └── examples/
