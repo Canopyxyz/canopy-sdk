@@ -3,6 +3,7 @@ import { CanopyErrorCode, isCanopyError } from "../packages/core/src";
 import { CanopySdk } from "../packages/sdk/src";
 
 interface MockAptosClient {
+  signAndSubmitTransaction: jest.MockedFunction<(input: unknown) => Promise<unknown>>;
   transaction: {
     build: {
       simple: jest.MockedFunction<(input: unknown) => Promise<unknown>>;
@@ -12,10 +13,12 @@ interface MockAptosClient {
     };
   };
   view: jest.MockedFunction<(input: unknown) => Promise<unknown[]>>;
+  waitForTransaction: jest.MockedFunction<(input: unknown) => Promise<unknown>>;
 }
 
 function createClient(): MockAptosClient {
   return {
+    signAndSubmitTransaction: jest.fn(),
     transaction: {
       build: {
         simple: jest.fn(async (input: unknown) => input),
@@ -25,6 +28,7 @@ function createClient(): MockAptosClient {
       },
     },
     view: jest.fn(async () => []),
+    waitForTransaction: jest.fn(),
   };
 }
 
@@ -172,5 +176,68 @@ describe("Transaction simulation", () => {
         },
       });
     }
+  });
+
+  it("wraps sign-and-submit aborts into structured move abort errors", async () => {
+    const client = createClient();
+    client.signAndSubmitTransaction.mockRejectedValue({
+      message:
+        "Move abort in 0x6db956973bb73aff8b6c3712a7b4fff18bfefd850cce81c558d20a7ab1fc37d9::router::deposit_coin: abort code 1",
+    });
+    const sdk = new CanopySdk(client as never, { chain: "aptos-testnet" });
+    const signer = { accountAddress: "0x1" };
+
+    await expect(
+      sdk.signAndSubmitTransaction({
+        signer: signer as never,
+        payload: {
+          function:
+            "0x6db956973bb73aff8b6c3712a7b4fff18bfefd850cce81c558d20a7ab1fc37d9::router::deposit_coin",
+          typeArguments: [],
+          functionArguments: ["0x1", [], [], "10", undefined],
+        },
+      })
+    ).rejects.toMatchObject({
+      code: CanopyErrorCode.MoveAbort,
+      details: {
+        moveAbort: {
+          abortCode: 1,
+          abortName: "ENOT_ENOUGH_OUT_SHARES",
+          functionName: "deposit_coin",
+        },
+      },
+    });
+  });
+
+  it("wraps wait-for-transaction aborts into structured move abort errors", async () => {
+    const client = createClient();
+    client.signAndSubmitTransaction.mockResolvedValue({ hash: "0xabc" });
+    client.waitForTransaction.mockRejectedValue({
+      message:
+        "Move abort in 0xeb57695cd494c59ea7b1356580f1e7d5666fd84827322369e21d712e22397b54::router::withdraw: abort code 4",
+    });
+    const sdk = new CanopySdk(client as never, { chain: "aptos-testnet" });
+    const signer = { accountAddress: "0x1" };
+
+    await expect(
+      sdk.signSubmitAndWaitForTransaction({
+        signer: signer as never,
+        payload: {
+          function:
+            "0xeb57695cd494c59ea7b1356580f1e7d5666fd84827322369e21d712e22397b54::router::withdraw",
+          typeArguments: [],
+          functionArguments: ["0x1", "10", "0", "0"],
+        },
+      })
+    ).rejects.toMatchObject({
+      code: CanopyErrorCode.MoveAbort,
+      details: {
+        moveAbort: {
+          abortCode: 4,
+          abortName: "ESLIPPAGE_ASSETS_OUT",
+          functionName: "withdraw",
+        },
+      },
+    });
   });
 });

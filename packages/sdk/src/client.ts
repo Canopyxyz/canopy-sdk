@@ -14,6 +14,10 @@ import type {
   CanopySdkOptions,
   SdkChainName,
   SimulateTransactionInput,
+  SignAndSubmitTransactionInput,
+  SignSubmitAndWaitTransactionInput,
+  SubmittedAndWaitedTransactionResult,
+  SubmittedTransactionResult,
   TransactionSimulationResult,
 } from "./types";
 import { MeridianClient } from "./alm/meridian";
@@ -83,10 +87,10 @@ export class CanopySdk<Chain extends SdkChainName = SdkChainName> {
   async simulateTransaction(
     input: SimulateTransactionInput
   ): Promise<TransactionSimulationResult> {
-    const transaction = await this.client.transaction.build.simple({
+    const transaction = await this.buildSimpleTransaction({
       sender: input.sender,
-      data: input.payload,
-      ...(input.transactionOptions ? { options: input.transactionOptions } : {}),
+      payload: input.payload,
+      transactionOptions: input.transactionOptions,
     });
 
     try {
@@ -105,7 +109,7 @@ export class CanopySdk<Chain extends SdkChainName = SdkChainName> {
       }
 
       if (!response.success) {
-        throwSimulationFailure(response.vm_status, input.payload.function);
+        throwTransactionFailure(response.vm_status, input.payload.function);
       }
 
       return response;
@@ -132,6 +136,62 @@ export class CanopySdk<Chain extends SdkChainName = SdkChainName> {
       );
     }
   }
+
+  async signAndSubmitTransaction(
+    input: SignAndSubmitTransactionInput
+  ): Promise<SubmittedTransactionResult> {
+    const sender = input.sender ?? input.signer.accountAddress;
+    const transaction = await this.buildSimpleTransaction({
+      sender,
+      payload: input.payload,
+      transactionOptions: input.transactionOptions,
+    });
+
+    try {
+      return await this.client.signAndSubmitTransaction({
+        signer: input.signer,
+        transaction,
+      });
+    } catch (error) {
+      throw wrapTransactionError(
+        error,
+        input.payload.function,
+        "Transaction submission failed"
+      );
+    }
+  }
+
+  async signSubmitAndWaitForTransaction(
+    input: SignSubmitAndWaitTransactionInput
+  ): Promise<SubmittedAndWaitedTransactionResult> {
+    const pending = await this.signAndSubmitTransaction(input);
+
+    try {
+      return await this.client.waitForTransaction({
+        transactionHash: pending.hash,
+        checkSuccess: true,
+        ...(input.waitOptions ?? {}),
+      });
+    } catch (error) {
+      throw wrapTransactionError(
+        error,
+        input.payload.function,
+        "Transaction execution failed"
+      );
+    }
+  }
+
+  private buildSimpleTransaction(input: {
+    sender: SimulateTransactionInput["sender"];
+    payload: SimulateTransactionInput["payload"];
+    transactionOptions?: SimulateTransactionInput["transactionOptions"];
+  }) {
+    return this.client.transaction.build.simple({
+      sender: input.sender,
+      data: input.payload,
+      ...(input.transactionOptions ? { options: input.transactionOptions } : {}),
+    });
+  }
 }
 
 export function createCanopySdk<Chain extends SdkChainName>(
@@ -141,7 +201,7 @@ export function createCanopySdk<Chain extends SdkChainName>(
   return new CanopySdk(client, options);
 }
 
-function throwSimulationFailure(vmStatus: string, fallbackFunction: string): never {
+function throwTransactionFailure(vmStatus: string, fallbackFunction: string): never {
   const moveAbort = extractMoveAbortDetails({ message: vmStatus }, fallbackFunction);
 
   if (moveAbort) {
@@ -156,4 +216,28 @@ function throwSimulationFailure(vmStatus: string, fallbackFunction: string): nev
     function: fallbackFunction,
     vmStatus,
   });
+}
+
+function wrapTransactionError(
+  error: unknown,
+  fallbackFunction: string,
+  message: string
+): CanopyError {
+  const moveAbort = extractMoveAbortDetails(error, fallbackFunction);
+
+  if (moveAbort) {
+    return new CanopyError(
+      "Move abort",
+      CanopyErrorCode.MoveAbort,
+      { function: fallbackFunction, moveAbort },
+      { cause: error }
+    );
+  }
+
+  return new CanopyError(
+    message,
+    CanopyErrorCode.TransactionBuildFailed,
+    { function: fallbackFunction },
+    { cause: error }
+  );
 }

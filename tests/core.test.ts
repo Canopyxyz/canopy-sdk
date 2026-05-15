@@ -205,16 +205,16 @@ describe("core helpers", () => {
         vm_error_code: 42,
         data: {
           message:
-            "Transaction failed: Move abort in 0xabc::router::withdraw: abort code 4",
+            "Transaction failed: Move abort in 0xabc::router::withdraw_coin: abort code 2",
         },
       })
     ).toMatchObject({
-      abortCode: 4,
-      abortName: "ESLIPPAGE_ASSETS_OUT",
+      abortCode: 2,
+      abortName: "ENOT_ENOUGH_OUT_AMOUNT",
       errorCode: "vm_error",
       function:
-        "0x0000000000000000000000000000000000000000000000000000000000000abc::router::withdraw",
-      functionName: "withdraw",
+        "0x0000000000000000000000000000000000000000000000000000000000000abc::router::withdraw_coin",
+      functionName: "withdraw_coin",
       module: "0x0000000000000000000000000000000000000000000000000000000000000abc::router",
       moduleName: "router",
       vmErrorCode: 42,

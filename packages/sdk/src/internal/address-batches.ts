@@ -15,26 +15,29 @@ export async function mapAddressBatch<TAddress extends string, TResult>(
   }
 
   const { uniqueAddresses, originalToUniqueIndex } = dedupeAddresses(addresses);
-  const uniqueResults: TResult[] = [];
   const maxChunkSize = Math.max(1, Math.trunc(options.maxChunkSize ?? DEFAULT_VIEW_BATCH_SIZE));
+  const chunks: TAddress[][] = [];
 
   for (let index = 0; index < uniqueAddresses.length; index += maxChunkSize) {
-    const chunk = uniqueAddresses.slice(index, index + maxChunkSize);
-    const chunkResults = await options.fetchChunk(chunk);
+    chunks.push(uniqueAddresses.slice(index, index + maxChunkSize));
+  }
 
-    if (chunkResults.length !== chunk.length) {
+  const chunkResults = await Promise.all(chunks.map((chunk) => options.fetchChunk(chunk)));
+  const uniqueResults = chunkResults.flatMap((results, index) => {
+    const chunk = chunks[index] as TAddress[];
+    if (results.length !== chunk.length) {
       throw new CanopyError(
         `Expected ${options.label} batch results to match input length`,
         CanopyErrorCode.ViewCallFailed,
         {
           expectedLength: chunk.length,
-          receivedLength: chunkResults.length,
+          receivedLength: results.length,
         }
       );
     }
 
-    uniqueResults.push(...chunkResults);
-  }
+    return results;
+  });
 
   return originalToUniqueIndex.map((index) => uniqueResults[index] as TResult);
 }

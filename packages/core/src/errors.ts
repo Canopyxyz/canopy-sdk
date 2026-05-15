@@ -44,9 +44,29 @@ export interface MoveAbortDetails {
 }
 
 const KNOWN_MOVE_ABORTS: Record<string, { name: string; message: string }> = {
-  "router::deposit:1": {
+  "router::deposit_coin:1": {
     name: "ENOT_ENOUGH_OUT_SHARES",
     message: "The deposit produced fewer shares than the caller required.",
+  },
+  "router::deposit_fa:1": {
+    name: "ENOT_ENOUGH_OUT_SHARES",
+    message: "The deposit produced fewer shares than the caller required.",
+  },
+  "router::deposit_fa_with_coin_type:1": {
+    name: "ENOT_ENOUGH_OUT_SHARES",
+    message: "The deposit produced fewer shares than the caller required.",
+  },
+  "router::withdraw_coin:2": {
+    name: "ENOT_ENOUGH_OUT_AMOUNT",
+    message: "The withdrawal would return fewer assets than the caller required.",
+  },
+  "router::withdraw_fa:2": {
+    name: "ENOT_ENOUGH_OUT_AMOUNT",
+    message: "The withdrawal would return fewer assets than the caller required.",
+  },
+  "router::withdraw_fa_with_coin_type:2": {
+    name: "ENOT_ENOUGH_OUT_AMOUNT",
+    message: "The withdrawal would return fewer assets than the caller required.",
   },
   "router::withdraw:1": {
     name: "EINVALID_ASSET_AMOUNT",
@@ -145,8 +165,7 @@ export function extractMoveAbortDetails(
 
   const fn = parseAbortFunction(rawMessage) ?? fallbackFunction;
   const [moduleAddress, moduleName, functionName] = fn ? fn.split("::") : [];
-  const knownAbort =
-    moduleName && functionName ? KNOWN_MOVE_ABORTS[`${moduleName}::${functionName}:${abortCode}`] : undefined;
+  const knownAbort = lookupKnownMoveAbort(moduleName, functionName, abortCode);
 
   return {
     abortCode,
@@ -257,4 +276,44 @@ function readString(value: unknown): string | undefined {
 function normalizeHexAddress(address: string): string {
   const input = address.startsWith("0x") ? address.slice(2) : address;
   return `0x${input.padStart(64, "0").toLowerCase()}`;
+}
+
+function lookupKnownMoveAbort(
+  moduleName: string | undefined,
+  functionName: string | undefined,
+  abortCode: number
+): { name: string; message: string } | undefined {
+  if (!functionName) {
+    return undefined;
+  }
+
+  if (moduleName) {
+    const exact = KNOWN_MOVE_ABORTS[`${moduleName}::${functionName}:${abortCode}`];
+    if (exact) {
+      return exact;
+    }
+  }
+
+  const exactByFunction = Object.entries(KNOWN_MOVE_ABORTS).find(([key]) =>
+    key.endsWith(`::${functionName}:${abortCode}`)
+  )?.[1];
+  if (exactByFunction) {
+    return exactByFunction;
+  }
+
+  if (functionName.startsWith("deposit_") && abortCode === 1) {
+    return {
+      name: "ENOT_ENOUGH_OUT_SHARES",
+      message: "The deposit produced fewer shares than the caller required.",
+    };
+  }
+
+  if (functionName.startsWith("withdraw_") && abortCode === 2) {
+    return {
+      name: "ENOT_ENOUGH_OUT_AMOUNT",
+      message: "The withdrawal would return fewer assets than the caller required.",
+    };
+  }
+
+  return undefined;
 }
