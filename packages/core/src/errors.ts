@@ -1,5 +1,3 @@
-import { defineErrorCause } from "../../shared/error-cause";
-
 export enum CanopyErrorCode {
   InvalidAddress = "INVALID_ADDRESS",
   InvalidAmount = "INVALID_AMOUNT",
@@ -10,6 +8,19 @@ export enum CanopyErrorCode {
   NetworkError = "NETWORK_ERROR",
   TransactionBuildFailed = "TRANSACTION_BUILD_FAILED",
   ViewCallFailed = "VIEW_CALL_FAILED",
+}
+
+function defineErrorCause(target: Error, cause: unknown): void {
+  if (cause === undefined) {
+    return;
+  }
+
+  Object.defineProperty(target, "cause", {
+    value: cause,
+    enumerable: false,
+    configurable: true,
+    writable: true,
+  });
 }
 
 export type CanopyErrorDetails = Record<string, unknown>;

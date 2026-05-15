@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { AptosWalletAdapterProvider } from "@aptos-labs/wallet-adapter-react";
-import { Movement, MovementConfig, Network as MovementNetwork } from "@moveindustries/ts-sdk";
+import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
 import { CanopySdk, type CanopyVaultView, type MeridianVaultSummary } from "@canopyhub/canopy-sdk";
 import { getDeployment } from "@canopyhub/canopy-sdk/deployments";
 import { WalletConnector } from "./WalletConnector";
@@ -29,7 +29,7 @@ const HIDDEN_VAULTS = new Set([
   "0xd686eeb2bc110e74fe6e62e66b1247fedc4a909f4ca8188a640aa7b5098bcb42",
 ]);
 
-function AlmVaultList({ sdk, movementClient }: { sdk: CanopySdk; movementClient: Movement }) {
+function AlmVaultList({ sdk, aptosClient }: { sdk: CanopySdk; aptosClient: Aptos }) {
   const [vaults, setVaults] = useState<MeridianVaultSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -57,7 +57,7 @@ function AlmVaultList({ sdk, movementClient }: { sdk: CanopySdk; movementClient:
         <AlmVaultCard
           key={vault.vaultAddress}
           sdk={sdk}
-          movementClient={movementClient}
+          aptosClient={aptosClient}
           vault={vault}
         />
       ))}
@@ -65,7 +65,7 @@ function AlmVaultList({ sdk, movementClient }: { sdk: CanopySdk; movementClient:
   );
 }
 
-function VaultList({ sdk, movementClient }: { sdk: CanopySdk; movementClient: Movement }) {
+function VaultList({ sdk, aptosClient }: { sdk: CanopySdk; aptosClient: Aptos }) {
   const [vaults, setVaults] = useState<CanopyVaultView[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -86,7 +86,7 @@ function VaultList({ sdk, movementClient }: { sdk: CanopySdk; movementClient: Mo
         <VaultCard
           key={vault.vaultAddress}
           sdk={sdk}
-          movementClient={movementClient}
+          aptosClient={aptosClient}
           vault={vault}
           strategyNames={STRATEGY_NAMES}
         />
@@ -100,11 +100,11 @@ type Page = "canopy" | "alm";
 export default function App() {
   const [page, setPage] = useState<Page>("canopy");
 
-  const movementClient = useMemo(
+  const aptosClient = useMemo(
     () =>
-      new Movement(
-        new MovementConfig({
-          network: MovementNetwork.CUSTOM,
+      new Aptos(
+        new AptosConfig({
+          network: Network.CUSTOM,
           fullnode: FULLNODE,
         })
       ),
@@ -112,15 +112,19 @@ export default function App() {
   );
 
   const sdk = useMemo(
-    () => new CanopySdk(movementClient, { chain: CHAIN, offchain: { sentioApiKey: import.meta.env.VITE_SENTIO_API_KEY } }),
-    [movementClient]
+    () =>
+      new CanopySdk(aptosClient, {
+        chain: CHAIN,
+        offchain: { sentioApiKey: import.meta.env.VITE_SENTIO_API_KEY },
+      }),
+    [aptosClient]
   );
 
   return (
     <AptosWalletAdapterProvider
       autoConnect={true}
       dappConfig={{
-        network: MovementNetwork.MAINNET,
+        network: Network.MAINNET,
         mizuwallet: {
           manifestURL:
             "https://assets.mz.xyz/static/config/mizuwallet-connect-manifest.json",
@@ -151,8 +155,8 @@ export default function App() {
             ALM Vaults
           </button>
         </div>
-        {page === "canopy" && <VaultList sdk={sdk} movementClient={movementClient} />}
-        {page === "alm" && <AlmVaultList sdk={sdk} movementClient={movementClient} />}
+        {page === "canopy" && <VaultList sdk={sdk} aptosClient={aptosClient} />}
+        {page === "alm" && <AlmVaultList sdk={sdk} aptosClient={aptosClient} />}
       </div>
     </AptosWalletAdapterProvider>
   );

@@ -1,8 +1,9 @@
 #!/usr/bin/env node
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import process from "node:process";
 import { ABI_MANIFEST } from "./abi-manifest.mjs";
 import {
+  isMoveAddressFormat,
   isCanonicalMoveAddressFormat,
   normalizeMoveAddressHex,
 } from "../../packages/shared/move-address-format.mjs";
@@ -19,6 +20,24 @@ for (const chain of chains) {
   }
 
   const deployment = await readJson(`packages/deployments/addresses/${chain}.json`);
+  const importedAbiFiles = await readChainAbiImports(chain);
+  const directoryAbiFiles = await readAbiDirectory(chain);
+  const manifestAbiFiles = new Set(entries.map((entry) => entry.file));
+
+  for (const file of manifestAbiFiles) {
+    if (!importedAbiFiles.has(file)) {
+      console.error(`abi:${chain}: manifest file ${file} is not imported by chain bindings`);
+      failed = true;
+    }
+  }
+
+  for (const file of directoryAbiFiles) {
+    if (!importedAbiFiles.has(file)) {
+      console.error(`abi:${chain}: ABI file ${file} exists on disk but is not imported by chain bindings`);
+      failed = true;
+    }
+  }
+
   for (const entry of entries) {
     const abi = await readAbi(`packages/bindings/abis/${chain}/${entry.file}`);
     const expectedAddress = readPath(deployment, entry.addressPath);
@@ -81,6 +100,34 @@ async function readAbi(relativePath) {
   throw new Error(`Unsupported ABI file extension: ${relativePath}`);
 }
 
+async function readAbiDirectory(chain) {
+  const directory = new URL(`../../packages/bindings/abis/${chain}/`, import.meta.url);
+  const entries = await safeReadDirectory(directory);
+  return new Set(
+    entries
+      .filter((entry) => entry.isFile() && entry.name.endsWith(".ts"))
+      .map((entry) => entry.name)
+  );
+}
+
+async function readChainAbiImports(chain) {
+  const contents = await readFile(
+    new URL(`../../packages/bindings/src/chains/${chain}.ts`, import.meta.url),
+    "utf8"
+  );
+  const importPattern = new RegExp(`\\.\\./\\.\\./abis/${escapeRegExp(chain)}/([^"']+)`, "g");
+  const importedFiles = new Set();
+
+  for (const match of contents.matchAll(importPattern)) {
+    const file = match[1];
+    if (file) {
+      importedFiles.add(`${file}.ts`);
+    }
+  }
+
+  return importedFiles;
+}
+
 function readPath(value, pathParts) {
   let current = value;
 
@@ -99,10 +146,38 @@ function repoRoot() {
   return new URL("../../", import.meta.url);
 }
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function normalizeMoveAddress(address) {
-  if (!isCanonicalMoveAddressFormat(address)) {
-    throw new Error(`Invalid canonical Move address: ${address}`);
+  if (
+    !isCanonicalMoveAddressFormat(address) &&
+    !isMoveAddressFormat(address)
+  ) {
+    throw new Error(`Invalid Move address: ${address}`);
   }
 
   return `0x${normalizeMoveAddressHex(address)}`;
+}
+
+async function safeReadDirectory(directory) {
+  try {
+    return await readdir(directory, { withFileTypes: true });
+  } catch (error) {
+    if (isMissingDirectoryError(error)) {
+      return [];
+    }
+
+    throw error;
+  }
+}
+
+function isMissingDirectoryError(error) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "ENOENT"
+  );
 }

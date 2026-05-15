@@ -61,7 +61,15 @@ export interface RewardsPoolInfo {
 export interface RewardData {
   lastUpdateTime: bigint;
   periodFinish: bigint;
+  /**
+   * Raw fixed-point value scaled by 1e12.
+   * Divide by 10^12 to convert to the human decimal reward-per-token rate.
+   */
   rewardPerTokenStored: bigint;
+  /**
+   * Raw fixed-point value scaled by 1e12.
+   * Divide by 10^12 to convert to the human decimal per-second reward rate.
+   */
   rewardRate: bigint;
   rewardsDistributor: string;
   rewardsDuration: bigint;
@@ -129,7 +137,15 @@ export interface RewardsRewardTokenDetails {
   lastUpdateTime: bigint;
   periodFinish: bigint;
   remainingRewards: bigint;
+  /**
+   * Raw fixed-point value scaled by 1e12.
+   * Divide by 10^12 to convert to the human decimal reward-per-token value.
+   */
   rewardPerToken: bigint;
+  /**
+   * Raw fixed-point value scaled by 1e12.
+   * Divide by 10^12 to convert to the human decimal per-second reward rate.
+   */
   rewardRate: bigint;
   rewardTokenAddress: string;
   unallocatedRewards: bigint;

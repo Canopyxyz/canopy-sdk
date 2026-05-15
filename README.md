@@ -161,6 +161,9 @@ const stakingPosition = await sdk.rewards!.getUserStakingPosition({
 });
 ```
 
+`rewardRate`, `rewardPerTokenStored`, and `rewardPerToken` are returned as raw fixed-point values scaled by `1e12`.
+Divide by `10^12` in application code when you want a human decimal representation.
+
 ### Rewards helper-module reads
 
 These helper-backed reads are currently available on `movement-mainnet`.
@@ -354,6 +357,7 @@ Package roles:
 
 ```bash
 pnpm install
+pnpm run hooks:install
 pnpm run typecheck
 pnpm test
 pnpm run check:exports
@@ -361,6 +365,8 @@ pnpm run check:imports
 pnpm run abi:check-local
 pnpm build
 ```
+
+`pnpm run hooks:install` configures the repo-local `.githooks/pre-commit` hook, which runs `abi:check-local` when staged changes touch deployment addresses, generated ABI files, chain bindings, or the ABI manifest.
 
 For the example app:
 

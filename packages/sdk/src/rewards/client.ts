@@ -8,7 +8,7 @@ import {
   callViewPayloadFunction,
   moveUintArgument,
   normalizeMoveAddress,
-} from "@canopyhub/canopy-sdk/core";
+} from "@canopyhub/canopy-sdk-core";
 import type { SdkContext, TransactionPayload } from "../types";
 import {
   readMoveAddress,
@@ -57,8 +57,18 @@ import {
 } from "../internal/surf";
 
 export class RewardsClient {
+  static fromContext(
+    context: SdkContext<"movement-mainnet" | "aptos-testnet">,
+    rewardsDiscovery?: RewardsDiscoveryClient
+  ): RewardsClient {
+    return new RewardsClient(context, rewardsDiscovery);
+  }
+
   constructor(
-    private readonly context: SdkContext<"movement-mainnet" | "aptos-testnet">,
+    private readonly context: Pick<
+      SdkContext<"movement-mainnet" | "aptos-testnet">,
+      "abis" | "chain" | "client"
+    >,
     private readonly rewardsDiscovery?: RewardsDiscoveryClient
   ) {}
 

@@ -3,5 +3,8 @@
   "compilerOptions": {
     "module": "ESNext",
     "moduleResolution": "node"
-  }
+  },
+  "include": [
+    "./index.ts"
+  ]
 }

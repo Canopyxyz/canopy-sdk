@@ -1,4 +1,4 @@
-import { normalizeMoveAddress } from "@canopyhub/canopy-sdk/core";
+import { normalizeMoveAddress } from "@canopyhub/canopy-sdk-core";
 
 export interface FungibleAssetDeposit {
   amount: bigint;

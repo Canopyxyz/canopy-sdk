@@ -53,18 +53,22 @@ export class CanopySdk<Chain extends SdkChainName = SdkChainName> {
     };
 
     if (baseContext.deployment.features.canopy) {
-      this.canopy = new CanopyProtocolClientImpl(requireCanopyFeatureContext(baseContext));
+      this.canopy = CanopyProtocolClientImpl.fromContext(
+        requireCanopyFeatureContext(baseContext)
+      );
     }
 
     if (baseContext.deployment.features.rewards) {
-      this.rewards = new RewardsClient(
+      this.rewards = RewardsClient.fromContext(
         requireRewardsFeatureContext(baseContext),
         this.data.rewardsDiscovery
       );
     }
 
     if (baseContext.deployment.features.almMeridian) {
-      this.alm.meridian = new MeridianClient(requireMeridianFeatureContext(baseContext));
+      this.alm.meridian = MeridianClient.fromContext(
+        requireMeridianFeatureContext(baseContext)
+      );
     }
   }
 }

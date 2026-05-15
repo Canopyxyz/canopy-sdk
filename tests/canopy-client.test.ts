@@ -1,5 +1,7 @@
 import { jest } from "@jest/globals";
 import { CanopySdk } from "../packages/sdk/src";
+import { normalizeMoveAddress } from "../packages/core/src";
+import { DEFAULT_VIEW_BATCH_SIZE } from "../packages/sdk/src/internal/address-batches";
 
 const APTOS_COIN_TYPE =
   "0x0000000000000000000000000000000000000000000000000000000000000001::aptos_coin::AptosCoin";
@@ -938,5 +940,41 @@ describe("Canopy client", () => {
       code: "VIEW_CALL_FAILED",
       message: "Expected Move scalar",
     });
+  });
+
+  it("dedupes and chunks canopy helper batch requests", async () => {
+    const requestedChunks: string[][] = [];
+    const client = createMovementMock({
+      "0x93c6d4852a37be13ec1487a60d32433e396b048ce634b4e8b9f60ff0dac365d2::helpers::batch_get_fa_balance":
+        (args: unknown[]) => {
+          const chunk = (args[0] as string[]).slice();
+          requestedChunks.push(chunk);
+          return [chunk.map((address) => BigInt(address).toString())];
+        },
+    });
+    const sdk = new CanopySdk(client as never, { chain: "movement-mainnet" });
+    const uniqueAddresses = Array.from({ length: DEFAULT_VIEW_BATCH_SIZE + 1 }, (_, index) => {
+      return `0x${(index + 1).toString(16)}`;
+    });
+    const inputAddresses = [...uniqueAddresses, uniqueAddresses[0] as string];
+
+    await expect(
+      sdk.canopy?.getBatchFungibleAssetBalances(inputAddresses, "0x111")
+    ).resolves.toEqual(
+      inputAddresses.map((address) => {
+        const metadataAddress = normalizeMoveAddress(address);
+        return {
+          metadataAddress,
+          balance: BigInt(metadataAddress),
+        };
+      })
+    );
+
+    expect(requestedChunks).toHaveLength(2);
+    expect(requestedChunks[0]).toHaveLength(DEFAULT_VIEW_BATCH_SIZE);
+    expect(requestedChunks[1]).toHaveLength(1);
+    expect(requestedChunks.flat()).toEqual(
+      uniqueAddresses.map((address) => normalizeMoveAddress(address))
+    );
   });
 });

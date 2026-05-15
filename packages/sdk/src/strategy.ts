@@ -1,9 +1,9 @@
-import { sameMoveAddress } from "@canopyhub/canopy-sdk/core";
+import { sameMoveAddress } from "@canopyhub/canopy-sdk-core";
 import {
   getContractAddress,
   type ChainName,
   type ContractId,
-} from "@canopyhub/canopy-sdk/deployments";
+} from "@canopyhub/canopy-sdk-deployments";
 import {
   getContract,
   requireContract,

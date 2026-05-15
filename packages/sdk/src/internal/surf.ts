@@ -1,7 +1,7 @@
 import { createViewPayload } from "@thalalabs/surf";
 import type { InputViewFunctionData } from "@aptos-labs/ts-sdk";
-import type { MoveModuleAbi } from "@canopyhub/canopy-sdk/bindings";
-import { normalizeMoveAddress } from "@canopyhub/canopy-sdk/core";
+import type { MoveModuleAbi } from "@canopyhub/canopy-sdk-bindings";
+import { normalizeMoveAddress } from "@canopyhub/canopy-sdk-core";
 
 export type SurfViewFunctionName<TAbi extends MoveModuleAbi> = Extract<
   TAbi["exposed_functions"][number],

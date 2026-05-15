@@ -1,7 +1,7 @@
 import type { Aptos } from "@aptos-labs/ts-sdk";
-import { getAbisForChain } from "@canopyhub/canopy-sdk/bindings";
-import { getDeployment, type ChainName } from "@canopyhub/canopy-sdk/deployments";
-import { CanopyError, CanopyErrorCode } from "@canopyhub/canopy-sdk/core";
+import { getAbisForChain } from "@canopyhub/canopy-sdk-bindings";
+import { getDeployment, type ChainName } from "@canopyhub/canopy-sdk-deployments";
+import { CanopyError, CanopyErrorCode } from "@canopyhub/canopy-sdk-core";
 import {
   aptosTestnetMovePositionConfig,
   movementMainnetMovePositionConfig,

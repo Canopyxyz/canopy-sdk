@@ -8,7 +8,7 @@ import {
   normalizeMoveAddress,
   normalizeMoveTypeTag,
   viewFunctionPayload,
-} from "@canopyhub/canopy-sdk/core";
+} from "@canopyhub/canopy-sdk-core";
 import type { SdkContext, TransactionPayload } from "../types";
 import {
   readMoveAddress,
@@ -40,6 +40,7 @@ import {
   type SurfViewFunctionArguments,
   type SurfViewFunctionName,
 } from "../internal/surf";
+import { mapAddressBatch } from "../internal/address-batches";
 
 export interface ListCanopyVaultsInput {
   limit?: bigint | number;
@@ -48,8 +49,21 @@ export interface ListCanopyVaultsInput {
 
 const ALLOCATION_TOLERANCE_BPS = 10n; // 0.1%
 
+type CanopyProtocolClientDeps = Pick<
+  SdkContext<"movement-mainnet" | "aptos-testnet">,
+  "abis" | "chain" | "client" | "deployment" | "moveposition"
+>;
+
 export class CanopyProtocolClient {
-  constructor(private readonly context: SdkContext<"movement-mainnet" | "aptos-testnet">) {}
+  static fromContext(
+    context: SdkContext<"movement-mainnet" | "aptos-testnet">
+  ): CanopyProtocolClient {
+    return new CanopyProtocolClient(context);
+  }
+
+  constructor(
+    private readonly context: CanopyProtocolClientDeps
+  ) {}
 
   async getVault(vaultAddress: string): Promise<CanopyVaultView> {
     const rawVault = await this.callCanopyVaultViewResult("vault_view", [
@@ -286,91 +300,127 @@ export class CanopyProtocolClient {
     metadataAddresses: string[],
     userAddress: string
   ): Promise<CanopyBatchMetadataBalance[]> {
-    const helpers = this.getHelpersAbi();
-    const normalizedMetadata = metadataAddresses.map((address) => normalizeMoveAddress(address));
-    const balances = await this.callHelpersViewResult("batch_get_fa_balance", [
-      normalizedMetadata,
-      normalizeMoveAddress(userAddress),
-    ]);
+    const normalizedMetadata = metadataAddresses.map((address) =>
+      normalizeMoveAddress(address)
+    ) as Array<`0x${string}`>;
+    const normalizedUserAddress = normalizeMoveAddress(userAddress);
 
-    return zipMetadataBalances(
-      normalizedMetadata,
-      readMoveU64Vector(balances),
-      "fungible asset metadata"
-    );
+    return mapAddressBatch(normalizedMetadata, {
+      label: "fungible asset metadata",
+      fetchChunk: async (chunk) => {
+        const balances = await this.callHelpersViewResult("batch_get_fa_balance", [
+          chunk,
+          normalizedUserAddress,
+        ]);
+
+        return zipMetadataBalances(chunk, readMoveU64Vector(balances), "fungible asset metadata");
+      },
+    });
   }
 
   async getBatchVaultSharesBalances(
     vaultAddresses: string[],
     userAddress: string
   ): Promise<CanopyBatchVaultBalance[]> {
-    const helpers = this.getHelpersAbi();
-    const normalizedVaults = vaultAddresses.map((address) => normalizeMoveAddress(address));
-    const balances = await this.callHelpersViewResult("batch_get_vault_balance", [
-      normalizedVaults,
-      normalizeMoveAddress(userAddress),
-    ]);
+    const normalizedVaults = vaultAddresses.map((address) =>
+      normalizeMoveAddress(address)
+    ) as Array<`0x${string}`>;
+    const normalizedUserAddress = normalizeMoveAddress(userAddress);
 
-    return zipVaultBalances(normalizedVaults, readMoveU64Vector(balances), "vault balances");
+    return mapAddressBatch(normalizedVaults, {
+      label: "vault balances",
+      fetchChunk: async (chunk) => {
+        const balances = await this.callHelpersViewResult("batch_get_vault_balance", [
+          chunk,
+          normalizedUserAddress,
+        ]);
+
+        return zipVaultBalances(chunk, readMoveU64Vector(balances), "vault balances");
+      },
+    });
   }
 
   async getBatchVaultBaseMetadataAndBalances(
     vaultAddresses: string[],
     userAddress: string
   ): Promise<CanopyBatchVaultMetadataBalance[]> {
-    const helpers = this.getHelpersAbi();
-    const normalizedVaults = vaultAddresses.map((address) => normalizeMoveAddress(address));
-    const [metadata, balances] = await this.callHelpersViewFunction<[unknown, unknown]>(
-      "batch_get_vault_base_metadata_and_balance",
-      [normalizedVaults, normalizeMoveAddress(userAddress)]
-    );
+    const normalizedVaults = vaultAddresses.map((address) =>
+      normalizeMoveAddress(address)
+    ) as Array<`0x${string}`>;
+    const normalizedUserAddress = normalizeMoveAddress(userAddress);
 
-    return zipVaultMetadataBalances(
-      normalizedVaults,
-      readMoveAddressVector(metadata),
-      readMoveU64Vector(balances),
-      "vault base metadata and balances"
-    );
+    return mapAddressBatch(normalizedVaults, {
+      label: "vault base metadata and balances",
+      fetchChunk: async (chunk) => {
+        const [metadata, balances] = await this.callHelpersViewFunction<[unknown, unknown]>(
+          "batch_get_vault_base_metadata_and_balance",
+          [chunk, normalizedUserAddress]
+        );
+
+        return zipVaultMetadataBalances(
+          chunk,
+          readMoveAddressVector(metadata),
+          readMoveU64Vector(balances),
+          "vault base metadata and balances"
+        );
+      },
+    });
   }
 
   async getBatchVaultSharesMetadataAndBalances(
     vaultAddresses: string[],
     userAddress: string
   ): Promise<CanopyBatchVaultMetadataBalance[]> {
-    const helpers = this.getHelpersAbi();
-    const normalizedVaults = vaultAddresses.map((address) => normalizeMoveAddress(address));
-    const [metadata, balances] = await this.callHelpersViewFunction<[unknown, unknown]>(
-      "batch_get_vault_shares_metadata_and_balance",
-      [normalizedVaults, normalizeMoveAddress(userAddress)]
-    );
+    const normalizedVaults = vaultAddresses.map((address) =>
+      normalizeMoveAddress(address)
+    ) as Array<`0x${string}`>;
+    const normalizedUserAddress = normalizeMoveAddress(userAddress);
 
-    return zipVaultMetadataBalances(
-      normalizedVaults,
-      readMoveAddressVector(metadata),
-      readMoveU64Vector(balances),
-      "vault shares metadata and balances"
-    );
+    return mapAddressBatch(normalizedVaults, {
+      label: "vault shares metadata and balances",
+      fetchChunk: async (chunk) => {
+        const [metadata, balances] = await this.callHelpersViewFunction<[unknown, unknown]>(
+          "batch_get_vault_shares_metadata_and_balance",
+          [chunk, normalizedUserAddress]
+        );
+
+        return zipVaultMetadataBalances(
+          chunk,
+          readMoveAddressVector(metadata),
+          readMoveU64Vector(balances),
+          "vault shares metadata and balances"
+        );
+      },
+    });
   }
 
   async getBatchVaultAllMetadataAndBalances(
     vaultAddresses: string[],
     userAddress: string
   ): Promise<CanopyBatchVaultAllMetadataBalance[]> {
-    const helpers = this.getHelpersAbi();
-    const normalizedVaults = vaultAddresses.map((address) => normalizeMoveAddress(address));
-    const [sharesMetadata, sharesBalances, baseMetadata, baseBalances] =
-      await this.callHelpersViewFunction<[unknown, unknown, unknown, unknown]>(
-        "batch_get_vault_all_metadata_and_balance",
-        [normalizedVaults, normalizeMoveAddress(userAddress)]
-      );
+    const normalizedVaults = vaultAddresses.map((address) =>
+      normalizeMoveAddress(address)
+    ) as Array<`0x${string}`>;
+    const normalizedUserAddress = normalizeMoveAddress(userAddress);
 
-    return zipVaultAllMetadataBalances(
-      normalizedVaults,
-      readMoveAddressVector(baseMetadata),
-      readMoveU64Vector(baseBalances),
-      readMoveAddressVector(sharesMetadata),
-      readMoveU64Vector(sharesBalances)
-    );
+    return mapAddressBatch(normalizedVaults, {
+      label: "vault base/share metadata and balances",
+      fetchChunk: async (chunk) => {
+        const [sharesMetadata, sharesBalances, baseMetadata, baseBalances] =
+          await this.callHelpersViewFunction<[unknown, unknown, unknown, unknown]>(
+            "batch_get_vault_all_metadata_and_balance",
+            [chunk, normalizedUserAddress]
+          );
+
+        return zipVaultAllMetadataBalances(
+          chunk,
+          readMoveAddressVector(baseMetadata),
+          readMoveU64Vector(baseBalances),
+          readMoveAddressVector(sharesMetadata),
+          readMoveU64Vector(sharesBalances)
+        );
+      },
+    });
   }
 
   async getStrategyDetails(
@@ -599,7 +649,7 @@ function assertParallelVectorLengths(vectors: Array<{ length: number }>, label: 
 }
 
 function buildUnstakePayload(
-  context: SdkContext<"movement-mainnet" | "aptos-testnet">,
+  context: CanopyProtocolClientDeps,
   stakingAsset: string,
   amount: bigint
 ): TransactionPayload {
@@ -681,7 +731,7 @@ function readOptionalNestedString(value: unknown): string | undefined {
 }
 
 async function getPacketArguments(
-  context: SdkContext<"movement-mainnet" | "aptos-testnet">,
+  context: CanopyProtocolClientDeps,
   vault: CanopyVaultView,
   operation: "deposit" | "withdraw",
   amount: bigint
@@ -714,7 +764,7 @@ async function getPacketArguments(
 }
 
 function hasRouterFunction(
-  context: SdkContext<"movement-mainnet" | "aptos-testnet">,
+  context: CanopyProtocolClientDeps,
   functionName: string
 ): boolean {
   return (
@@ -725,7 +775,7 @@ function hasRouterFunction(
 }
 
 async function getAllocationMap(
-  context: SdkContext<"movement-mainnet" | "aptos-testnet">,
+  context: CanopyProtocolClientDeps,
   operation: "deposit" | "withdraw",
   vaultAddress: string,
   amount: bigint

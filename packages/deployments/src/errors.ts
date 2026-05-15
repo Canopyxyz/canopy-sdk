@@ -1,11 +1,22 @@
-import { defineErrorCause } from "../../shared/error-cause";
-
 export const INVALID_DEPLOYMENT = "INVALID_DEPLOYMENT";
 
 export type DeploymentErrorDetails = Record<string, unknown>;
 
 export interface DeploymentErrorOptions {
   cause?: unknown;
+}
+
+function defineErrorCause(target: Error, cause: unknown): void {
+  if (cause === undefined) {
+    return;
+  }
+
+  Object.defineProperty(target, "cause", {
+    value: cause,
+    enumerable: false,
+    configurable: true,
+    writable: true,
+  });
 }
 
 export class DeploymentError extends Error {

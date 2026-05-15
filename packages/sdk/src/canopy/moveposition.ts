@@ -4,7 +4,7 @@ import {
   callSingleViewResult,
   moveUintArgument,
   normalizeMoveAddress,
-} from "@canopyhub/canopy-sdk/core";
+} from "@canopyhub/canopy-sdk-core";
 import type { SdkContext } from "../types";
 import { readMoveU64 } from "../internal/move-readers";
 import type { CanopyVaultAllocation, CanopyVaultView } from "./types";
@@ -25,6 +25,11 @@ export interface PacketGenerationResult {
   packetStrategies: Array<`0x${string}`>;
 }
 
+type MovePositionContextDeps = Pick<
+  SdkContext<"movement-mainnet" | "aptos-testnet">,
+  "abis" | "chain" | "client" | "deployment" | "moveposition"
+>;
+
 interface MovePositionRequest {
   amount: string;
   brokerName: string;
@@ -41,7 +46,7 @@ interface MovePositionResponse {
 }
 
 export async function buildMovePositionPackets(
-  context: SdkContext<"movement-mainnet" | "aptos-testnet">,
+  context: MovePositionContextDeps,
   vault: CanopyVaultView,
   allocation: Pick<CanopyVaultAllocation, "amounts" | "strategies">,
   operation: "deposit" | "withdraw"
@@ -129,7 +134,7 @@ export async function buildMovePositionPackets(
 }
 
 async function getWithdrawAmount(
-  context: SdkContext<"movement-mainnet" | "aptos-testnet">,
+  context: MovePositionContextDeps,
   strategyAddress: string,
   amount: bigint,
   vault: CanopyVaultView

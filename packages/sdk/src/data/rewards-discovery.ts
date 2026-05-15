@@ -1,5 +1,5 @@
-import { CanopyError, CanopyErrorCode, normalizeMoveAddress } from "@canopyhub/canopy-sdk/core";
-import type { ChainName } from "@canopyhub/canopy-sdk/deployments";
+import { CanopyError, CanopyErrorCode, normalizeMoveAddress } from "@canopyhub/canopy-sdk-core";
+import type { ChainName } from "@canopyhub/canopy-sdk-deployments";
 import type {
   ResolveRewardPoolsInput,
   RewardsDiscoveryClientOptions,

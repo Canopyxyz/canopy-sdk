@@ -7,7 +7,7 @@ import {
   callViewPayloadFunction,
   moveUintArgument,
   normalizeMoveAddress,
-} from "@canopyhub/canopy-sdk/core";
+} from "@canopyhub/canopy-sdk-core";
 import {
   readMoveAddress,
   readMoveAddressVector,
@@ -23,7 +23,8 @@ import {
   type SurfViewFunctionArguments,
   type SurfViewFunctionName,
 } from "../../internal/surf";
-import type { MoveModuleAbi } from "@canopyhub/canopy-sdk/bindings";
+import { mapAddressBatch } from "../../internal/address-batches";
+import type { MoveModuleAbi } from "@canopyhub/canopy-sdk-bindings";
 import type { SdkContext, TransactionPayload } from "../../types";
 import type {
   MeridianBatchPositionSummary,
@@ -38,9 +39,20 @@ import type {
   MeridianWithdrawPayloadInput,
 } from "./types";
 
+type MeridianClientDeps = Pick<
+  SdkContext<"movement-mainnet" | "aptos-mainnet">,
+  "abis" | "chain" | "client"
+>;
+
 export class MeridianClient {
+  static fromContext(
+    context: SdkContext<"movement-mainnet" | "aptos-mainnet">
+  ): MeridianClient {
+    return new MeridianClient(context);
+  }
+
   constructor(
-    private readonly context: SdkContext<"movement-mainnet" | "aptos-mainnet">
+    private readonly context: MeridianClientDeps
   ) {}
 
   async listVaults(input: ListMeridianVaultsInput = {}): Promise<string[]> {
@@ -170,22 +182,28 @@ export class MeridianClient {
     vaultAddresses: string[]
   ): Promise<Array<MeridianBatchVaultInfo | null>> {
     const batchViews = this.getBatchViewsAbi();
-    const normalizedVaults = vaultAddresses.map((address) => normalizeMoveAddress(address));
-    const results = await this.callAbiViewResult(batchViews, "batch_get_vault_info", [
-      normalizedVaults,
-    ]);
+    const normalizedVaults = vaultAddresses.map((address) =>
+      normalizeMoveAddress(address)
+    ) as Array<`0x${string}`>;
 
-    if (!Array.isArray(results)) {
-      throw new CanopyError("Expected vault info batch vector", CanopyErrorCode.ViewCallFailed, {
-        valueType: typeof results,
-      });
-    }
+    return mapAddressBatch(normalizedVaults, {
+      label: "vault info",
+      fetchChunk: async (chunk) => {
+        const results = await this.callAbiViewResult(batchViews, "batch_get_vault_info", [chunk]);
 
-    return results.map((result, index) =>
-      readMoveOption(result, (value) =>
-        readBatchVaultInfo(value, normalizedVaults[index] as string)
-      )
-    );
+        if (!Array.isArray(results)) {
+          throw new CanopyError(
+            "Expected vault info batch vector",
+            CanopyErrorCode.ViewCallFailed,
+            { valueType: typeof results }
+          );
+        }
+
+        return results.map((result, index) =>
+          readMoveOption(result, (value) => readBatchVaultInfo(value, chunk[index] as string))
+        );
+      },
+    });
   }
 
   async getBatchUserVaultBalances(
@@ -193,50 +211,67 @@ export class MeridianClient {
     userAddress: string
   ): Promise<Array<MeridianBatchUserVaultBalance | null>> {
     const batchViews = this.getBatchViewsAbi();
-    const normalizedVaults = vaultAddresses.map((address) => normalizeMoveAddress(address));
-    const results = await this.callAbiViewResult(batchViews, "batch_get_user_balances", [
-      normalizedVaults,
-      normalizeMoveAddress(userAddress),
-    ]);
+    const normalizedVaults = vaultAddresses.map((address) =>
+      normalizeMoveAddress(address)
+    ) as Array<`0x${string}`>;
+    const normalizedUserAddress = normalizeMoveAddress(userAddress);
 
-    if (!Array.isArray(results)) {
-      throw new CanopyError(
-        "Expected user vault balance batch vector",
-        CanopyErrorCode.ViewCallFailed,
-        { valueType: typeof results }
-      );
-    }
+    return mapAddressBatch(normalizedVaults, {
+      label: "user vault balances",
+      fetchChunk: async (chunk) => {
+        const results = await this.callAbiViewResult(batchViews, "batch_get_user_balances", [
+          chunk,
+          normalizedUserAddress,
+        ]);
 
-    return results.map((result, index) =>
-      readMoveOption(result, (value) =>
-        readBatchUserVaultBalance(value, normalizedVaults[index] as string)
-      )
-    );
+        if (!Array.isArray(results)) {
+          throw new CanopyError(
+            "Expected user vault balance batch vector",
+            CanopyErrorCode.ViewCallFailed,
+            { valueType: typeof results }
+          );
+        }
+
+        return results.map((result, index) =>
+          readMoveOption(result, (value) =>
+            readBatchUserVaultBalance(value, chunk[index] as string)
+          )
+        );
+      },
+    });
   }
 
   async getBatchVaultPositions(
     vaultAddresses: string[]
   ): Promise<Array<MeridianBatchVaultPositions | null>> {
     const batchViews = this.getBatchViewsAbi();
-    const normalizedVaults = vaultAddresses.map((address) => normalizeMoveAddress(address));
-    const results = await this.callAbiViewResult(batchViews, "batch_get_vault_positions", [
-      normalizedVaults,
-    ]);
+    const normalizedVaults = vaultAddresses.map((address) =>
+      normalizeMoveAddress(address)
+    ) as Array<`0x${string}`>;
 
-    if (!Array.isArray(results)) {
-      throw new CanopyError(
-        "Expected vault positions batch vector",
-        CanopyErrorCode.ViewCallFailed,
-        { valueType: typeof results }
-      );
-    }
+    return mapAddressBatch(normalizedVaults, {
+      label: "vault positions",
+      fetchChunk: async (chunk) => {
+        const results = await this.callAbiViewResult(batchViews, "batch_get_vault_positions", [
+          chunk,
+        ]);
 
-    return results.map((result, index) =>
-      readMoveOption(result, (value) => ({
-        positions: readBatchPositionSummaryVector(value),
-        vaultAddress: normalizedVaults[index] as string,
-      }))
-    );
+        if (!Array.isArray(results)) {
+          throw new CanopyError(
+            "Expected vault positions batch vector",
+            CanopyErrorCode.ViewCallFailed,
+            { valueType: typeof results }
+          );
+        }
+
+        return results.map((result, index) =>
+          readMoveOption(result, (value) => ({
+            positions: readBatchPositionSummaryVector(value),
+            vaultAddress: chunk[index] as string,
+          }))
+        );
+      },
+    });
   }
 
   private getBatchViewsAbi() {
@@ -415,7 +450,7 @@ function assertMeridianWithdrawInputShape(input: MeridianWithdrawPayloadInput): 
 }
 
 async function getFungibleAssetDecimals(
-  context: SdkContext<"movement-mainnet" | "aptos-mainnet">,
+  context: MeridianClientDeps,
   metadataAddress: string
 ): Promise<number> {
   const decimals = await callSingleViewResult(

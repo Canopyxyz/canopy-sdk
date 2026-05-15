@@ -1,6 +1,6 @@
 import type { Aptos, InputEntryFunctionData } from "@aptos-labs/ts-sdk";
-import type { AbisForChain } from "@canopyhub/canopy-sdk/bindings";
-import type { ChainDeployment, ChainName } from "@canopyhub/canopy-sdk/deployments";
+import type { AbisForChain } from "@canopyhub/canopy-sdk-bindings";
+import type { ChainDeployment, ChainName } from "@canopyhub/canopy-sdk-deployments";
 import type { MovePositionConfig } from "./canopy/moveposition";
 
 export type SdkChainName = ChainName;

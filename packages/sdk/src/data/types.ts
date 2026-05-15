@@ -1,4 +1,4 @@
-import type { ChainName } from "@canopyhub/canopy-sdk/deployments";
+import type { ChainName } from "@canopyhub/canopy-sdk-deployments";
 
 export interface SentioRewardData {
   distributor: string;

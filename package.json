@@ -67,6 +67,7 @@
     "abi:fetch": "node scripts/abi/fetch-abis.mjs",
     "abi:check": "node scripts/abi/fetch-abis.mjs --check",
     "abi:check-local": "node scripts/abi/check-local-abis.mjs",
+    "hooks:install": "git config core.hooksPath .githooks",
     "check:exports": "node scripts/ci/check-exports.mjs",
     "check:imports": "node scripts/ci/check-imports.mjs",
     "check:no-surf-public-api": "node scripts/ci/check-no-surf-public-api.mjs",

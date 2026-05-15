@@ -4,7 +4,7 @@ import {
   normalizeMoveAddress,
   parseU128,
   parseU64,
-} from "@canopyhub/canopy-sdk/core";
+} from "@canopyhub/canopy-sdk-core";
 
 interface MoveObjectLike {
   inner?: unknown;

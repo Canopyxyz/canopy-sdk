@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
-import type { Movement } from "@moveindustries/ts-sdk";
-import type { CanopySdk, MeridianVaultSummary } from "@canopyhub/canopy-sdk";
+import type { Aptos } from "@aptos-labs/ts-sdk";
+import type { CanopySdk, MeridianVaultSummary, TransactionPayload } from "@canopyhub/canopy-sdk";
 import { scaleToDecimals, scaleFromDecimals } from "./utils";
 
 interface Props {
+  aptosClient: Aptos;
   sdk: CanopySdk;
-  movementClient: Movement;
   vault: MeridianVaultSummary;
 }
 
@@ -15,7 +15,7 @@ interface Balances {
   shares: bigint;
 }
 
-export default function AlmVaultCard({ sdk, movementClient, vault }: Props) {
+export default function AlmVaultCard({ sdk, aptosClient, vault }: Props) {
   const { account, signAndSubmitTransaction } = useWallet();
   const [balances, setBalances] = useState<Balances | null>(null);
   const [depositAmount, setDepositAmount] = useState("");
@@ -32,38 +32,31 @@ export default function AlmVaultCard({ sdk, movementClient, vault }: Props) {
     }
 
     try {
-      const [assetResult, position] = await Promise.all([
-        movementClient.view({
-          payload: {
-            function: "0x1::primary_fungible_store::balance" as `${string}::${string}::${string}`,
-            typeArguments: ["0x1::fungible_asset::Metadata"],
-            functionArguments: [userAddress, vault.depositAssetAddress],
-          },
-        }),
+      const [assetBalances, position] = await Promise.all([
+        sdk.canopy?.getBatchFungibleAssetBalances([vault.depositAssetAddress], userAddress),
         sdk.alm.meridian?.getUserVaultPosition(vault.vaultAddress, userAddress),
       ]);
 
       setBalances({
-        depositAssetWallet: BigInt((assetResult as string[])[0] ?? "0"),
+        depositAssetWallet: assetBalances?.[0]?.balance ?? 0n,
         shares: position?.shares ?? 0n,
       });
     } catch (error) {
       console.error(`Failed to fetch ALM balances for ${vault.vaultAddress}:`, error);
     }
-  }, [userAddress, vault, sdk, movementClient]);
+  }, [userAddress, vault, sdk]);
 
   useEffect(() => {
     fetchBalances();
   }, [fetchBalances]);
 
-  const submit = async (label: string, buildPayload: () => Promise<unknown>) => {
+  const submit = async (label: string, buildPayload: () => Promise<TransactionPayload>) => {
     setLoading(true);
     setStatus(`${label}...`);
     try {
       const payload = await buildPayload();
-      // @ts-expect-error
       const pending = await signAndSubmitTransaction({ data: payload });
-      await movementClient.waitForTransaction({ transactionHash: pending.hash });
+      await aptosClient.waitForTransaction({ transactionHash: pending.hash });
       setStatus(`${label} successful! TX: ${pending.hash}`);
       setTimeout(fetchBalances, 2000);
     } catch (error: unknown) {
@@ -90,8 +83,8 @@ export default function AlmVaultCard({ sdk, movementClient, vault }: Props) {
         sdk.alm.meridian!.buildWithdrawPayload({
           vaultAddress: vault.vaultAddress,
           shares: scaleToDecimals(sharesAmount, vault.shareDecimals),
-          maxLossBps: 0n,
-          minAmountOut: 0n,
+          minAsset0: 0n,
+          minAsset1: 0n,
         })
       )
     );
