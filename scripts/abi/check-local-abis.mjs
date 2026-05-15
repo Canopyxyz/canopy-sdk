@@ -2,6 +2,10 @@
 import { readFile } from "node:fs/promises";
 import process from "node:process";
 import { ABI_MANIFEST } from "./abi-manifest.mjs";
+import {
+  isCanonicalMoveAddressFormat,
+  normalizeMoveAddressHex,
+} from "../../packages/shared/move-address-format.mjs";
 
 const requestedChain = getArgValue("--chain");
 const chains = requestedChain ? [requestedChain] : Object.keys(ABI_MANIFEST);
@@ -96,6 +100,9 @@ function repoRoot() {
 }
 
 function normalizeMoveAddress(address) {
-  const hex = address.startsWith("0x") ? address.slice(2) : address;
-  return `0x${hex.padStart(64, "0").toLowerCase()}`;
+  if (!isCanonicalMoveAddressFormat(address)) {
+    throw new Error(`Invalid canonical Move address: ${address}`);
+  }
+
+  return `0x${normalizeMoveAddressHex(address)}`;
 }

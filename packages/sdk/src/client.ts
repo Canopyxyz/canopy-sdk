@@ -19,7 +19,7 @@ export class CanopySdk<Chain extends SdkChainName = SdkChainName> {
   readonly canopy?: CanopyProtocolClient;
   readonly chain: Chain;
   readonly data: {
-    rewardsDiscovery: RewardsDiscoveryClient;
+    rewardsDiscovery?: RewardsDiscoveryClient;
   };
   readonly rewards?: RewardsClient;
 
@@ -32,15 +32,24 @@ export class CanopySdk<Chain extends SdkChainName = SdkChainName> {
     this.chain = baseContext.chain;
 
     this.alm = {};
+    const rewardsDiscovery =
+      baseContext.deployment.features.rewards || options.offchain?.sentioEndpoint
+        ? new RewardsDiscoveryClient({
+            chain: baseContext.chain,
+            ...(options.offchain?.sentioEndpoint
+              ? { endpoint: options.offchain.sentioEndpoint }
+              : {}),
+            ...(options.offchain?.sentioApiKey ? { apiKey: options.offchain.sentioApiKey } : {}),
+            ...(options.offchain?.cacheMaxEntries !== undefined
+              ? { cacheMaxEntries: options.offchain.cacheMaxEntries }
+              : {}),
+            ...(options.offchain?.cacheTimeoutMs !== undefined
+              ? { cacheTimeoutMs: options.offchain.cacheTimeoutMs }
+              : {}),
+          })
+        : undefined;
     this.data = {
-      rewardsDiscovery: new RewardsDiscoveryClient({
-        chain: baseContext.chain,
-        ...(options.offchain?.sentioEndpoint ? { endpoint: options.offchain.sentioEndpoint } : {}),
-        ...(options.offchain?.sentioApiKey ? { apiKey: options.offchain.sentioApiKey } : {}),
-        ...(options.offchain?.cacheTimeoutMs !== undefined
-          ? { cacheTimeoutMs: options.offchain.cacheTimeoutMs }
-          : {}),
-      }),
+      ...(rewardsDiscovery ? { rewardsDiscovery } : {}),
     };
 
     if (baseContext.deployment.features.canopy) {

@@ -2,6 +2,7 @@ import aptosMainnet from "../addresses/aptos-mainnet.json";
 import aptosTestnet from "../addresses/aptos-testnet.json";
 import movementMainnet from "../addresses/movement-mainnet.json";
 import movementTestnet from "../addresses/movement-testnet.json";
+import { isCanonicalMoveAddressFormat } from "../../shared/move-address-format.mjs";
 import { CHAIN_IDS, FULLNODE_DEFAULTS } from "./chains";
 import { DeploymentError } from "./errors";
 import { CANOPY_REQUIRED, MERIDIAN_REQUIRED_STRATEGIES } from "./requirements";
@@ -136,7 +137,7 @@ function validateOptionalAddress(address: string | undefined, label: string): vo
     return;
   }
 
-  if (!isMoveAddress(address)) {
+  if (!isCanonicalMoveAddressFormat(address)) {
     throw new DeploymentError(`Invalid deployment address: ${label}`, {
       label,
       address,
@@ -220,11 +221,4 @@ function validateFeatureOverrides(
       });
     }
   }
-}
-
-// Keep this in sync with `packages/core/src/address.ts#isMoveAddress`.
-// Deployments stays independent from core so the package can be consumed standalone.
-function isMoveAddress(address: string): boolean {
-  const input = address.startsWith("0x") ? address.slice(2) : address;
-  return /^[0-9a-fA-F]{1,64}$/.test(input);
 }

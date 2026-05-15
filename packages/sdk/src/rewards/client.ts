@@ -77,7 +77,7 @@ export class RewardsClient {
       function: "stake_and_subscribe",
       typeArguments: [input.coinType],
       functionArguments: [
-        input.poolAddresses.map(normalizeMoveAddress),
+        input.poolAddresses.map((address) => normalizeMoveAddress(address)),
         moveUintArgument(input.amount),
       ],
     });
@@ -103,7 +103,7 @@ export class RewardsClient {
       functionArguments: [
         normalizeMoveAddress(input.stakingAsset),
         moveUintArgument(input.amount),
-        input.poolAddresses.map(normalizeMoveAddress),
+        input.poolAddresses.map((address) => normalizeMoveAddress(address)),
       ],
     });
   }
@@ -131,7 +131,9 @@ export class RewardsClient {
     return createEntryPayload(this.context.abis.multiRewardsRouter, {
       function: "claim_rewards",
       typeArguments: [],
-      functionArguments: [input.rewardTokenAddresses.map(normalizeMoveAddress)],
+      functionArguments: [
+        input.rewardTokenAddresses.map((address) => normalizeMoveAddress(address)),
+      ],
     });
   }
 
@@ -158,7 +160,7 @@ export class RewardsClient {
       function: "unsubscribe_and_withdraw",
       typeArguments: [input.coinType],
       functionArguments: [
-        input.poolAddresses.map(normalizeMoveAddress),
+        input.poolAddresses.map((address) => normalizeMoveAddress(address)),
         moveUintArgument(input.amount),
       ],
     });
@@ -173,7 +175,7 @@ export class RewardsClient {
       functionArguments: [
         normalizeMoveAddress(input.stakingAsset),
         moveUintArgument(input.amount),
-        input.poolAddresses.map(normalizeMoveAddress),
+        input.poolAddresses.map((address) => normalizeMoveAddress(address)),
       ],
     });
   }
@@ -201,7 +203,7 @@ export class RewardsClient {
         (
           input.poolAddresses && input.poolAddresses.length > 0
             ? [
-                input.poolAddresses.map(normalizeMoveAddress),
+                input.poolAddresses.map((address) => normalizeMoveAddress(address)),
                 moveUintArgument(input.amount),
                 normalizeMoveAddress(input.tokenCreator),
                 input.tokenName,
@@ -415,7 +417,7 @@ export class RewardsClient {
         functionName: "get_user_pool_positions_by_tokens",
         functionArguments: [
           normalizeMoveAddress(input.userAddress),
-          input.stakingAssets.map(normalizeMoveAddress),
+          input.stakingAssets.map((address) => normalizeMoveAddress(address)),
           moveOptionU64Argument(input.offset),
           moveOptionU64Argument(input.limit),
         ],
@@ -629,7 +631,7 @@ export class RewardsClient {
             userAddress: input.userAddress,
             poolAddresses: input.poolAddresses,
           })
-        : input.poolAddresses.map(normalizeMoveAddress);
+        : input.poolAddresses.map((address) => normalizeMoveAddress(address));
     }
 
     const discoveredPools = this.rewardsDiscovery

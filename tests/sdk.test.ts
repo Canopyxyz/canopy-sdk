@@ -45,6 +45,7 @@ describe("CanopySdk", () => {
     expect(movementSdk.canopy).toBeDefined();
     expect(movementSdk.rewards).toBeDefined();
     expect(movementSdk.alm.meridian).toBeDefined();
+    expect(movementSdk.data.rewardsDiscovery).toBeDefined();
 
     const aptosMainnetClient = createMovementMock({});
     const aptosMainnetSdk = createCanopySdk(aptosMainnetClient as never, {
@@ -54,6 +55,7 @@ describe("CanopySdk", () => {
     expect(aptosMainnetSdk.canopy).toBeUndefined();
     expect(aptosMainnetSdk.rewards).toBeUndefined();
     expect(aptosMainnetSdk.alm.meridian).toBeDefined();
+    expect(aptosMainnetSdk.data.rewardsDiscovery).toBeUndefined();
 
     const aptosTestnetClient = createMovementMock({});
     const aptosTestnetSdk = createCanopySdk(aptosTestnetClient as never, {
@@ -63,6 +65,7 @@ describe("CanopySdk", () => {
     expect(aptosTestnetSdk.canopy).toBeDefined();
     expect(aptosTestnetSdk.rewards).toBeDefined();
     expect(aptosTestnetSdk.alm.meridian).toBeUndefined();
+    expect(aptosTestnetSdk.data.rewardsDiscovery).toBeDefined();
 
     const movementTestnetClient = createMovementMock({});
     const movementTestnetSdk = createCanopySdk(movementTestnetClient as never, {
@@ -72,6 +75,7 @@ describe("CanopySdk", () => {
     expect(movementTestnetSdk.canopy).toBeUndefined();
     expect(movementTestnetSdk.rewards).toBeUndefined();
     expect(movementTestnetSdk.alm.meridian).toBeUndefined();
+    expect(movementTestnetSdk.data.rewardsDiscovery).toBeUndefined();
   });
 
   it("exposes nullable and required resolved contract helpers", () => {
@@ -1206,207 +1210,6 @@ describe("CanopySdk", () => {
       ],
       totalStaked: 21n,
     });
-  });
-
-  it("adds sentio pool discovery support", async () => {
-    const originalFetch = global.fetch;
-    const client = createMovementMock({
-      "0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::is_user_subscribed":
-        [false],
-    });
-
-    global.fetch = jest.fn(async (_url: string, init?: RequestInit) => {
-      const body = JSON.parse(String(init?.body));
-
-      if (body.operationName === "GetMRStakingPoolsByToken") {
-        return {
-          ok: true,
-          json: async () => ({
-            data: {
-              mrstakingPools: [
-                {
-                  id: "0x123",
-                  creator: "0x456",
-                  staking_token: "0x789",
-                  reward_tokens: ["0xabc"],
-                  reward_datas: [],
-                  subscriber_count: 1,
-                  total_subscribed: "50",
-                  created_at: "2025-01-01T00:00:00Z",
-                },
-              ],
-            },
-          }),
-        } as Response;
-      }
-
-      throw new Error(`Unexpected fetch ${JSON.stringify(body)}`);
-    }) as typeof fetch;
-
-    const sdk = new CanopySdk(client as never, {
-      chain: "movement-mainnet",
-      offchain: {
-        sentioApiKey: "test-key",
-      },
-    });
-
-    await expect(
-      sdk.data.rewardsDiscovery.findPoolAddressesByStakingAsset("0x789")
-    ).resolves.toEqual([
-      "0x0000000000000000000000000000000000000000000000000000000000000123",
-    ]);
-
-    await expect(
-      sdk.rewards?.buildStakeVaultSharesPayload({
-        stakingAsset: "0x789",
-        amount: 11n,
-        userAddress: "0x111",
-      })
-    ).resolves.toMatchObject({
-      function:
-        "0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::router::stake_and_subscribe_fa",
-      typeArguments: [],
-      functionArguments: [
-        "0x0000000000000000000000000000000000000000000000000000000000000789",
-        "11",
-        ["0x0000000000000000000000000000000000000000000000000000000000000123"],
-      ],
-      abi: expect.any(Object),
-    });
-
-    global.fetch = originalFetch;
-  });
-
-  it("exposes rewards discovery status by chain", () => {
-    const movementSdk = new CanopySdk(createMovementMock({}) as never, {
-      chain: "movement-mainnet",
-    });
-    const aptosTestnetSdk = new CanopySdk(createMovementMock({}) as never, {
-      chain: "aptos-testnet",
-    });
-
-    expect(movementSdk.data.rewardsDiscovery.getStatus()).toMatchObject({
-      chain: "movement-mainnet",
-      endpoint:
-        "https://app.sentio.xyz/api/v1/graphql/solo-labs/canopy-multi-rewards-movement",
-      endpointConfigured: true,
-    });
-
-    expect(aptosTestnetSdk.data.rewardsDiscovery.getStatus()).toEqual({
-      chain: "aptos-testnet",
-      endpoint: null,
-      endpointConfigured: false,
-    });
-  });
-
-  it("returns no pool addresses when sentio returns no match", async () => {
-    const originalFetch = global.fetch;
-    const client = createMovementMock({});
-
-    global.fetch = jest.fn(async (_url: string, init?: RequestInit) => {
-      const body = JSON.parse(String(init?.body));
-
-      if (body.operationName === "GetMRStakingPoolsByToken") {
-        return {
-          ok: true,
-          json: async () => ({
-            data: {
-              mrstakingPools: [],
-            },
-          }),
-        } as Response;
-      }
-
-      throw new Error(`Unexpected fetch ${JSON.stringify(body)}`);
-    }) as typeof fetch;
-
-    const sdk = new CanopySdk(client as never, {
-      chain: "movement-mainnet",
-    });
-
-    await expect(
-      sdk.data.rewardsDiscovery.resolvePoolAddresses({
-        stakingAsset: "0xe005014fbdd053aebf97b9a36dfeed790d337f571fa9d37690f527acb3015e02",
-      })
-    ).resolves.toEqual([]);
-
-    await expect(
-      sdk.rewards?.buildStakeVaultSharesPayload({
-        stakingAsset: "0xe005014fbdd053aebf97b9a36dfeed790d337f571fa9d37690f527acb3015e02",
-        amount: 11n,
-        userAddress: "0x111",
-      })
-    ).rejects.toMatchObject({
-      code: "TRANSACTION_BUILD_FAILED",
-      details: {
-        stakingAsset:
-          "0xe005014fbdd053aebf97b9a36dfeed790d337f571fa9d37690f527acb3015e02",
-      },
-    });
-
-    expect(global.fetch).toHaveBeenCalledTimes(1);
-    expect(global.fetch).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        method: "POST",
-      })
-    );
-
-    global.fetch = originalFetch;
-  });
-
-  it("surfaces sentio HTTP failures directly", async () => {
-    const originalFetch = global.fetch;
-
-    global.fetch = jest.fn(async () => {
-      return {
-        ok: false,
-        status: 404,
-        json: async () => ({}),
-      } as Response;
-    }) as typeof fetch;
-
-    const sdk = new CanopySdk(createMovementMock({}) as never, {
-      chain: "movement-mainnet",
-    });
-
-    await expect(
-      sdk.data.rewardsDiscovery.resolvePoolAddresses({
-        stakingAsset: "0xe005014fbdd053aebf97b9a36dfeed790d337f571fa9d37690f527acb3015e02",
-      })
-    ).rejects.toMatchObject({
-      code: "NETWORK_ERROR",
-      details: expect.objectContaining({
-        reason: "http",
-        status: 404,
-      }),
-    });
-
-    global.fetch = originalFetch;
-  });
-
-  it("does not use the movement sentio endpoint as a default for aptos-testnet", async () => {
-    const originalFetch = global.fetch;
-    global.fetch = jest.fn() as typeof fetch;
-
-    const sdk = new CanopySdk(createMovementMock({}) as never, {
-      chain: "aptos-testnet",
-    });
-
-    await expect(
-      sdk.data.rewardsDiscovery.resolvePoolAddresses({
-        stakingAsset: "0x789",
-      })
-    ).rejects.toMatchObject({
-      code: "INVALID_DEPLOYMENT",
-      details: {
-        chain: "aptos-testnet",
-        endpointConfigured: false,
-      },
-    });
-
-    expect(global.fetch).not.toHaveBeenCalled();
-    global.fetch = originalFetch;
   });
 
   it("finds user fungible-asset deposits from transaction results", () => {

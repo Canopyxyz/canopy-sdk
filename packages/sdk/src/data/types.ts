@@ -26,12 +26,15 @@ export interface SentioStakingPool {
 
 export interface RewardsDiscoveryClientOptions {
   apiKey?: string;
+  cacheMaxEntries?: number;
   cacheTimeoutMs?: number;
   chain: ChainName;
   endpoint?: string;
 }
 
 export interface RewardsDiscoveryStatus {
+  cacheEntries: number;
+  cacheMaxEntries: number;
   chain: ChainName;
   endpoint: string | null;
   endpointConfigured: boolean;

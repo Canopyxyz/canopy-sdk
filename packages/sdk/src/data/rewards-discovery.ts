@@ -11,6 +11,7 @@ const DEFAULT_SENTIO_ENDPOINTS: Partial<Record<ChainName, string>> = {
   "movement-mainnet":
     "https://app.sentio.xyz/api/v1/graphql/solo-labs/canopy-multi-rewards-movement",
 };
+const DEFAULT_CACHE_MAX_ENTRIES = 32;
 const DEFAULT_CACHE_TIMEOUT_MS = 60_000;
 
 interface GraphqlResponse<TData> {
@@ -49,12 +50,14 @@ interface SentioPoolsResponse {
 export class RewardsDiscoveryClient {
   private readonly apiKey: string | undefined;
   private readonly cache = new Map<string, { data: SentioStakingPool[]; timestamp: number }>();
+  private readonly cacheMaxEntries: number;
   private readonly cacheTimeoutMs: number;
   private readonly chain: ChainName;
   private readonly endpoint: string | undefined;
 
   constructor(options: RewardsDiscoveryClientOptions) {
     this.apiKey = options.apiKey;
+    this.cacheMaxEntries = Math.max(0, options.cacheMaxEntries ?? DEFAULT_CACHE_MAX_ENTRIES);
     this.cacheTimeoutMs = options.cacheTimeoutMs ?? DEFAULT_CACHE_TIMEOUT_MS;
     this.chain = options.chain;
     this.endpoint = options.endpoint ?? DEFAULT_SENTIO_ENDPOINTS[options.chain];
@@ -62,6 +65,8 @@ export class RewardsDiscoveryClient {
 
   getStatus(): RewardsDiscoveryStatus {
     return {
+      cacheEntries: this.cache.size,
+      cacheMaxEntries: this.cacheMaxEntries,
       chain: this.chain,
       endpoint: this.endpoint ?? null,
       endpointConfigured: this.endpoint !== undefined,
@@ -70,7 +75,7 @@ export class RewardsDiscoveryClient {
 
   async resolvePoolAddresses(input: ResolveRewardPoolsInput): Promise<string[]> {
     if (input.explicitPoolAddresses && input.explicitPoolAddresses.length > 0) {
-      return input.explicitPoolAddresses.map(normalizeMoveAddress);
+      return input.explicitPoolAddresses.map((address) => normalizeMoveAddress(address));
     }
 
     if (!this.endpoint) {
@@ -128,7 +133,7 @@ export class RewardsDiscoveryClient {
     );
 
     const pools = (response.mrstakingPools ?? []).map(transformSentioPool);
-    this.cache.set(cacheKey, { data: pools, timestamp: Date.now() });
+    this.setCache(cacheKey, pools);
     return pools;
   }
 
@@ -174,7 +179,7 @@ export class RewardsDiscoveryClient {
     );
 
     const pools = (response.mrstakingPools ?? []).map(transformSentioPool);
-    this.cache.set(cacheKey, { data: pools, timestamp: Date.now() });
+    this.setCache(cacheKey, pools);
     return pools.map((pool) => pool.id);
   }
 
@@ -196,6 +201,26 @@ export class RewardsDiscoveryClient {
       }
     );
   }
+
+  private setCache(key: string, data: SentioStakingPool[]): void {
+    if (this.cacheMaxEntries <= 0) {
+      return;
+    }
+
+    if (this.cache.has(key)) {
+      this.cache.delete(key);
+    }
+
+    this.cache.set(key, { data, timestamp: Date.now() });
+
+    while (this.cache.size > this.cacheMaxEntries) {
+      const oldestKey = this.cache.keys().next().value;
+      if (oldestKey === undefined) {
+        return;
+      }
+      this.cache.delete(oldestKey);
+    }
+  }
 }
 
 function transformSentioPool(pool: SentioPoolItem): SentioStakingPool {
@@ -215,7 +240,7 @@ function transformSentioPool(pool: SentioPoolItem): SentioStakingPool {
       totalDistributed: rewardData.total_distributed,
       unallocatedRewards: rewardData.unallocated_rewards,
     })),
-    rewardTokenAddresses: pool.reward_tokens.map(normalizeMoveAddress),
+    rewardTokenAddresses: pool.reward_tokens.map((address) => normalizeMoveAddress(address)),
     stakingAsset: normalizeMoveAddress(pool.staking_token),
     subscriberCount: pool.subscriber_count,
     totalStaked: pool.total_subscribed,

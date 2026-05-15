@@ -6,6 +6,7 @@ import type { MovePositionConfig } from "./canopy/moveposition";
 export type SdkChainName = ChainName;
 
 export interface OffchainDataOptions {
+  cacheMaxEntries?: number;
   cacheTimeoutMs?: number;
   sentioApiKey?: string;
   sentioEndpoint?: string;

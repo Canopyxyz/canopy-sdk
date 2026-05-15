@@ -253,7 +253,7 @@ The SDK exposes one optional data client under `sdk.data`:
 
 - `sdk.data.rewardsDiscovery`
 
-This is useful for rewards pool discovery.
+This is useful for rewards pool discovery. It is only constructed on chains with rewards support, or when you explicitly pass `offchain.sentioEndpoint`.
 
 Rewards pool resolution for `buildStakeVaultSharesPayload(...)` uses:
 
@@ -263,7 +263,7 @@ Rewards pool resolution for `buildStakeVaultSharesPayload(...)` uses:
 You can inspect the active discovery source with:
 
 ```ts
-const status = sdk.data.rewardsDiscovery.getStatus();
+const status = sdk.data.rewardsDiscovery?.getStatus();
 ```
 
 ## Contract And ABI Lookup

@@ -170,7 +170,7 @@ export class MeridianClient {
     vaultAddresses: string[]
   ): Promise<Array<MeridianBatchVaultInfo | null>> {
     const batchViews = this.getBatchViewsAbi();
-    const normalizedVaults = vaultAddresses.map(normalizeMoveAddress);
+    const normalizedVaults = vaultAddresses.map((address) => normalizeMoveAddress(address));
     const results = await this.callAbiViewResult(batchViews, "batch_get_vault_info", [
       normalizedVaults,
     ]);
@@ -193,7 +193,7 @@ export class MeridianClient {
     userAddress: string
   ): Promise<Array<MeridianBatchUserVaultBalance | null>> {
     const batchViews = this.getBatchViewsAbi();
-    const normalizedVaults = vaultAddresses.map(normalizeMoveAddress);
+    const normalizedVaults = vaultAddresses.map((address) => normalizeMoveAddress(address));
     const results = await this.callAbiViewResult(batchViews, "batch_get_user_balances", [
       normalizedVaults,
       normalizeMoveAddress(userAddress),
@@ -218,7 +218,7 @@ export class MeridianClient {
     vaultAddresses: string[]
   ): Promise<Array<MeridianBatchVaultPositions | null>> {
     const batchViews = this.getBatchViewsAbi();
-    const normalizedVaults = vaultAddresses.map(normalizeMoveAddress);
+    const normalizedVaults = vaultAddresses.map((address) => normalizeMoveAddress(address));
     const results = await this.callAbiViewResult(batchViews, "batch_get_vault_positions", [
       normalizedVaults,
     ]);

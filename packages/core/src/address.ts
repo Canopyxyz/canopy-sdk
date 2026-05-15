@@ -1,18 +1,22 @@
 import { CanopyError, CanopyErrorCode } from "./errors";
+import {
+  isCanonicalMoveAddressFormat,
+  isMoveAddressFormat,
+  normalizeMoveAddressHex,
+} from "../../shared/move-address-format.mjs";
 
 export type HexString = `0x${string}`;
 export type MoveAddress = HexString;
 
-export function normalizeMoveAddress(address: string): HexString {
-  const input = address.startsWith("0x") ? address.slice(2) : address;
-
-  if (!/^[0-9a-fA-F]{1,64}$/.test(input)) {
+export function normalizeMoveAddress(address: string, label = "address"): HexString {
+  if (!isMoveAddressFormat(address)) {
     throw new CanopyError("Invalid Move address", CanopyErrorCode.InvalidAddress, {
       address,
+      label,
     });
   }
 
-  return `0x${input.toLowerCase().padStart(64, "0")}` as HexString;
+  return `0x${normalizeMoveAddressHex(address)}` as HexString;
 }
 
 export function sameMoveAddress(left: string, right: string): boolean {
@@ -37,6 +41,21 @@ export function assertMoveAddress(
   label = "address"
 ): asserts address is HexString {
   if (!isMoveAddress(address)) {
+    throw new CanopyError(`Invalid ${label}`, CanopyErrorCode.InvalidAddress, {
+      address,
+    });
+  }
+}
+
+export function isCanonicalMoveAddress(address: unknown): address is HexString {
+  return typeof address === "string" && isCanonicalMoveAddressFormat(address);
+}
+
+export function assertCanonicalMoveAddress(
+  address: unknown,
+  label = "address"
+): asserts address is HexString {
+  if (!isCanonicalMoveAddress(address)) {
     throw new CanopyError(`Invalid ${label}`, CanopyErrorCode.InvalidAddress, {
       address,
     });
