@@ -24,9 +24,11 @@ export const abisByChain = {
   "aptos-testnet": aptosTestnetAbis,
 } as const satisfies ChainAbiSet;
 
+export type AbisForChain<Chain extends AbiChainName> = (typeof abisByChain)[Chain];
+
 export function getAbisForChain<Chain extends AbiChainName>(
   chain: Chain
-): ChainAbiSet[Chain] {
+): AbisForChain<Chain> {
   const abis = abisByChain[chain];
 
   if (abis === undefined) {
@@ -35,7 +37,7 @@ export function getAbisForChain<Chain extends AbiChainName>(
     );
   }
 
-  return abis as ChainAbiSet[Chain];
+  return abis;
 }
 
 export * from "./contracts";

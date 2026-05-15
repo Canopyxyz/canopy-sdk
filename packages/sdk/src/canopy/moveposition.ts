@@ -17,12 +17,12 @@ export interface MovePositionConfig {
 
 export interface PacketData {
   packet: Uint8Array;
-  strategy: string;
+  strategy: `0x${string}`;
 }
 
 export interface PacketGenerationResult {
   packetData: Uint8Array[];
-  packetStrategies: string[];
+  packetStrategies: Array<`0x${string}`>;
 }
 
 interface MovePositionRequest {

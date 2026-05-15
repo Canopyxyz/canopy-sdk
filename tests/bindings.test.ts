@@ -82,7 +82,7 @@ describe("ABI bindings", () => {
       "0xe5ec58845afb1cb164d1c260f2a284b2f1311318973e13355b9e4dc2908eed5a"
     );
     expect(aptosTestnet.canopyBaseStrategy.friends).toContain(
-      "0xe5ec58845afb1cb164d1c260f2a284b2f1311318973e13355b9e4dc2908eed5a::satay"
+      "0xe5ec58845afb1cb164d1c260f2a284b2f1311318973e13355b9e4dc2908eed5a::vault"
     );
     expect(aptosTestnet.multiRewardsBatcherEntry.name).toBe(
       "batcher_entry"

@@ -92,14 +92,14 @@ export interface CanopyVaultAllocation {
 
 export interface CanopyDepositPayloadInput {
   amount: bigint;
-  minSharesOut: bigint;
+  minSharesOut?: bigint;
   vaultAddress: string;
   wrapperCoinType?: string;
 }
 
 export interface CanopyWithdrawPayloadInput {
-  maxLossBps: bigint;
-  minAmountOut: bigint;
+  maxLossBps?: bigint;
+  minAmountOut?: bigint;
   shares: bigint;
   vaultAddress: string;
   wrapperCoinType?: string;

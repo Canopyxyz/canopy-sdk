@@ -1,12 +1,13 @@
+import { createEntryPayload } from "@thalalabs/surf";
 import {
   CanopyError,
   CanopyErrorCode,
-  callSingleViewResult,
-  callViewFunction,
-  entryFunctionPayload,
+  callSingleViewPayloadResult,
+  callViewPayloadFunction,
   moveUintArgument,
   normalizeMoveAddress,
   normalizeMoveTypeTag,
+  viewFunctionPayload,
 } from "@canopyhub/canopy-sdk/core";
 import type { SdkContext, TransactionPayload } from "../types";
 import {
@@ -16,9 +17,7 @@ import {
   readMoveString,
   readMoveU64,
 } from "../internal/move-readers";
-import {
-  buildMovePositionPackets,
-} from "./moveposition";
+import { buildMovePositionPackets } from "./moveposition";
 import type {
   CanopyBatchMetadataBalance,
   CanopyBatchVaultAllMetadataBalance,
@@ -35,6 +34,11 @@ import type {
   UnstakeAndWithdrawInput,
   UnstakeAndWithdrawPlan,
 } from "./types";
+import {
+  createSurfViewFunctionPayload,
+  type SurfViewFunctionArguments,
+  type SurfViewFunctionName,
+} from "../internal/surf";
 
 export interface ListCanopyVaultsInput {
   limit?: bigint | number;
@@ -47,15 +51,9 @@ export class CanopyProtocolClient {
   constructor(private readonly context: SdkContext<"movement-mainnet" | "aptos-testnet">) {}
 
   async getVault(vaultAddress: string): Promise<CanopyVaultView> {
-    const rawVault = await callSingleViewResult(
-      this.context.client,
-      {
-        moduleAddress: this.context.abis.canopyVault.address,
-        moduleName: this.context.abis.canopyVault.name,
-        functionName: "vault_view",
-        functionArguments: [normalizeMoveAddress(vaultAddress)],
-      }
-    );
+    const rawVault = await this.callCanopyVaultViewResult("vault_view", [
+      normalizeMoveAddress(vaultAddress),
+    ]);
 
     return parseCanopyVaultView(rawVault);
   }
@@ -63,22 +61,17 @@ export class CanopyProtocolClient {
   async listVaults(input: ListCanopyVaultsInput = {}): Promise<PaginatedCanopyVaults> {
     const offset = input.offset ?? 0;
     const limit = input.limit ?? 50;
-    const rawVaults = await callSingleViewResult(
-      this.context.client,
-      {
-        moduleAddress: this.context.abis.canopyVault.address,
-        moduleName: this.context.abis.canopyVault.name,
-        functionName: "vaults_view",
-        functionArguments: [moveUintArgument(offset), moveUintArgument(limit)],
-      }
-    );
+    const rawVaults = await this.callCanopyVaultViewResult("vaults_view", [
+      moveUintArgument(offset),
+      moveUintArgument(limit),
+    ]);
 
     return parsePaginatedVaults(rawVaults);
   }
 
   async buildDepositPayload(
     input: CanopyDepositPayloadInput
-  ): Promise<ReturnType<typeof entryFunctionPayload>> {
+  ): Promise<TransactionPayload> {
     const vault = await this.getVault(input.vaultAddress);
     const packetArguments = await getPacketArguments(
       this.context,
@@ -88,27 +81,28 @@ export class CanopyProtocolClient {
     );
 
     if (vault.pairedCoinType) {
-      return entryFunctionPayload({
-        moduleAddress: this.context.abis.canopyRouter.address,
-        moduleName: this.context.abis.canopyRouter.name,
-        functionName: "deposit_coin",
+      return createEntryPayload(this.context.abis.canopyRouter, {
+        function: "deposit_coin",
         typeArguments: [vault.pairedCoinType, vault.pairedCoinType],
         functionArguments: [
           normalizeMoveAddress(input.vaultAddress),
           packetArguments.packetStrategies,
           packetArguments.packetData,
           moveUintArgument(input.amount),
-          moveUintArgument(input.minSharesOut),
+          input.minSharesOut !== undefined ? moveUintArgument(input.minSharesOut) : undefined,
         ],
       });
     }
 
-    const faDepositFunction = hasRouterFunction(this.context, "deposit_fa")
+    const faDepositFunction:
+      | { functionName: "deposit_fa"; typeArguments: string[] }
+      | { functionName: "deposit_fa_with_coin_type"; typeArguments: [string] } =
+      hasRouterFunction(this.context, "deposit_fa")
       ? packetArguments.packetStrategies.length === 0
         ? {
-            functionName: "deposit_fa",
-            typeArguments: [] as string[],
-          }
+              functionName: "deposit_fa",
+              typeArguments: [],
+            }
         : hasRouterFunction(this.context, "deposit_fa_with_coin_type")
           ? {
               functionName: "deposit_fa_with_coin_type",
@@ -123,24 +117,22 @@ export class CanopyProtocolClient {
           typeArguments: [input.wrapperCoinType ?? "0x1::aptos_coin::AptosCoin"],
         };
 
-    return entryFunctionPayload({
-      moduleAddress: this.context.abis.canopyRouter.address,
-      moduleName: this.context.abis.canopyRouter.name,
-      functionName: faDepositFunction.functionName,
-      typeArguments: faDepositFunction.typeArguments,
+    return createEntryPayload(this.context.abis.canopyRouter, {
+      function: faDepositFunction.functionName as never,
+      typeArguments: faDepositFunction.typeArguments as never,
       functionArguments: [
         normalizeMoveAddress(input.vaultAddress),
         packetArguments.packetStrategies,
         packetArguments.packetData,
         moveUintArgument(input.amount),
-        moveUintArgument(input.minSharesOut),
-      ],
+        input.minSharesOut !== undefined ? moveUintArgument(input.minSharesOut) : undefined,
+      ] as never,
     });
   }
 
   async buildWithdrawPayload(
     input: CanopyWithdrawPayloadInput
-  ): Promise<ReturnType<typeof entryFunctionPayload>> {
+  ): Promise<TransactionPayload> {
     const vault = await this.getVault(input.vaultAddress);
     return this.buildWithdrawPayloadForVault(vault, input);
   }
@@ -148,7 +140,7 @@ export class CanopyProtocolClient {
   private async buildWithdrawPayloadForVault(
     vault: CanopyVaultView,
     input: CanopyWithdrawPayloadInput
-  ): Promise<ReturnType<typeof entryFunctionPayload>> {
+  ): Promise<TransactionPayload> {
     const packetArguments = await getPacketArguments(
       this.context,
       vault,
@@ -157,27 +149,28 @@ export class CanopyProtocolClient {
     );
 
     if (vault.pairedCoinType) {
-      return entryFunctionPayload({
-        moduleAddress: this.context.abis.canopyRouter.address,
-        moduleName: this.context.abis.canopyRouter.name,
-        functionName: "withdraw_coin",
+      return createEntryPayload(this.context.abis.canopyRouter, {
+        function: "withdraw_coin",
         typeArguments: [vault.pairedCoinType, vault.pairedCoinType],
         functionArguments: [
           normalizeMoveAddress(input.vaultAddress),
           packetArguments.packetStrategies,
           packetArguments.packetData,
           moveUintArgument(input.shares),
-          moveUintArgument(input.maxLossBps),
-          moveUintArgument(input.minAmountOut),
+          input.maxLossBps !== undefined ? moveUintArgument(input.maxLossBps) : undefined,
+          input.minAmountOut !== undefined ? moveUintArgument(input.minAmountOut) : undefined,
         ],
       });
     }
 
-    const faWithdrawFunction = hasRouterFunction(this.context, "withdraw_fa")
+    const faWithdrawFunction:
+      | { functionName: "withdraw_fa"; typeArguments: string[] }
+      | { functionName: "withdraw_fa_with_coin_type"; typeArguments: [string] } =
+      hasRouterFunction(this.context, "withdraw_fa")
       ? packetArguments.packetStrategies.length === 0
         ? {
             functionName: "withdraw_fa",
-            typeArguments: [] as string[],
+            typeArguments: [],
           }
         : hasRouterFunction(this.context, "withdraw_fa_with_coin_type")
           ? {
@@ -193,19 +186,17 @@ export class CanopyProtocolClient {
           typeArguments: [input.wrapperCoinType ?? "0x1::aptos_coin::AptosCoin"],
         };
 
-    return entryFunctionPayload({
-      moduleAddress: this.context.abis.canopyRouter.address,
-      moduleName: this.context.abis.canopyRouter.name,
-      functionName: faWithdrawFunction.functionName,
-      typeArguments: faWithdrawFunction.typeArguments,
+    return createEntryPayload(this.context.abis.canopyRouter, {
+      function: faWithdrawFunction.functionName as never,
+      typeArguments: faWithdrawFunction.typeArguments as never,
       functionArguments: [
         normalizeMoveAddress(input.vaultAddress),
         packetArguments.packetStrategies,
         packetArguments.packetData,
         moveUintArgument(input.shares),
-        moveUintArgument(input.maxLossBps),
-        moveUintArgument(input.minAmountOut),
-      ],
+        input.maxLossBps !== undefined ? moveUintArgument(input.maxLossBps) : undefined,
+        input.minAmountOut !== undefined ? moveUintArgument(input.minAmountOut) : undefined,
+      ] as never,
     });
   }
 
@@ -259,36 +250,26 @@ export class CanopyProtocolClient {
     vaultAddress: string
   ): Promise<CanopyUserVaultPosition> {
     const vault = await this.getVault(vaultAddress);
-    const sharesBalance = await callSingleViewResult(
+    const sharesBalance = await callSingleViewPayloadResult(
       this.context.client,
-      {
-        moduleAddress: "0x1",
-        moduleName: "primary_fungible_store",
+      createSurfViewFunctionPayload(this.context.abis.aptosFrameworkPrimaryFungibleStore, {
         functionName: "balance",
         typeArguments: ["0x1::fungible_asset::Metadata"],
         functionArguments: [
           normalizeMoveAddress(userAddress),
           normalizeMoveAddress(vault.sharesAddress),
         ],
-      }
+      })
     );
 
     const parsedSharesBalance = readMoveU64(sharesBalance);
     const assetValue =
       parsedSharesBalance > 0n
         ? readMoveU64(
-            await callSingleViewResult(
-              this.context.client,
-              {
-                moduleAddress: this.context.abis.canopyVault.address,
-                moduleName: this.context.abis.canopyVault.name,
-                functionName: "shares_to_amount",
-                functionArguments: [
-                  normalizeMoveAddress(vaultAddress),
-                  moveUintArgument(parsedSharesBalance),
-                ],
-              }
-            )
+            await this.callCanopyVaultViewResult("shares_to_amount", [
+              normalizeMoveAddress(vaultAddress),
+              moveUintArgument(parsedSharesBalance),
+            ])
           )
         : 0n;
 
@@ -306,15 +287,10 @@ export class CanopyProtocolClient {
   ): Promise<CanopyBatchMetadataBalance[]> {
     const helpers = this.getHelpersAbi();
     const normalizedMetadata = metadataAddresses.map(normalizeMoveAddress);
-    const balances = await callSingleViewResult(
-      this.context.client,
-      {
-        moduleAddress: helpers.address,
-        moduleName: helpers.name,
-        functionName: "batch_get_fa_balance",
-        functionArguments: [normalizedMetadata, normalizeMoveAddress(userAddress)],
-      }
-    );
+    const balances = await this.callHelpersViewResult("batch_get_fa_balance", [
+      normalizedMetadata,
+      normalizeMoveAddress(userAddress),
+    ]);
 
     return zipMetadataBalances(
       normalizedMetadata,
@@ -329,15 +305,10 @@ export class CanopyProtocolClient {
   ): Promise<CanopyBatchVaultBalance[]> {
     const helpers = this.getHelpersAbi();
     const normalizedVaults = vaultAddresses.map(normalizeMoveAddress);
-    const balances = await callSingleViewResult(
-      this.context.client,
-      {
-        moduleAddress: helpers.address,
-        moduleName: helpers.name,
-        functionName: "batch_get_vault_balance",
-        functionArguments: [normalizedVaults, normalizeMoveAddress(userAddress)],
-      }
-    );
+    const balances = await this.callHelpersViewResult("batch_get_vault_balance", [
+      normalizedVaults,
+      normalizeMoveAddress(userAddress),
+    ]);
 
     return zipVaultBalances(normalizedVaults, readMoveU64Vector(balances), "vault balances");
   }
@@ -348,14 +319,9 @@ export class CanopyProtocolClient {
   ): Promise<CanopyBatchVaultMetadataBalance[]> {
     const helpers = this.getHelpersAbi();
     const normalizedVaults = vaultAddresses.map(normalizeMoveAddress);
-    const [metadata, balances] = await callViewFunction<[unknown, unknown]>(
-      this.context.client,
-      {
-        moduleAddress: helpers.address,
-        moduleName: helpers.name,
-        functionName: "batch_get_vault_base_metadata_and_balance",
-        functionArguments: [normalizedVaults, normalizeMoveAddress(userAddress)],
-      }
+    const [metadata, balances] = await this.callHelpersViewFunction<[unknown, unknown]>(
+      "batch_get_vault_base_metadata_and_balance",
+      [normalizedVaults, normalizeMoveAddress(userAddress)]
     );
 
     return zipVaultMetadataBalances(
@@ -372,14 +338,9 @@ export class CanopyProtocolClient {
   ): Promise<CanopyBatchVaultMetadataBalance[]> {
     const helpers = this.getHelpersAbi();
     const normalizedVaults = vaultAddresses.map(normalizeMoveAddress);
-    const [metadata, balances] = await callViewFunction<[unknown, unknown]>(
-      this.context.client,
-      {
-        moduleAddress: helpers.address,
-        moduleName: helpers.name,
-        functionName: "batch_get_vault_shares_metadata_and_balance",
-        functionArguments: [normalizedVaults, normalizeMoveAddress(userAddress)],
-      }
+    const [metadata, balances] = await this.callHelpersViewFunction<[unknown, unknown]>(
+      "batch_get_vault_shares_metadata_and_balance",
+      [normalizedVaults, normalizeMoveAddress(userAddress)]
     );
 
     return zipVaultMetadataBalances(
@@ -397,14 +358,9 @@ export class CanopyProtocolClient {
     const helpers = this.getHelpersAbi();
     const normalizedVaults = vaultAddresses.map(normalizeMoveAddress);
     const [baseMetadata, baseBalances, sharesMetadata, sharesBalances] =
-      await callViewFunction<[unknown, unknown, unknown, unknown]>(
-        this.context.client,
-        {
-          moduleAddress: helpers.address,
-          moduleName: helpers.name,
-          functionName: "batch_get_vault_all_metadata_and_balance",
-          functionArguments: [normalizedVaults, normalizeMoveAddress(userAddress)],
-        }
+      await this.callHelpersViewFunction<[unknown, unknown, unknown, unknown]>(
+        "batch_get_vault_all_metadata_and_balance",
+        [normalizedVaults, normalizeMoveAddress(userAddress)]
       );
 
     return zipVaultAllMetadataBalances(
@@ -425,59 +381,33 @@ export class CanopyProtocolClient {
 
     const [debt, debtLimit, lastReport, totalProfit, totalLoss, sharesBalance] =
       await Promise.all([
-        callSingleViewResult(
+        this.callCanopyVaultViewResult("strategy_debt", [normalizedVault, normalizedStrategy]),
+        this.callCanopyVaultViewResult("strategy_debt_limit", [
+          normalizedVault,
+          normalizedStrategy,
+        ]),
+        this.callCanopyVaultViewResult("strategy_last_report", [
+          normalizedVault,
+          normalizedStrategy,
+        ]),
+        this.callCanopyVaultViewResult("strategy_total_profit", [
+          normalizedVault,
+          normalizedStrategy,
+        ]),
+        this.callCanopyVaultViewResult("strategy_total_loss", [
+          normalizedVault,
+          normalizedStrategy,
+        ]),
+        callSingleViewPayloadResult(
           this.context.client,
-          {
-            moduleAddress: this.context.abis.canopyVault.address,
-            moduleName: this.context.abis.canopyVault.name,
-            functionName: "strategy_debt",
-            functionArguments: [normalizedVault, normalizedStrategy],
-          }
-        ),
-        callSingleViewResult(
-          this.context.client,
-          {
-            moduleAddress: this.context.abis.canopyVault.address,
-            moduleName: this.context.abis.canopyVault.name,
-            functionName: "strategy_debt_limit",
-            functionArguments: [normalizedVault, normalizedStrategy],
-          }
-        ),
-        callSingleViewResult(
-          this.context.client,
-          {
-            moduleAddress: this.context.abis.canopyVault.address,
-            moduleName: this.context.abis.canopyVault.name,
-            functionName: "strategy_last_report",
-            functionArguments: [normalizedVault, normalizedStrategy],
-          }
-        ),
-        callSingleViewResult(
-          this.context.client,
-          {
-            moduleAddress: this.context.abis.canopyVault.address,
-            moduleName: this.context.abis.canopyVault.name,
-            functionName: "strategy_total_profit",
-            functionArguments: [normalizedVault, normalizedStrategy],
-          }
-        ),
-        callSingleViewResult(
-          this.context.client,
-          {
-            moduleAddress: this.context.abis.canopyVault.address,
-            moduleName: this.context.abis.canopyVault.name,
-            functionName: "strategy_total_loss",
-            functionArguments: [normalizedVault, normalizedStrategy],
-          }
-        ),
-        callSingleViewResult(
-          this.context.client,
-          {
+          // The on-chain ABI marks this function as non-view, but the chain still accepts it
+          // through the view endpoint, so we intentionally bypass Surf's view-only guard here.
+          viewFunctionPayload({
             moduleAddress: this.context.abis.canopyVault.address,
             moduleName: this.context.abis.canopyVault.name,
             functionName: "get_strategy_shares_balance",
             functionArguments: [normalizedVault, normalizedStrategy],
-          }
+          })
         ),
       ]);
 
@@ -514,7 +444,8 @@ export class CanopyProtocolClient {
   }
 
   private getHelpersAbi() {
-    const abi = this.context.abis.canopyHelpers;
+    const abi =
+      "canopyHelpers" in this.context.abis ? this.context.abis.canopyHelpers : undefined;
 
     if (!abi) {
       throw new CanopyError(
@@ -525,6 +456,54 @@ export class CanopyProtocolClient {
     }
 
     return abi;
+  }
+
+  private callCanopyVaultViewResult<Result = unknown>(
+    functionName: SurfViewFunctionName<typeof this.context.abis.canopyVault>,
+    functionArguments?: SurfViewFunctionArguments<
+      typeof this.context.abis.canopyVault,
+      typeof functionName
+    >
+  ): Promise<Result> {
+    return callSingleViewPayloadResult(
+      this.context.client,
+      createSurfViewFunctionPayload(this.context.abis.canopyVault, {
+        functionName,
+        ...(functionArguments ? { functionArguments } : {}),
+      })
+    );
+  }
+
+  private callHelpersViewResult<Result = unknown>(
+    functionName: SurfViewFunctionName<ReturnType<CanopyProtocolClient["getHelpersAbi"]>>,
+    functionArguments?: SurfViewFunctionArguments<
+      ReturnType<CanopyProtocolClient["getHelpersAbi"]>,
+      typeof functionName
+    >
+  ): Promise<Result> {
+    return callSingleViewPayloadResult(
+      this.context.client,
+      createSurfViewFunctionPayload(this.getHelpersAbi(), {
+        functionName,
+        ...(functionArguments ? { functionArguments } : {}),
+      })
+    );
+  }
+
+  private callHelpersViewFunction<Result extends unknown[] = unknown[]>(
+    functionName: SurfViewFunctionName<ReturnType<CanopyProtocolClient["getHelpersAbi"]>>,
+    functionArguments?: SurfViewFunctionArguments<
+      ReturnType<CanopyProtocolClient["getHelpersAbi"]>,
+      typeof functionName
+    >
+  ): Promise<Result> {
+    return callViewPayloadFunction(
+      this.context.client,
+      createSurfViewFunctionPayload(this.getHelpersAbi(), {
+        functionName,
+        ...(functionArguments ? { functionArguments } : {}),
+      })
+    );
   }
 }
 
@@ -623,10 +602,9 @@ function buildUnstakePayload(
   stakingAsset: string,
   amount: bigint
 ): TransactionPayload {
-  return entryFunctionPayload({
-    moduleAddress: context.abis.multiRewards.address,
-    moduleName: context.abis.multiRewards.name,
-    functionName: "withdraw",
+  return createEntryPayload(context.abis.multiRewards, {
+    function: "withdraw",
+    typeArguments: [],
     functionArguments: [normalizeMoveAddress(stakingAsset), moveUintArgument(amount)],
   });
 }
@@ -706,7 +684,7 @@ async function getPacketArguments(
   vault: CanopyVaultView,
   operation: "deposit" | "withdraw",
   amount: bigint
-): Promise<{ packetData: Uint8Array[]; packetStrategies: string[] }> {
+): Promise<{ packetData: Uint8Array[]; packetStrategies: Array<`0x${string}`> }> {
   const movePositionStrategy = context.deployment.canopy?.strategies.movepositionSimple;
   if (!movePositionStrategy) {
     return { packetData: [], packetStrategies: [] };
@@ -751,27 +729,21 @@ async function getAllocationMap(
   vaultAddress: string,
   amount: bigint
 ): Promise<Pick<CanopyVaultAllocation, "amounts" | "strategies">> {
-  const moduleAddress =
+  const abi =
     operation === "deposit"
-      ? context.abis.canopyRouterDeposit.address
-      : context.abis.canopyRouterWithdraw.address;
-  const moduleName =
-    operation === "deposit"
-      ? context.abis.canopyRouterDeposit.name
-      : context.abis.canopyRouterWithdraw.name;
+      ? context.abis.canopyRouterDeposit
+      : context.abis.canopyRouterWithdraw;
   const functionName =
     operation === "deposit"
       ? "get_allocations_view"
       : "get_withdrawal_map_view";
 
-  const rawMap = await callSingleViewResult(
+  const rawMap = await callSingleViewPayloadResult(
     context.client,
-    {
-      moduleAddress,
-      moduleName,
+    createSurfViewFunctionPayload(abi, {
       functionName,
       functionArguments: [normalizeMoveAddress(vaultAddress), moveUintArgument(amount)],
-    }
+    })
   );
 
   return parseAllocationMap(rawMap);

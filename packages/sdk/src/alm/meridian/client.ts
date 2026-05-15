@@ -1,9 +1,10 @@
+import { createEntryPayload } from "@thalalabs/surf";
 import {
   CanopyError,
   CanopyErrorCode,
   callSingleViewResult,
-  callViewFunction,
-  entryFunctionPayload,
+  callSingleViewPayloadResult,
+  callViewPayloadFunction,
   moveUintArgument,
   normalizeMoveAddress,
 } from "@canopyhub/canopy-sdk/core";
@@ -16,6 +17,12 @@ import {
   readMoveU128,
   readMoveU64,
 } from "../../internal/move-readers";
+import {
+  createSurfViewFunctionPayload,
+  type SurfViewFunctionArguments,
+  type SurfViewFunctionName,
+} from "../../internal/surf";
+import type { MoveModuleAbi } from "@canopyhub/canopy-sdk/bindings";
 import type { SdkContext, TransactionPayload } from "../../types";
 import type {
   MeridianBatchPositionSummary,
@@ -38,28 +45,16 @@ export class MeridianClient {
   async listVaults(input: ListMeridianVaultsInput = {}): Promise<string[]> {
     const offset = input.offset ?? 0;
     const limit = input.limit ?? 50;
-    const rawVaults = await callSingleViewResult(
-      this.context.client,
-      {
-        moduleAddress: this.context.abis.meridianRegistry.address,
-        moduleName: this.context.abis.meridianRegistry.name,
-        functionName: "get_paginated_vaults",
-        functionArguments: [moveUintArgument(offset), moveUintArgument(limit)],
-      }
+    const rawVaults = await this.callRegistryViewResult(
+      "get_paginated_vaults",
+      [moveUintArgument(offset), moveUintArgument(limit)]
     );
 
     return readMoveAddressVector(rawVaults);
   }
 
   async getVaultCount(): Promise<bigint> {
-    const count = await callSingleViewResult(
-      this.context.client,
-      {
-        moduleAddress: this.context.abis.meridianRegistry.address,
-        moduleName: this.context.abis.meridianRegistry.name,
-        functionName: "get_recognized_vault_count",
-      }
-    );
+    const count = await this.callRegistryViewResult("get_recognized_vault_count");
 
     return readMoveU64(count);
   }
@@ -68,51 +63,17 @@ export class MeridianClient {
     const normalizedVault = normalizeMoveAddress(vaultAddress);
     const [sharePriceE18, totalHoldings, depositAndQuoteAssets, underlyingPool, depositIsAsset0] =
       await Promise.all([
-        callSingleViewResult(
-          this.context.client,
-          {
-            moduleAddress: this.context.abis.meridianVault.address,
-            moduleName: this.context.abis.meridianVault.name,
-            functionName: "get_shares_price_e18",
-            functionArguments: [normalizedVault],
-          }
+        this.callVaultViewResult("get_shares_price_e18", [normalizedVault]),
+        this.callVaultViewFunction<[unknown, unknown]>(
+          "get_total_vault_holdings",
+          [normalizedVault]
         ),
-        callViewFunction<[unknown, unknown]>(
-          this.context.client,
-          {
-            moduleAddress: this.context.abis.meridianVault.address,
-            moduleName: this.context.abis.meridianVault.name,
-            functionName: "get_total_vault_holdings",
-            functionArguments: [normalizedVault],
-          }
+        this.callVaultViewFunction<[unknown, unknown]>(
+          "get_vault_deposit_and_quote_assets",
+          [normalizedVault]
         ),
-        callViewFunction<[unknown, unknown]>(
-          this.context.client,
-          {
-            moduleAddress: this.context.abis.meridianVault.address,
-            moduleName: this.context.abis.meridianVault.name,
-            functionName: "get_vault_deposit_and_quote_assets",
-            functionArguments: [normalizedVault],
-          }
-        ),
-        callSingleViewResult(
-          this.context.client,
-          {
-            moduleAddress: this.context.abis.meridianVault.address,
-            moduleName: this.context.abis.meridianVault.name,
-            functionName: "get_underlying_pool",
-            functionArguments: [normalizedVault],
-          }
-        ),
-        callSingleViewResult(
-          this.context.client,
-          {
-            moduleAddress: this.context.abis.meridianVault.address,
-            moduleName: this.context.abis.meridianVault.name,
-            functionName: "is_asset_0_deposit",
-            functionArguments: [normalizedVault],
-          }
-        ),
+        this.callVaultViewResult("get_underlying_pool", [normalizedVault]),
+        this.callVaultViewResult("is_asset_0_deposit", [normalizedVault]),
       ]);
     const depositAssetAddress = readMoveAddress(depositAndQuoteAssets[0]);
     const quoteAssetAddress = readMoveAddress(depositAndQuoteAssets[1]);
@@ -143,17 +104,12 @@ export class MeridianClient {
     vaultAddress: string,
     userAddress: string
   ): Promise<MeridianUserVaultPosition> {
-    const [shares, valueE18] = await callViewFunction<[unknown, unknown]>(
-      this.context.client,
-      {
-        moduleAddress: this.context.abis.meridianVault.address,
-        moduleName: this.context.abis.meridianVault.name,
-        functionName: "get_user_vault_balance",
-        functionArguments: [
-          normalizeMoveAddress(vaultAddress),
-          normalizeMoveAddress(userAddress),
-        ],
-      }
+    const [shares, valueE18] = await this.callVaultViewFunction<[unknown, unknown]>(
+      "get_user_vault_balance",
+      [
+        normalizeMoveAddress(vaultAddress),
+        normalizeMoveAddress(userAddress),
+      ]
     );
 
     return {
@@ -167,17 +123,12 @@ export class MeridianClient {
     vaultAddress: string,
     shares: bigint
   ): Promise<MeridianWithdrawalPreview> {
-    const [asset0, asset1] = await callViewFunction<[unknown, unknown]>(
-      this.context.client,
-      {
-        moduleAddress: this.context.abis.meridianVault.address,
-        moduleName: this.context.abis.meridianVault.name,
-        functionName: "get_shares_withdrawal_amounts",
-        functionArguments: [
-          normalizeMoveAddress(vaultAddress),
-          moveUintArgument(shares),
-        ],
-      }
+    const [asset0, asset1] = await this.callVaultViewFunction<[unknown, unknown]>(
+      "get_shares_withdrawal_amounts",
+      [
+        normalizeMoveAddress(vaultAddress),
+        moveUintArgument(shares),
+      ]
     );
 
     return {
@@ -188,10 +139,9 @@ export class MeridianClient {
   }
 
   buildDepositPayload(input: MeridianDepositPayloadInput): TransactionPayload {
-    return entryFunctionPayload({
-      moduleAddress: this.context.abis.meridianRouter.address,
-      moduleName: this.context.abis.meridianRouter.name,
-      functionName: "deposit",
+    return createEntryPayload(this.context.abis.meridianRouter, {
+      function: "deposit",
+      typeArguments: [],
       functionArguments: [
         normalizeMoveAddress(input.vaultAddress),
         moveUintArgument(input.amount),
@@ -201,15 +151,16 @@ export class MeridianClient {
   }
 
   buildWithdrawPayload(input: MeridianWithdrawPayloadInput): TransactionPayload {
-    return entryFunctionPayload({
-      moduleAddress: this.context.abis.meridianRouter.address,
-      moduleName: this.context.abis.meridianRouter.name,
-      functionName: "withdraw",
+    assertMeridianWithdrawInputShape(input);
+
+    return createEntryPayload(this.context.abis.meridianRouter, {
+      function: "withdraw",
+      typeArguments: [],
       functionArguments: [
         normalizeMoveAddress(input.vaultAddress),
         moveUintArgument(input.shares),
-        moveUintArgument(input.maxLossBps),
-        moveUintArgument(input.minAmountOut),
+        moveUintArgument(input.minAsset0),
+        moveUintArgument(input.minAsset1),
       ],
     });
   }
@@ -219,15 +170,9 @@ export class MeridianClient {
   ): Promise<Array<MeridianBatchVaultInfo | null>> {
     const batchViews = this.getBatchViewsAbi();
     const normalizedVaults = vaultAddresses.map(normalizeMoveAddress);
-    const results = await callSingleViewResult(
-      this.context.client,
-      {
-        moduleAddress: batchViews.address,
-        moduleName: batchViews.name,
-        functionName: "batch_get_vault_info",
-        functionArguments: [normalizedVaults],
-      }
-    );
+    const results = await this.callAbiViewResult(batchViews, "batch_get_vault_info", [
+      normalizedVaults,
+    ]);
 
     if (!Array.isArray(results)) {
       throw new CanopyError("Expected vault info batch vector", CanopyErrorCode.ViewCallFailed, {
@@ -248,15 +193,10 @@ export class MeridianClient {
   ): Promise<Array<MeridianBatchUserVaultBalance | null>> {
     const batchViews = this.getBatchViewsAbi();
     const normalizedVaults = vaultAddresses.map(normalizeMoveAddress);
-    const results = await callSingleViewResult(
-      this.context.client,
-      {
-        moduleAddress: batchViews.address,
-        moduleName: batchViews.name,
-        functionName: "batch_get_user_balances",
-        functionArguments: [normalizedVaults, normalizeMoveAddress(userAddress)],
-      }
-    );
+    const results = await this.callAbiViewResult(batchViews, "batch_get_user_balances", [
+      normalizedVaults,
+      normalizeMoveAddress(userAddress),
+    ]);
 
     if (!Array.isArray(results)) {
       throw new CanopyError(
@@ -278,15 +218,9 @@ export class MeridianClient {
   ): Promise<Array<MeridianBatchVaultPositions | null>> {
     const batchViews = this.getBatchViewsAbi();
     const normalizedVaults = vaultAddresses.map(normalizeMoveAddress);
-    const results = await callSingleViewResult(
-      this.context.client,
-      {
-        moduleAddress: batchViews.address,
-        moduleName: batchViews.name,
-        functionName: "batch_get_vault_positions",
-        functionArguments: [normalizedVaults],
-      }
-    );
+    const results = await this.callAbiViewResult(batchViews, "batch_get_vault_positions", [
+      normalizedVaults,
+    ]);
 
     if (!Array.isArray(results)) {
       throw new CanopyError(
@@ -305,7 +239,10 @@ export class MeridianClient {
   }
 
   private getBatchViewsAbi() {
-    const abi = this.context.abis.meridianBatchViews;
+    const abi =
+      "meridianBatchViews" in this.context.abis
+        ? this.context.abis.meridianBatchViews
+        : undefined;
 
     if (!abi) {
       throw new CanopyError(
@@ -316,6 +253,84 @@ export class MeridianClient {
     }
 
     return abi;
+  }
+
+  private callRegistryViewResult<Result = unknown>(
+    functionName: SurfViewFunctionName<typeof this.context.abis.meridianRegistry>,
+    functionArguments?: SurfViewFunctionArguments<
+      typeof this.context.abis.meridianRegistry,
+      typeof functionName
+    >
+  ): Promise<Result> {
+    return this.callAbiViewResult(
+      this.context.abis.meridianRegistry,
+      functionName,
+      functionArguments
+    );
+  }
+
+  private callVaultViewResult<Result = unknown>(
+    functionName: SurfViewFunctionName<typeof this.context.abis.meridianVault>,
+    functionArguments?: SurfViewFunctionArguments<
+      typeof this.context.abis.meridianVault,
+      typeof functionName
+    >
+  ): Promise<Result> {
+    return this.callAbiViewResult(
+      this.context.abis.meridianVault,
+      functionName,
+      functionArguments
+    );
+  }
+
+  private callVaultViewFunction<Result extends unknown[] = unknown[]>(
+    functionName: SurfViewFunctionName<typeof this.context.abis.meridianVault>,
+    functionArguments?: SurfViewFunctionArguments<
+      typeof this.context.abis.meridianVault,
+      typeof functionName
+    >
+  ): Promise<Result> {
+    return this.callAbiViewFunction(
+      this.context.abis.meridianVault,
+      functionName,
+      functionArguments
+    );
+  }
+
+  private callAbiViewResult<
+    TAbi extends MoveModuleAbi,
+    TFn extends SurfViewFunctionName<TAbi>,
+    Result = unknown,
+  >(
+    abi: TAbi,
+    functionName: TFn,
+    functionArguments?: SurfViewFunctionArguments<TAbi, TFn>
+  ): Promise<Result> {
+    return callSingleViewPayloadResult(
+      this.context.client,
+      createSurfViewFunctionPayload(abi, {
+        functionName,
+        ...(functionArguments ? { functionArguments } : {}),
+      })
+    );
+  }
+
+  private callAbiViewFunction<
+    TAbi extends MoveModuleAbi,
+    TFn extends SurfViewFunctionName<TAbi>,
+    Result extends unknown[] = unknown[],
+  >(
+    abi: TAbi,
+    functionName: TFn,
+    functionArguments?: SurfViewFunctionArguments<TAbi, TFn>
+  ): Promise<Result> {
+    return callViewPayloadFunction(
+      this.context.client,
+      createSurfViewFunctionPayload(abi, {
+        functionName,
+        ...(functionArguments ? { functionArguments } : {}),
+      })
+    );
   }
 }
 
@@ -379,6 +394,23 @@ function readBatchPositionSummary(value: unknown): MeridianBatchPositionSummary 
 function readSignedTick(isNegative: unknown, absoluteValue: unknown): bigint {
   const value = readMoveU64(absoluteValue);
   return readMoveBool(isNegative) ? -value : value;
+}
+
+function assertMeridianWithdrawInputShape(input: MeridianWithdrawPayloadInput): void {
+  const legacyInput = input as MeridianWithdrawPayloadInput & {
+    maxLossBps?: unknown;
+    minAmountOut?: unknown;
+  };
+
+  if (legacyInput.maxLossBps !== undefined || legacyInput.minAmountOut !== undefined) {
+    throw new CanopyError(
+      "Meridian withdraw inputs must use minAsset0 and minAsset1 instead of maxLossBps and minAmountOut",
+      CanopyErrorCode.InvalidInput,
+      {
+        receivedKeys: Object.keys(legacyInput).sort(),
+      }
+    );
+  }
 }
 
 async function getFungibleAssetDecimals(

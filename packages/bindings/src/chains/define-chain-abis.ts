@@ -1,4 +1,9 @@
-import type { AbiChainName, ChainAbiSet, MoveModuleAbi } from "../types";
+import type {
+  AbiChainName,
+  ChainAbiSet,
+  MoveExposedFunction,
+  MoveModuleAbi,
+} from "../types";
 
 type RequiredKeyOf<T> = Exclude<
   {
@@ -7,44 +12,35 @@ type RequiredKeyOf<T> = Exclude<
   undefined
 >;
 
+export interface MoveExposedFunctionInput extends Omit<
+  MoveExposedFunction,
+  "generic_type_params" | "params" | "return"
+> {
+  generic_type_params: readonly unknown[];
+  params: readonly string[];
+  return: readonly string[];
+}
+
+export interface MoveModuleAbiInput extends Omit<
+  MoveModuleAbi,
+  "exposed_functions" | "structs"
+> {
+  exposed_functions: readonly MoveExposedFunctionInput[];
+  structs: readonly unknown[];
+}
+
 type RawAbiSet<Chain extends AbiChainName> = {
-  [Name in RequiredKeyOf<ChainAbiSet[Chain]>]: unknown;
+  [Name in RequiredKeyOf<ChainAbiSet[Chain]>]: MoveModuleAbiInput;
 } & Partial<
-  Record<Exclude<keyof ChainAbiSet[Chain], RequiredKeyOf<ChainAbiSet[Chain]>>, unknown>
+  Record<
+    Exclude<keyof ChainAbiSet[Chain], RequiredKeyOf<ChainAbiSet[Chain]>>,
+    MoveModuleAbiInput
+  >
 >;
 
-export function defineChainAbis<Chain extends AbiChainName>(
+export function defineChainAbis<Chain extends AbiChainName, Abis extends RawAbiSet<Chain>>(
   _chain: Chain,
-  abis: RawAbiSet<Chain>
-): ChainAbiSet[Chain] {
-  return Object.fromEntries(
-    Object.entries(abis).map(([name, abi]) => [name, normalizeMoveModuleAbi(abi)])
-  ) as unknown as ChainAbiSet[Chain];
-}
-
-export function retargetMoveModuleAbi(
-  abi: unknown,
-  address: string
-): MoveModuleAbi {
-  const normalized = normalizeMoveModuleAbi(abi);
-  const sourceAddress = normalized.address;
-
-  if (sourceAddress === address) {
-    return normalized;
-  }
-
-  return JSON.parse(
-    JSON.stringify(normalized).split(sourceAddress).join(address)
-  ) as MoveModuleAbi;
-}
-
-function normalizeMoveModuleAbi(abi: unknown): MoveModuleAbi {
-  const moduleAbi = abi as Omit<MoveModuleAbi, "structs"> & {
-    structs?: MoveModuleAbi["structs"];
-  };
-
-  return {
-    ...moduleAbi,
-    structs: moduleAbi.structs ?? [],
-  };
+  abis: Abis
+): Abis {
+  return abis;
 }

@@ -1,0 +1,2152 @@
+export const ABI = {
+  "address": "0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83",
+  "name": "ichi_vault_meridian",
+  "friends": [],
+  "exposed_functions": [
+    {
+      "name": "exists_at",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "address"
+      ],
+      "return": [
+        "bool"
+      ]
+    },
+    {
+      "name": "deposit",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "0x1::fungible_asset::FungibleAsset"
+      ],
+      "return": [
+        "0x1::fungible_asset::FungibleAsset"
+      ]
+    },
+    {
+      "name": "withdraw",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "0x1::fungible_asset::FungibleAsset"
+      ],
+      "return": [
+        "0x1::fungible_asset::FungibleAsset",
+        "0x1::fungible_asset::FungibleAsset"
+      ]
+    },
+    {
+      "name": "collect_fees",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": []
+    },
+    {
+      "name": "add_whitelisted_reward_token",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "0x1::object::Object<0x1::fungible_asset::Metadata>"
+      ],
+      "return": []
+    },
+    {
+      "name": "can_rebalance",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "address",
+        "u64"
+      ],
+      "return": [
+        "bool",
+        "u64"
+      ]
+    },
+    {
+      "name": "claim_global_ownership",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer"
+      ],
+      "return": []
+    },
+    {
+      "name": "claim_vault_ownership",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": []
+    },
+    {
+      "name": "collect_and_try_notify_rewards",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "vector<0x1::object::Object<0x1::fungible_asset::Metadata>>",
+        "vector<u64>"
+      ]
+    },
+    {
+      "name": "compute_position_info",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x88def51006db6ae8f90051a1531d1b43877eeb233f4c0d99dcb24f49cd27ad5b::pool::Pool>",
+        "0xcff27db92178da13d6543c9036552fcee0f4c7a2cca464e58bab1f40db2296e7::i64::I64",
+        "0xcff27db92178da13d6543c9036552fcee0f4c7a2cca464e58bab1f40db2296e7::i64::I64",
+        "u64",
+        "u64"
+      ],
+      "return": [
+        "u64",
+        "u64",
+        "u64"
+      ]
+    },
+    {
+      "name": "compute_position_info_raw",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x88def51006db6ae8f90051a1531d1b43877eeb233f4c0d99dcb24f49cd27ad5b::pool::Pool>",
+        "bool",
+        "u64",
+        "bool",
+        "u64",
+        "u64",
+        "u64"
+      ],
+      "return": [
+        "u64",
+        "u64",
+        "u64"
+      ]
+    },
+    {
+      "name": "create_rebalance_position",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "u64",
+        "0xcff27db92178da13d6543c9036552fcee0f4c7a2cca464e58bab1f40db2296e7::i64::I64",
+        "0xcff27db92178da13d6543c9036552fcee0f4c7a2cca464e58bab1f40db2296e7::i64::I64"
+      ],
+      "return": [
+        "0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::RebalancePosition"
+      ]
+    },
+    {
+      "name": "create_vault",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x88def51006db6ae8f90051a1531d1b43877eeb233f4c0d99dcb24f49cd27ad5b::pool::Pool>",
+        "bool",
+        "0x1::option::Option<u64>"
+      ],
+      "return": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ]
+    },
+    {
+      "name": "is_asset_0_deposit",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "bool"
+      ]
+    },
+    {
+      "name": "deposit_valuation_tick",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "0xcff27db92178da13d6543c9036552fcee0f4c7a2cca464e58bab1f40db2296e7::i64::I64"
+      ]
+    },
+    {
+      "name": "donate_quote",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "0x1::fungible_asset::FungibleAsset"
+      ],
+      "return": []
+    },
+    {
+      "name": "emergency_exit",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": []
+    },
+    {
+      "name": "get_all_position_info",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "u64"
+      ],
+      "return": [
+        "u64",
+        "u64",
+        "0x1::object::Object<0x4::token::Token>",
+        "u64",
+        "u64",
+        "bool",
+        "u64",
+        "bool",
+        "u64"
+      ]
+    },
+    {
+      "name": "get_all_valuation_ticks_raw",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "bool",
+        "u64",
+        "bool",
+        "u64",
+        "bool",
+        "u64"
+      ]
+    },
+    {
+      "name": "get_both_store_balances",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "u64",
+        "u64"
+      ]
+    },
+    {
+      "name": "get_deposit_asset_metadata",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "0x1::object::Object<0x1::fungible_asset::Metadata>"
+      ]
+    },
+    {
+      "name": "get_deposit_asset_ratio_bps",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "u128"
+      ]
+    },
+    {
+      "name": "get_deposit_max_tick_difference",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "u64"
+      ]
+    },
+    {
+      "name": "get_deposit_store_balances",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "u64",
+        "u64"
+      ]
+    },
+    {
+      "name": "get_global_config",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [],
+      "return": [
+        "u64",
+        "u64",
+        "address",
+        "u64"
+      ]
+    },
+    {
+      "name": "get_global_owner",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [],
+      "return": [
+        "address"
+      ]
+    },
+    {
+      "name": "get_global_pending_owner",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [],
+      "return": [
+        "0x1::option::Option<address>"
+      ]
+    },
+    {
+      "name": "get_info_for_timelocked_aux_deposit_twap_period",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "u64",
+        "u64",
+        "bool",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>"
+      ]
+    },
+    {
+      "name": "get_info_for_timelocked_deposit_hysteresis_ticks",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "u64",
+        "u64",
+        "bool",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>"
+      ]
+    },
+    {
+      "name": "get_info_for_timelocked_deposit_twap_period",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "u64",
+        "u64",
+        "bool",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>"
+      ]
+    },
+    {
+      "name": "get_info_for_timelocked_rebalance_cooldown",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "u64",
+        "u64",
+        "bool",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>"
+      ]
+    },
+    {
+      "name": "get_info_for_timelocked_rebalance_hysteresis_ticks",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "u64",
+        "u64",
+        "bool",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>"
+      ]
+    },
+    {
+      "name": "get_info_for_timelocked_withdraw_fee_bps",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "u64",
+        "u64",
+        "bool",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>"
+      ]
+    },
+    {
+      "name": "get_last_rebalance_timestamp",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "u64"
+      ]
+    },
+    {
+      "name": "get_position_count",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "u64"
+      ]
+    },
+    {
+      "name": "get_position_holdings",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "u64"
+      ],
+      "return": [
+        "u64",
+        "u64"
+      ]
+    },
+    {
+      "name": "get_position_info",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "u64"
+      ],
+      "return": [
+        "0x1::object::Object<0x4::token::Token>",
+        "u64",
+        "u64",
+        "0xcff27db92178da13d6543c9036552fcee0f4c7a2cca464e58bab1f40db2296e7::i64::I64",
+        "0xcff27db92178da13d6543c9036552fcee0f4c7a2cca464e58bab1f40db2296e7::i64::I64"
+      ]
+    },
+    {
+      "name": "get_position_info_raw",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "u64"
+      ],
+      "return": [
+        "0x1::object::Object<0x4::token::Token>",
+        "u64",
+        "u64",
+        "bool",
+        "u64",
+        "bool",
+        "u64"
+      ]
+    },
+    {
+      "name": "get_quote_asset_metadata",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "0x1::object::Object<0x1::fungible_asset::Metadata>"
+      ]
+    },
+    {
+      "name": "get_rebalance_store_balances",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "u64",
+        "u64"
+      ]
+    },
+    {
+      "name": "get_seconds_until_next_rebalance",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "u64"
+      ]
+    },
+    {
+      "name": "get_shares_price_e18",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "u128"
+      ]
+    },
+    {
+      "name": "get_shares_withdrawal_amounts",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "u64"
+      ],
+      "return": [
+        "u64",
+        "u64"
+      ]
+    },
+    {
+      "name": "get_staking_pool",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "0x1::option::Option<0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>>"
+      ]
+    },
+    {
+      "name": "get_tick_coverage",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "0xcff27db92178da13d6543c9036552fcee0f4c7a2cca464e58bab1f40db2296e7::i64::I64",
+        "0xcff27db92178da13d6543c9036552fcee0f4c7a2cca464e58bab1f40db2296e7::i64::I64"
+      ]
+    },
+    {
+      "name": "get_tick_coverage_raw",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "bool",
+        "u64",
+        "bool",
+        "u64"
+      ]
+    },
+    {
+      "name": "get_total_vault_holdings",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "u64",
+        "u64"
+      ]
+    },
+    {
+      "name": "get_underlying_pool",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "0x1::object::Object<0x88def51006db6ae8f90051a1531d1b43877eeb233f4c0d99dcb24f49cd27ad5b::pool::Pool>"
+      ]
+    },
+    {
+      "name": "get_user_vault_balance",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "address"
+      ],
+      "return": [
+        "u64",
+        "u128"
+      ]
+    },
+    {
+      "name": "get_vault_config",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "address",
+        "address",
+        "u64",
+        "u64",
+        "u64",
+        "u64",
+        "u64",
+        "u64",
+        "u64",
+        "bool"
+      ]
+    },
+    {
+      "name": "get_vault_deposit_and_quote_assets",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "0x1::object::Object<0x1::fungible_asset::Metadata>",
+        "0x1::object::Object<0x1::fungible_asset::Metadata>"
+      ]
+    },
+    {
+      "name": "get_vault_exposure_bps",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "u128"
+      ]
+    },
+    {
+      "name": "get_vault_owner",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "address"
+      ]
+    },
+    {
+      "name": "get_vault_pending_owner",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "0x1::option::Option<address>"
+      ]
+    },
+    {
+      "name": "get_vault_value_in_0",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "u128"
+      ]
+    },
+    {
+      "name": "get_vault_value_in_1",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "u128"
+      ]
+    },
+    {
+      "name": "get_whitelisted_reward_tokens",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "vector<0x1::object::Object<0x1::fungible_asset::Metadata>>"
+      ]
+    },
+    {
+      "name": "holdings_valuation_tick",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "0xcff27db92178da13d6543c9036552fcee0f4c7a2cca464e58bab1f40db2296e7::i64::I64"
+      ]
+    },
+    {
+      "name": "is_depositor",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "address"
+      ],
+      "return": [
+        "bool"
+      ]
+    },
+    {
+      "name": "is_farming_enabled",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "bool"
+      ]
+    },
+    {
+      "name": "is_rebalance_paused",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "bool"
+      ]
+    },
+    {
+      "name": "is_rebalance_volatility_within_tolerance",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>"
+      ],
+      "return": [
+        "bool"
+      ]
+    },
+    {
+      "name": "is_rebalancer",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "address"
+      ],
+      "return": [
+        "bool"
+      ]
+    },
+    {
+      "name": "is_reward_token_whitelisted",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "0x1::object::Object<0x1::fungible_asset::Metadata>"
+      ],
+      "return": [
+        "bool"
+      ]
+    },
+    {
+      "name": "manage_timelocked_aux_deposit_twap_period",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>"
+      ],
+      "return": []
+    },
+    {
+      "name": "manage_timelocked_deposit_hysteresis_ticks",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>"
+      ],
+      "return": []
+    },
+    {
+      "name": "manage_timelocked_deposit_twap_period",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>"
+      ],
+      "return": []
+    },
+    {
+      "name": "manage_timelocked_rebalance_cooldown",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>"
+      ],
+      "return": []
+    },
+    {
+      "name": "manage_timelocked_rebalance_hysteresis_ticks",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>"
+      ],
+      "return": []
+    },
+    {
+      "name": "manage_timelocked_withdraw_fee_bps",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "0x1::option::Option<u64>",
+        "0x1::option::Option<u64>"
+      ],
+      "return": []
+    },
+    {
+      "name": "rebalance",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "vector<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::RebalancePosition>",
+        "u64",
+        "bool",
+        "u128"
+      ],
+      "return": []
+    },
+    {
+      "name": "recover_assets",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "0x1::object::Object<0x1::fungible_asset::Metadata>"
+      ],
+      "return": [
+        "0x1::fungible_asset::FungibleAsset"
+      ]
+    },
+    {
+      "name": "remove_whitelisted_reward_token",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "0x1::object::Object<0x1::fungible_asset::Metadata>"
+      ],
+      "return": []
+    },
+    {
+      "name": "set_affiliate",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "address"
+      ],
+      "return": []
+    },
+    {
+      "name": "set_amm_fee_bps",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "u64"
+      ],
+      "return": []
+    },
+    {
+      "name": "set_amm_fee_recipient",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "address"
+      ],
+      "return": []
+    },
+    {
+      "name": "set_base_fee_bps",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "u64"
+      ],
+      "return": []
+    },
+    {
+      "name": "set_base_fee_split_bps",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "u64"
+      ],
+      "return": []
+    },
+    {
+      "name": "set_depositor_role",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "address",
+        "bool"
+      ],
+      "return": []
+    },
+    {
+      "name": "set_farming_enabled",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "bool"
+      ],
+      "return": []
+    },
+    {
+      "name": "set_fee_recipient",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "address"
+      ],
+      "return": []
+    },
+    {
+      "name": "set_max_deposit_amount",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "u64"
+      ],
+      "return": []
+    },
+    {
+      "name": "set_rebalance_paused",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "bool"
+      ],
+      "return": []
+    },
+    {
+      "name": "set_rebalancer_role",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "address",
+        "bool"
+      ],
+      "return": []
+    },
+    {
+      "name": "set_staking_pool",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "0x1::option::Option<0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>>"
+      ],
+      "return": []
+    },
+    {
+      "name": "transfer_global_ownership",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "address"
+      ],
+      "return": []
+    },
+    {
+      "name": "transfer_vault_ownership",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::Vault>",
+        "address"
+      ],
+      "return": []
+    }
+  ],
+  "structs": [
+    {
+      "name": "DepositEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "vault_address",
+          "type": "address"
+        },
+        {
+          "name": "depositor",
+          "type": "address"
+        },
+        {
+          "name": "deposit_amount",
+          "type": "u64"
+        },
+        {
+          "name": "shares_minted",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "WithdrawEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "vault_address",
+          "type": "address"
+        },
+        {
+          "name": "shares_burned",
+          "type": "u64"
+        },
+        {
+          "name": "amount_0",
+          "type": "u64"
+        },
+        {
+          "name": "amount_1",
+          "type": "u64"
+        },
+        {
+          "name": "withdraw_fee_0",
+          "type": "u64"
+        },
+        {
+          "name": "withdraw_fee_1",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "ManagedFungibleStore",
+      "is_native": false,
+      "is_event": false,
+      "abilities": [
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "store",
+          "type": "0x1::object::Object<0x1::fungible_asset::FungibleStore>"
+        },
+        {
+          "name": "store_extend_ref",
+          "type": "0x1::object::ExtendRef"
+        }
+      ]
+    },
+    {
+      "name": "CollectFeesEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "vault_address",
+          "type": "address"
+        },
+        {
+          "name": "fee_0_collected",
+          "type": "u64"
+        },
+        {
+          "name": "fee_1_collected",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "AssetRecoveredEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "vault_address",
+          "type": "address"
+        },
+        {
+          "name": "metadata",
+          "type": "0x1::object::Object<0x1::fungible_asset::Metadata>"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "EmergencyExitEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "vault_address",
+          "type": "address"
+        },
+        {
+          "name": "executor",
+          "type": "address"
+        },
+        {
+          "name": "removed_positions_count",
+          "type": "u64"
+        },
+        {
+          "name": "collected_fees_0",
+          "type": "u64"
+        },
+        {
+          "name": "collected_fees_1",
+          "type": "u64"
+        },
+        {
+          "name": "removed_0",
+          "type": "u64"
+        },
+        {
+          "name": "removed_1",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "FarmingEnabledEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "vault_address",
+          "type": "address"
+        },
+        {
+          "name": "enabled",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "GlobalOwnershipTransferInitiatedEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "previous_owner",
+          "type": "address"
+        },
+        {
+          "name": "pending_owner",
+          "type": "address"
+        }
+      ]
+    },
+    {
+      "name": "GlobalOwnershipTransferredEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "previous_owner",
+          "type": "address"
+        },
+        {
+          "name": "new_owner",
+          "type": "address"
+        }
+      ]
+    },
+    {
+      "name": "GlobalVaultConfig",
+      "is_native": false,
+      "is_event": false,
+      "abilities": [
+        "key"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "name": "pending_owner",
+          "type": "0x1::option::Option<address>"
+        },
+        {
+          "name": "resource_signer_cap",
+          "type": "0x1::account::SignerCapability"
+        },
+        {
+          "name": "vault_count",
+          "type": "u32"
+        },
+        {
+          "name": "base_fee_bps",
+          "type": "u64"
+        },
+        {
+          "name": "base_fee_split_bps",
+          "type": "u64"
+        },
+        {
+          "name": "fee_recipient",
+          "type": "address"
+        },
+        {
+          "name": "amm_fee_bps",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "PositionAddedEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "lower",
+          "type": "u64"
+        },
+        {
+          "name": "lower_is_negative",
+          "type": "bool"
+        },
+        {
+          "name": "upper",
+          "type": "u64"
+        },
+        {
+          "name": "upper_is_negative",
+          "type": "bool"
+        },
+        {
+          "name": "liquidity",
+          "type": "u64"
+        },
+        {
+          "name": "amount_0",
+          "type": "u64"
+        },
+        {
+          "name": "amount_1",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "RebalanceEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "vault_address",
+          "type": "address"
+        },
+        {
+          "name": "rebalancer",
+          "type": "address"
+        },
+        {
+          "name": "positions_count",
+          "type": "u64"
+        },
+        {
+          "name": "swap_amount",
+          "type": "u64"
+        },
+        {
+          "name": "zero_for_one",
+          "type": "bool"
+        },
+        {
+          "name": "collected_fees_0",
+          "type": "u64"
+        },
+        {
+          "name": "collected_fees_1",
+          "type": "u64"
+        },
+        {
+          "name": "total_0",
+          "type": "u64"
+        },
+        {
+          "name": "total_1",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "RebalancePausedEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "vault_address",
+          "type": "address"
+        },
+        {
+          "name": "previous_state",
+          "type": "bool"
+        },
+        {
+          "name": "new_state",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "RebalancePosition",
+      "is_native": false,
+      "is_event": false,
+      "abilities": [
+        "copy",
+        "drop"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "liquidity_to_mint",
+          "type": "u64"
+        },
+        {
+          "name": "lower",
+          "type": "0xcff27db92178da13d6543c9036552fcee0f4c7a2cca464e58bab1f40db2296e7::i64::I64"
+        },
+        {
+          "name": "upper",
+          "type": "0xcff27db92178da13d6543c9036552fcee0f4c7a2cca464e58bab1f40db2296e7::i64::I64"
+        }
+      ]
+    },
+    {
+      "name": "SetAffiliateEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "vault_address",
+          "type": "address"
+        },
+        {
+          "name": "previous_affiliate",
+          "type": "address"
+        },
+        {
+          "name": "new_affiliate",
+          "type": "address"
+        }
+      ]
+    },
+    {
+      "name": "SetAmmFeeEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "previous_amm_fee_bps",
+          "type": "u64"
+        },
+        {
+          "name": "new_amm_fee_bps",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "SetAmmFeeRecipientEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "vault_address",
+          "type": "address"
+        },
+        {
+          "name": "previous_recipient",
+          "type": "address"
+        },
+        {
+          "name": "new_recipient",
+          "type": "address"
+        }
+      ]
+    },
+    {
+      "name": "SetBaseFeeEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "previous_base_fee_bps",
+          "type": "u64"
+        },
+        {
+          "name": "new_base_fee_bps",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "SetBaseSplitFeeEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "previous_base_fee_split_bps",
+          "type": "u64"
+        },
+        {
+          "name": "new_base_fee_split_bps",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "SetDepositRoleEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "vault_address",
+          "type": "address"
+        },
+        {
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "name": "is_granted",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "SetFeeRecipientEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "previous_recipient",
+          "type": "address"
+        },
+        {
+          "name": "new_recipient",
+          "type": "address"
+        }
+      ]
+    },
+    {
+      "name": "SetMaxDepositAmountEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "vault_address",
+          "type": "address"
+        },
+        {
+          "name": "previous_amount",
+          "type": "u64"
+        },
+        {
+          "name": "new_amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "SetRebalancerRoleEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "vault_address",
+          "type": "address"
+        },
+        {
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "name": "is_granted",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "SetStakingPoolEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "vault_address",
+          "type": "address"
+        },
+        {
+          "name": "previous_pool",
+          "type": "0x1::option::Option<0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>>"
+        },
+        {
+          "name": "new_pool",
+          "type": "0x1::option::Option<0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>>"
+        }
+      ]
+    },
+    {
+      "name": "Vault",
+      "is_native": false,
+      "is_event": false,
+      "abilities": [
+        "key"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "name": "pending_owner",
+          "type": "0x1::option::Option<address>"
+        },
+        {
+          "name": "is_asset_0_deposit",
+          "type": "bool"
+        },
+        {
+          "name": "depositors",
+          "type": "0x1::table::Table<address, bool>"
+        },
+        {
+          "name": "rebalancers",
+          "type": "0x1::table::Table<address, bool>"
+        },
+        {
+          "name": "underlying_pool",
+          "type": "0x1::object::Object<0x88def51006db6ae8f90051a1531d1b43877eeb233f4c0d99dcb24f49cd27ad5b::pool::Pool>"
+        },
+        {
+          "name": "positions",
+          "type": "vector<0x1::object::Object<0x4::token::Token>>"
+        },
+        {
+          "name": "vault_shares_metadata",
+          "type": "0x1::object::Object<0x1::fungible_asset::Metadata>"
+        },
+        {
+          "name": "mint_ref",
+          "type": "0x1::fungible_asset::MintRef"
+        },
+        {
+          "name": "burn_ref",
+          "type": "0x1::fungible_asset::BurnRef"
+        },
+        {
+          "name": "rebalance_0",
+          "type": "0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::ManagedFungibleStore"
+        },
+        {
+          "name": "rebalance_1",
+          "type": "0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::ManagedFungibleStore"
+        },
+        {
+          "name": "extend_ref",
+          "type": "0x1::object::ExtendRef"
+        },
+        {
+          "name": "position_map",
+          "type": "0x1::table::Table<0xcff27db92178da13d6543c9036552fcee0f4c7a2cca464e58bab1f40db2296e7::i64::I64, 0x1::table::Table<0xcff27db92178da13d6543c9036552fcee0f4c7a2cca464e58bab1f40db2296e7::i64::I64, 0x1::option::Option<0x1::object::Object<0x4::token::Token>>>>"
+        },
+        {
+          "name": "last_rebalanced_at",
+          "type": "u64"
+        },
+        {
+          "name": "staking_pool",
+          "type": "0x1::option::Option<0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>>"
+        },
+        {
+          "name": "whitelisted_reward_tokens",
+          "type": "vector<0x1::object::Object<0x1::fungible_asset::Metadata>>"
+        },
+        {
+          "name": "vault_config",
+          "type": "0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::ichi_vault_meridian::VaultConfig"
+        }
+      ]
+    },
+    {
+      "name": "VaultConfig",
+      "is_native": false,
+      "is_event": false,
+      "abilities": [
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "amm_fee_recipient",
+          "type": "address"
+        },
+        {
+          "name": "affiliate",
+          "type": "address"
+        },
+        {
+          "name": "max_deposit_amount",
+          "type": "u64"
+        },
+        {
+          "name": "timelocked_deposit_hysteresis_ticks",
+          "type": "0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::timelocked::TimeLocked<u64>"
+        },
+        {
+          "name": "timelocked_rebalance_hysteresis_ticks",
+          "type": "0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::timelocked::TimeLocked<u64>"
+        },
+        {
+          "name": "timelocked_deposit_twap_period",
+          "type": "0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::timelocked::TimeLocked<u64>"
+        },
+        {
+          "name": "timelocked_aux_deposit_twap_period",
+          "type": "0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::timelocked::TimeLocked<u64>"
+        },
+        {
+          "name": "timelocked_withdraw_fee_bps",
+          "type": "0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::timelocked::TimeLocked<u64>"
+        },
+        {
+          "name": "timelocked_rebalance_cooldown",
+          "type": "0x96cfeae5e78eeb1b6215bb83ed9023106e0df49e6d4380783e0e40aa8e771f83::timelocked::TimeLocked<u64>"
+        },
+        {
+          "name": "is_rebalance_paused",
+          "type": "bool"
+        },
+        {
+          "name": "is_farming_enabled",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "VaultCreatedEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "vault_owner",
+          "type": "address"
+        },
+        {
+          "name": "vault_address",
+          "type": "address"
+        },
+        {
+          "name": "underlying_pool",
+          "type": "0x1::object::Object<0x88def51006db6ae8f90051a1531d1b43877eeb233f4c0d99dcb24f49cd27ad5b::pool::Pool>"
+        },
+        {
+          "name": "is_asset_0_deposit",
+          "type": "bool"
+        },
+        {
+          "name": "vault_shares_metadata",
+          "type": "0x1::object::Object<0x1::fungible_asset::Metadata>"
+        },
+        {
+          "name": "max_deposit_amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "VaultOwnershipTransferInitiatedEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "vault_address",
+          "type": "address"
+        },
+        {
+          "name": "previous_owner",
+          "type": "address"
+        },
+        {
+          "name": "pending_owner",
+          "type": "address"
+        }
+      ]
+    },
+    {
+      "name": "VaultOwnershipTransferredEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "vault_address",
+          "type": "address"
+        },
+        {
+          "name": "previous_owner",
+          "type": "address"
+        },
+        {
+          "name": "new_owner",
+          "type": "address"
+        }
+      ]
+    },
+    {
+      "name": "WhitelistedRewardTokenAddedEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "vault_address",
+          "type": "address"
+        },
+        {
+          "name": "reward_token",
+          "type": "0x1::object::Object<0x1::fungible_asset::Metadata>"
+        },
+        {
+          "name": "total_whitelisted",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "WhitelistedRewardTokenRemovedEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "vault_address",
+          "type": "address"
+        },
+        {
+          "name": "reward_token",
+          "type": "0x1::object::Object<0x1::fungible_asset::Metadata>"
+        },
+        {
+          "name": "total_whitelisted",
+          "type": "u64"
+        }
+      ]
+    }
+  ]
+} as const;

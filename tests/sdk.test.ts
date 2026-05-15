@@ -1,3 +1,4 @@
+import { jest } from "@jest/globals";
 import {
   CanopySdk,
   createCanopySdk,
@@ -12,7 +13,7 @@ const APTOS_COIN_TYPE =
   "0x0000000000000000000000000000000000000000000000000000000000000001::aptos_coin::AptosCoin";
 
 interface MockViewClient {
-  view: jest.Mock<Promise<unknown[]>, [unknown]>;
+  view: jest.MockedFunction<(input: unknown) => Promise<unknown[]>>;
 }
 
 function createMovementMock(
@@ -210,7 +211,7 @@ describe("CanopySdk", () => {
         amount: 10n,
         minSharesOut: 9n,
       })
-    ).resolves.toEqual({
+    ).resolves.toMatchObject({
       function:
         "0x6db956973bb73aff8b6c3712a7b4fff18bfefd850cce81c558d20a7ab1fc37d9::router::deposit_coin",
       typeArguments: [APTOS_COIN_TYPE, APTOS_COIN_TYPE],
@@ -221,6 +222,7 @@ describe("CanopySdk", () => {
         "10",
         "9",
       ],
+      abi: expect.any(Object),
     });
 
     await expect(
@@ -230,7 +232,7 @@ describe("CanopySdk", () => {
         maxLossBps: 50n,
         minAmountOut: 3n,
       })
-    ).resolves.toEqual({
+    ).resolves.toMatchObject({
       function:
         "0x6db956973bb73aff8b6c3712a7b4fff18bfefd850cce81c558d20a7ab1fc37d9::router::withdraw_coin",
       typeArguments: [APTOS_COIN_TYPE, APTOS_COIN_TYPE],
@@ -242,6 +244,44 @@ describe("CanopySdk", () => {
         "50",
         "3",
       ],
+      abi: expect.any(Object),
+    });
+
+    await expect(
+      sdk.canopy?.buildDepositPayload({
+        vaultAddress: "0xabc",
+        amount: 10n,
+      })
+    ).resolves.toMatchObject({
+      function:
+        "0x6db956973bb73aff8b6c3712a7b4fff18bfefd850cce81c558d20a7ab1fc37d9::router::deposit_coin",
+      functionArguments: [
+        "0x0000000000000000000000000000000000000000000000000000000000000abc",
+        [],
+        [],
+        "10",
+        undefined,
+      ],
+      abi: expect.any(Object),
+    });
+
+    await expect(
+      sdk.canopy?.buildWithdrawPayload({
+        vaultAddress: "0xabc",
+        shares: 10n,
+      })
+    ).resolves.toMatchObject({
+      function:
+        "0x6db956973bb73aff8b6c3712a7b4fff18bfefd850cce81c558d20a7ab1fc37d9::router::withdraw_coin",
+      functionArguments: [
+        "0x0000000000000000000000000000000000000000000000000000000000000abc",
+        [],
+        [],
+        "10",
+        undefined,
+        undefined,
+      ],
+      abi: expect.any(Object),
     });
   });
 
@@ -276,10 +316,10 @@ describe("CanopySdk", () => {
         maxLossBps: 50n,
         minAmountOut: 3n,
       })
-    ).resolves.toEqual({
+    ).resolves.toMatchObject({
       requiresUnstake: false,
       unstakeAmount: 0n,
-        withdrawPayload: {
+      withdrawPayload: expect.objectContaining({
           function:
             "0x6db956973bb73aff8b6c3712a7b4fff18bfefd850cce81c558d20a7ab1fc37d9::router::withdraw_coin",
           typeArguments: [APTOS_COIN_TYPE, APTOS_COIN_TYPE],
@@ -287,11 +327,12 @@ describe("CanopySdk", () => {
             "0x0000000000000000000000000000000000000000000000000000000000000abc",
             [],
             [],
-          "10",
-          "50",
-          "3",
-        ],
-      },
+            "10",
+            "50",
+            "3",
+          ],
+          abi: expect.any(Object),
+      }),
     });
 
     await expect(
@@ -303,7 +344,7 @@ describe("CanopySdk", () => {
         maxLossBps: 50n,
         minAmountOut: 3n,
       })
-    ).resolves.toEqual({
+    ).resolves.toMatchObject({
       requiresUnstake: true,
       unstakeAmount: 6n,
       unstakePayload: {
@@ -315,7 +356,7 @@ describe("CanopySdk", () => {
           "6",
         ],
       },
-        withdrawPayload: {
+      withdrawPayload: expect.objectContaining({
           function:
             "0x6db956973bb73aff8b6c3712a7b4fff18bfefd850cce81c558d20a7ab1fc37d9::router::withdraw_coin",
           typeArguments: [APTOS_COIN_TYPE, APTOS_COIN_TYPE],
@@ -323,11 +364,12 @@ describe("CanopySdk", () => {
             "0x0000000000000000000000000000000000000000000000000000000000000abc",
             [],
             [],
-          "10",
-          "50",
-          "3",
-        ],
-      },
+            "10",
+            "50",
+            "3",
+          ],
+          abi: expect.any(Object),
+      }),
     });
   });
 
@@ -441,7 +483,7 @@ describe("CanopySdk", () => {
         amount: 10n,
         minSharesOut: 8n,
       })
-    ).resolves.toEqual({
+    ).resolves.toMatchObject({
       function:
         "0x717b417949cd5bfa6dc02822eacb727d820de2741f6ea90bf16be6c0ed46ff4b::router::deposit_fa_with_coin_type",
       typeArguments: ["0x1::aptos_coin::AptosCoin"],
@@ -452,6 +494,7 @@ describe("CanopySdk", () => {
         "10",
         "8",
       ],
+      abi: expect.any(Object),
     });
 
     await expect(
@@ -461,7 +504,7 @@ describe("CanopySdk", () => {
         maxLossBps: 50n,
         minAmountOut: 3n,
       })
-    ).resolves.toEqual({
+    ).resolves.toMatchObject({
       function:
         "0x717b417949cd5bfa6dc02822eacb727d820de2741f6ea90bf16be6c0ed46ff4b::router::withdraw_fa_with_coin_type",
       typeArguments: ["0x1::aptos_coin::AptosCoin"],
@@ -473,6 +516,7 @@ describe("CanopySdk", () => {
         "50",
         "3",
       ],
+      abi: expect.any(Object),
     });
 
     global.fetch = originalFetch;
@@ -563,7 +607,7 @@ describe("CanopySdk", () => {
         amount: 10n,
         minSharesOut: 8n,
       })
-    ).resolves.toEqual({
+    ).resolves.toMatchObject({
       function:
         "0x6db956973bb73aff8b6c3712a7b4fff18bfefd850cce81c558d20a7ab1fc37d9::router::deposit_fa",
       typeArguments: [],
@@ -574,6 +618,7 @@ describe("CanopySdk", () => {
         "10",
         "8",
       ],
+      abi: expect.any(Object),
     });
 
     global.fetch = originalFetch;
@@ -661,7 +706,7 @@ describe("CanopySdk", () => {
         minSharesOut: 8n,
         wrapperCoinType: "0xfoo::wrapped_usdc::WrappedUsdc",
       })
-    ).resolves.toEqual({
+    ).resolves.toMatchObject({
       function:
         "0x717b417949cd5bfa6dc02822eacb727d820de2741f6ea90bf16be6c0ed46ff4b::router::deposit_fa_with_coin_type",
       typeArguments: ["0xfoo::wrapped_usdc::WrappedUsdc"],
@@ -672,6 +717,7 @@ describe("CanopySdk", () => {
         "10",
         "8",
       ],
+      abi: expect.any(Object),
     });
 
     await expect(
@@ -682,7 +728,7 @@ describe("CanopySdk", () => {
         minAmountOut: 3n,
         wrapperCoinType: "0xfoo::wrapped_usdc::WrappedUsdc",
       })
-    ).resolves.toEqual({
+    ).resolves.toMatchObject({
       function:
         "0x717b417949cd5bfa6dc02822eacb727d820de2741f6ea90bf16be6c0ed46ff4b::router::withdraw_fa_with_coin_type",
       typeArguments: ["0xfoo::wrapped_usdc::WrappedUsdc"],
@@ -694,6 +740,7 @@ describe("CanopySdk", () => {
         "50",
         "3",
       ],
+      abi: expect.any(Object),
     });
 
     global.fetch = originalFetch;
@@ -885,11 +932,12 @@ describe("CanopySdk", () => {
         coinType: "0x1::aptos_coin::AptosCoin",
         amount: 10n,
       })
-    ).toEqual({
+    ).toMatchObject({
       function:
         "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3::router::stake",
       typeArguments: ["0x1::aptos_coin::AptosCoin"],
       functionArguments: ["10"],
+      abi: expect.any(Object),
     });
 
     expect(
@@ -898,7 +946,7 @@ describe("CanopySdk", () => {
         amount: 11n,
         poolAddresses: ["0xB", "0xC"],
       })
-    ).toEqual({
+    ).toMatchObject({
       function:
         "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3::router::stake_and_subscribe_fa",
       typeArguments: [],
@@ -910,6 +958,7 @@ describe("CanopySdk", () => {
           "0x000000000000000000000000000000000000000000000000000000000000000c",
         ],
       ],
+      abi: expect.any(Object),
     });
 
     expect(await rewards.getEarned({
@@ -953,18 +1002,20 @@ describe("CanopySdk", () => {
     const sdk = new CanopySdk(client as never, { chain: "aptos-testnet" });
     const rewards = sdk.rewards!;
 
-    expect(rewards.buildSubscribePayload({ poolAddress: "0xA" })).toEqual({
+    expect(rewards.buildSubscribePayload({ poolAddress: "0xA" })).toMatchObject({
       function:
         "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3::multi_rewards::subscribe",
       typeArguments: [],
       functionArguments: ["0x000000000000000000000000000000000000000000000000000000000000000a"],
+      abi: expect.any(Object),
     });
 
-    expect(rewards.buildUnsubscribePayload({ poolAddress: "0xA" })).toEqual({
+    expect(rewards.buildUnsubscribePayload({ poolAddress: "0xA" })).toMatchObject({
       function:
         "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3::multi_rewards::unsubscribe",
       typeArguments: [],
       functionArguments: ["0x000000000000000000000000000000000000000000000000000000000000000a"],
+      abi: expect.any(Object),
     });
 
     expect(
@@ -973,7 +1024,7 @@ describe("CanopySdk", () => {
         amount: 5n,
         poolAddresses: ["0xA"],
       })
-    ).toEqual({
+    ).toMatchObject({
       function:
         "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3::router::unsubscribe_and_withdraw_fa",
       typeArguments: [],
@@ -982,17 +1033,19 @@ describe("CanopySdk", () => {
         "5",
         ["0x000000000000000000000000000000000000000000000000000000000000000a"],
       ],
+      abi: expect.any(Object),
     });
 
     expect(
       rewards.buildCreateStakingPoolPayload({
         coinType: "0x1::aptos_coin::AptosCoin",
       })
-    ).toEqual({
+    ).toMatchObject({
       function:
         "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3::router::create_staking_pool",
       typeArguments: ["0x1::aptos_coin::AptosCoin"],
       functionArguments: [],
+      abi: expect.any(Object),
     });
 
     expect(
@@ -1004,7 +1057,7 @@ describe("CanopySdk", () => {
         tokenDecimals: 8,
         poolAddresses: ["0xA"],
       })
-    ).toEqual({
+    ).toMatchObject({
       function:
         "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3::router::stake_and_subscribe_token",
       typeArguments: [],
@@ -1016,6 +1069,7 @@ describe("CanopySdk", () => {
         "VSHARE",
         "8",
       ],
+      abi: expect.any(Object),
     });
 
     await expect(
@@ -1123,7 +1177,7 @@ describe("CanopySdk", () => {
         amount: 11n,
         userAddress: "0x111",
       })
-    ).resolves.toEqual({
+    ).resolves.toMatchObject({
       function:
         "0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::router::stake_and_subscribe_fa",
       typeArguments: [],
@@ -1132,6 +1186,7 @@ describe("CanopySdk", () => {
         "11",
         ["0x0000000000000000000000000000000000000000000000000000000000000123"],
       ],
+      abi: expect.any(Object),
     });
 
     global.fetch = originalFetch;
@@ -1180,7 +1235,7 @@ describe("CanopySdk", () => {
         amount: 11n,
         userAddress: "0x111",
       })
-    ).resolves.toEqual({
+    ).resolves.toMatchObject({
       function:
         "0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::router::stake_and_subscribe_fa",
       typeArguments: [],
@@ -1192,6 +1247,7 @@ describe("CanopySdk", () => {
           "0xc1d2493f1ecc4ce35726fb0a48719752ce573f6aead45f35703193c021af3001",
         ],
       ],
+      abi: expect.any(Object),
     });
 
     expect(global.fetch).toHaveBeenCalledTimes(1);
@@ -1352,7 +1408,7 @@ describe("CanopySdk", () => {
         amount: 10n,
         minSharesOut: 2n,
       })
-    ).toEqual({
+    ).toMatchObject({
       function:
         "0xeb57695cd494c59ea7b1356580f1e7d5666fd84827322369e21d712e22397b54::router::deposit",
       typeArguments: [],
@@ -1361,15 +1417,16 @@ describe("CanopySdk", () => {
         "10",
         "2",
       ],
+      abi: expect.any(Object),
     });
     expect(
       meridian.buildWithdrawPayload({
         vaultAddress: "0x111",
         shares: 10n,
-        maxLossBps: 50n,
-        minAmountOut: 3n,
+        minAsset0: 50n,
+        minAsset1: 3n,
       })
-    ).toEqual({
+    ).toMatchObject({
       function:
         "0xeb57695cd494c59ea7b1356580f1e7d5666fd84827322369e21d712e22397b54::router::withdraw",
       typeArguments: [],
@@ -1379,7 +1436,19 @@ describe("CanopySdk", () => {
         "50",
         "3",
       ],
+      abi: expect.any(Object),
     });
+
+    expect(() =>
+      meridian.buildWithdrawPayload({
+        vaultAddress: "0x111",
+        shares: 10n,
+        maxLossBps: 50n,
+        minAmountOut: 3n,
+      } as never)
+    ).toThrow(
+      "Meridian withdraw inputs must use minAsset0 and minAsset1 instead of maxLossBps and minAmountOut"
+    );
   });
 
   it("uses movement helper modules for rewards and meridian batch views", async () => {
@@ -1458,13 +1527,9 @@ describe("CanopySdk", () => {
       "0x707462571715301b063d79c2cdb57c3bd1cfe2189889793b00077ceed86e0219::rewards_view::get_rewards_snapshot":
         (args: unknown[]) => {
           expect(args).toEqual([
-            { vec: ["0"] },
-            { vec: ["10"] },
-            {
-              vec: [
-                "0x0000000000000000000000000000000000000000000000000000000000000111",
-              ],
-            },
+            "0",
+            "10",
+            "0x0000000000000000000000000000000000000000000000000000000000000111",
           ]);
 
           return [
@@ -1542,8 +1607,8 @@ describe("CanopySdk", () => {
               "0x0000000000000000000000000000000000000000000000000000000000000aaa",
               "0x0000000000000000000000000000000000000000000000000000000000000ccc",
             ],
-            { vec: [] },
-            { vec: ["5"] },
+            undefined,
+            "5",
           ]);
 
           return [[
@@ -1566,8 +1631,8 @@ describe("CanopySdk", () => {
         (args: unknown[]) => {
           expect(args).toEqual([
             "0x0000000000000000000000000000000000000000000000000000000000000111",
-            { vec: ["1"] },
-            { vec: ["2"] },
+            "1",
+            "2",
           ]);
 
           return [[
@@ -1582,7 +1647,7 @@ describe("CanopySdk", () => {
         },
       "0x707462571715301b063d79c2cdb57c3bd1cfe2189889793b00077ceed86e0219::rewards_view::get_registry_overview":
         (args: unknown[]) => {
-          expect(args).toEqual([{ vec: ["1"] }, { vec: ["2"] }, false]);
+          expect(args).toEqual(["1", "2", false]);
 
           return [
             "1778006540",
@@ -1602,8 +1667,8 @@ describe("CanopySdk", () => {
           expect(args).toEqual([
             "0x0000000000000000000000000000000000000000000000000000000000000111",
             "0x0000000000000000000000000000000000000000000000000000000000000aaa",
-            { vec: ["3"] },
-            { vec: ["4"] },
+            "3",
+            "4",
           ]);
 
           return [[

@@ -1,0 +1,139 @@
+export const ABI = {
+  "address": "0x265d62018bb6ec05859cdf5520cfc1efa8e84a4f9a853c66f139a2184d367be4",
+  "name": "batcher_entry",
+  "friends": [],
+  "exposed_functions": [
+    {
+      "name": "batch_add_multiple_rewards_to_pool",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>",
+        "vector<0x1::object::Object<0x1::fungible_asset::Metadata>>",
+        "vector<address>",
+        "vector<u64>"
+      ],
+      "return": []
+    },
+    {
+      "name": "batch_add_reward_to_multiple_pools",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "vector<0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>>",
+        "0x1::object::Object<0x1::fungible_asset::Metadata>",
+        "address",
+        "u64"
+      ],
+      "return": []
+    },
+    {
+      "name": "batch_add_rewards_matrix",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "vector<0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>>",
+        "vector<0x1::object::Object<0x1::fungible_asset::Metadata>>",
+        "vector<address>",
+        "vector<u64>",
+        "vector<u8>"
+      ],
+      "return": []
+    },
+    {
+      "name": "batch_create_staking_pools",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "vector<0x1::object::Object<0x1::fungible_asset::Metadata>>"
+      ],
+      "return": []
+    },
+    {
+      "name": "batch_notify_reward_amounts",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "vector<0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>>",
+        "vector<0x1::object::Object<0x1::fungible_asset::Metadata>>",
+        "vector<u64>"
+      ],
+      "return": []
+    },
+    {
+      "name": "batch_set_rewards_durations",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "vector<0x1::object::Object<0x113a1769acc5ce21b5ece6f9533eef6dd34c758911fa5235124c87ff1298633b::multi_rewards::StakingPool>>",
+        "vector<0x1::object::Object<0x1::fungible_asset::Metadata>>",
+        "vector<u64>"
+      ],
+      "return": []
+    },
+    {
+      "name": "create_pools_with_multiple_rewards",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "vector<0x1::object::Object<0x1::fungible_asset::Metadata>>",
+        "vector<vector<0x1::object::Object<0x1::fungible_asset::Metadata>>>",
+        "vector<vector<address>>",
+        "vector<vector<u64>>"
+      ],
+      "return": []
+    },
+    {
+      "name": "create_pools_with_rewards",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "vector<0x1::object::Object<0x1::fungible_asset::Metadata>>",
+        "vector<0x1::object::Object<0x1::fungible_asset::Metadata>>",
+        "vector<address>",
+        "vector<u64>"
+      ],
+      "return": []
+    },
+    {
+      "name": "create_pools_with_same_reward",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "vector<0x1::object::Object<0x1::fungible_asset::Metadata>>",
+        "0x1::object::Object<0x1::fungible_asset::Metadata>",
+        "address",
+        "u64"
+      ],
+      "return": []
+    }
+  ],
+  "structs": []
+} as const;

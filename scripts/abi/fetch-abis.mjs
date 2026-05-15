@@ -31,7 +31,7 @@ for (const chain of chains) {
   for (const entry of entries) {
     const address = readPath(deployment, entry.addressPath);
     const abi = await fetchModuleAbi(deployment.fullnode, address, entry.moduleName);
-    const formatted = `${JSON.stringify(abi, null, 2)}\n`;
+    const formatted = formatAbiModule(abi);
     const outputUrl = new URL(entry.file, outputDir);
 
     if (checkOnly) {
@@ -97,6 +97,10 @@ async function fetchModuleAbi(fullnode, address, moduleName) {
   }
 
   return module.abi;
+}
+
+function formatAbiModule(abi) {
+  return `export const ABI = ${JSON.stringify(abi, null, 2)} as const;\n`;
 }
 
 function toRelativePath(fileUrl) {

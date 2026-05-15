@@ -18,11 +18,24 @@ export function viewFunctionRequest(
   };
 }
 
+export function viewPayloadRequest(payload: InputViewFunctionData): ViewFunctionRequest {
+  return {
+    payload,
+  };
+}
+
 export async function callViewFunction<Result extends unknown[] = unknown[]>(
   client: MoveViewClient,
   input: ViewFunctionPayloadInput
 ): Promise<Result> {
-  const request = viewFunctionRequest(input);
+  return callViewPayloadFunction(client, viewFunctionPayload(input));
+}
+
+export async function callViewPayloadFunction<Result extends unknown[] = unknown[]>(
+  client: MoveViewClient,
+  payload: InputViewFunctionData
+): Promise<Result> {
+  const request = viewPayloadRequest(payload);
 
   try {
     return (await client.view(request)) as Result;
@@ -41,6 +54,14 @@ export async function callSingleViewResult<Result = unknown>(
   input: ViewFunctionPayloadInput
 ): Promise<Result> {
   const result = await callViewFunction(client, input);
+  return readViewResult<Result>(result);
+}
+
+export async function callSingleViewPayloadResult<Result = unknown>(
+  client: MoveViewClient,
+  payload: InputViewFunctionData
+): Promise<Result> {
+  const result = await callViewPayloadFunction(client, payload);
   return readViewResult<Result>(result);
 }
 

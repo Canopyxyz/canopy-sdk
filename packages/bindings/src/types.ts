@@ -2,12 +2,29 @@ import type { ChainName } from "@canopyhub/canopy-sdk-deployments";
 
 export type HexString = `0x${string}`;
 
+export interface MoveGenericTypeParam {
+  constraints: readonly unknown[];
+}
+
+export interface MoveStructField {
+  name: string;
+  type: string;
+}
+
+export interface MoveStructAbi {
+  name: string;
+  is_native: boolean;
+  abilities: readonly string[];
+  generic_type_params: readonly MoveGenericTypeParam[];
+  fields: readonly MoveStructField[];
+}
+
 export interface MoveModuleAbi {
   address: HexString;
   name: string;
-  friends?: string[];
-  exposed_functions?: MoveExposedFunction[];
-  structs: unknown[];
+  friends: readonly string[];
+  exposed_functions: readonly MoveExposedFunction[];
+  structs: readonly MoveStructAbi[];
 }
 
 export interface MoveExposedFunction {
@@ -15,9 +32,9 @@ export interface MoveExposedFunction {
   visibility: "public" | "friend" | "private";
   is_entry: boolean;
   is_view: boolean;
-  generic_type_params: unknown[];
-  params: string[];
-  return: string[];
+  generic_type_params: readonly MoveGenericTypeParam[];
+  params: readonly string[];
+  return: readonly string[];
 }
 
 export interface FrameworkAbiSet {

@@ -29,11 +29,11 @@ pnpm add @canopyhub/canopy-sdk
 ## Quick Start
 
 ```ts
-import { Movement, MovementConfig, Network } from "@moveindustries/ts-sdk";
+import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
 import { createCanopySdk } from "@canopyhub/canopy-sdk";
 
-const client = new Movement(
-  new MovementConfig({
+const client = new Aptos(
+  new AptosConfig({
     network: Network.MAINNET
   })
 );
@@ -230,7 +230,7 @@ Movement batch-view-backed Meridian reads:
 
 ## Transactions
 
-All `build*Payload` methods return `InputEntryFunctionData` compatible with `@moveindustries/ts-sdk`.
+All `build*Payload` methods return `InputEntryFunctionData` compatible with `@aptos-labs/ts-sdk`.
 
 ```ts
 const payload = await sdk.canopy!.buildDepositPayload({

@@ -2,13 +2,15 @@ import type { Aptos } from "@aptos-labs/ts-sdk";
 import { RewardsDiscoveryClient } from "./data";
 import type { CanopyProtocolClient } from "./canopy";
 import { CanopyProtocolClient as CanopyProtocolClientImpl } from "./canopy";
-import { createSdkContext } from "./context";
+import {
+  createSdkContext,
+  requireCanopyFeatureContext,
+  requireMeridianFeatureContext,
+  requireRewardsFeatureContext,
+} from "./context";
 import { RewardsClient } from "./rewards";
-import type { CanopySdkOptions, SdkChainName, SdkContext } from "./types";
+import type { CanopySdkOptions, SdkChainName } from "./types";
 import { MeridianClient } from "./alm/meridian";
-
-type CanopyContext = SdkContext<"movement-mainnet" | "aptos-testnet">;
-type MeridianContext = SdkContext<"movement-mainnet" | "aptos-mainnet">;
 
 export class CanopySdk<Chain extends SdkChainName = SdkChainName> {
   readonly alm: {
@@ -22,17 +24,17 @@ export class CanopySdk<Chain extends SdkChainName = SdkChainName> {
   readonly rewards?: RewardsClient;
 
   constructor(client: Aptos, options: CanopySdkOptions<Chain>) {
-    const context = createSdkContext(
+    const baseContext = createSdkContext(
       client,
       options.chain,
       options.moveposition ? { moveposition: options.moveposition } : undefined
     );
-    this.chain = context.chain;
+    this.chain = baseContext.chain;
 
     this.alm = {};
     this.data = {
       rewardsDiscovery: new RewardsDiscoveryClient({
-        chain: context.chain,
+        chain: baseContext.chain,
         ...(options.offchain?.sentioEndpoint ? { endpoint: options.offchain.sentioEndpoint } : {}),
         ...(options.offchain?.sentioApiKey ? { apiKey: options.offchain.sentioApiKey } : {}),
         ...(options.offchain?.cacheTimeoutMs !== undefined
@@ -41,19 +43,19 @@ export class CanopySdk<Chain extends SdkChainName = SdkChainName> {
       }),
     };
 
-    if (context.deployment.features.canopy) {
-      this.canopy = new CanopyProtocolClientImpl(context as unknown as CanopyContext);
+    if (baseContext.deployment.features.canopy) {
+      this.canopy = new CanopyProtocolClientImpl(requireCanopyFeatureContext(baseContext));
     }
 
-    if (context.deployment.features.rewards) {
+    if (baseContext.deployment.features.rewards) {
       this.rewards = new RewardsClient(
-        context as unknown as CanopyContext,
+        requireRewardsFeatureContext(baseContext),
         this.data.rewardsDiscovery
       );
     }
 
-    if (context.deployment.features.almMeridian) {
-      this.alm.meridian = new MeridianClient(context as unknown as MeridianContext);
+    if (baseContext.deployment.features.almMeridian) {
+      this.alm.meridian = new MeridianClient(requireMeridianFeatureContext(baseContext));
     }
   }
 }

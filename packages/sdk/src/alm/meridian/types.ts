@@ -33,8 +33,8 @@ export interface MeridianDepositPayloadInput {
 }
 
 export interface MeridianWithdrawPayloadInput {
-  maxLossBps: bigint;
-  minAmountOut: bigint;
+  minAsset0: bigint;
+  minAsset1: bigint;
   shares: bigint;
   vaultAddress: string;
 }

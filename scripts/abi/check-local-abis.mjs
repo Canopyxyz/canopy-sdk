@@ -16,7 +16,7 @@ for (const chain of chains) {
 
   const deployment = await readJson(`packages/deployments/addresses/${chain}.json`);
   for (const entry of entries) {
-    const abi = await readJson(`packages/bindings/abis/${chain}/${entry.file}`);
+    const abi = await readAbi(`packages/bindings/abis/${chain}/${entry.file}`);
     const expectedAddress = readPath(deployment, entry.addressPath);
 
     if (normalizeMoveAddress(abi.address) !== normalizeMoveAddress(expectedAddress)) {
@@ -59,6 +59,22 @@ function getArgValue(name) {
 
 async function readJson(relativePath) {
   return JSON.parse(await readFile(new URL(relativePath, repoRoot()), "utf8"));
+}
+
+async function readAbi(relativePath) {
+  const contents = await readFile(new URL(relativePath, repoRoot()), "utf8");
+
+  if (relativePath.endsWith(".ts")) {
+    const match = contents.match(/^export const ABI = ([\s\S]+) as const;\s*$/);
+
+    if (!match) {
+      throw new Error(`Unsupported ABI module format: ${relativePath}`);
+    }
+
+    return JSON.parse(match[1]);
+  }
+
+  throw new Error(`Unsupported ABI file extension: ${relativePath}`);
 }
 
 function readPath(value, pathParts) {

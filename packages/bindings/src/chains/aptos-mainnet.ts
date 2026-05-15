@@ -1,12 +1,12 @@
-import aptosMainnetFrameworkCoinAbi from "../../abis/aptos-mainnet/aptos_framework_coin.json";
-import aptosMainnetFrameworkMultisigAccountAbi from "../../abis/aptos-mainnet/aptos_framework_multisig_account.json";
-import aptosMainnetFrameworkObjectAbi from "../../abis/aptos-mainnet/aptos_framework_object.json";
-import aptosMainnetFrameworkPrimaryFungibleStoreAbi from "../../abis/aptos-mainnet/aptos_framework_primary_fungible_store.json";
-import aptosMainnetMeridianRegistryAbi from "../../abis/aptos-mainnet/meridian_registry.json";
-import aptosMainnetMeridianRegularV4Abi from "../../abis/aptos-mainnet/meridian_regular_v4.json";
-import aptosMainnetMeridianRegularV4EntryAbi from "../../abis/aptos-mainnet/meridian_regular_v4_entry.json";
-import aptosMainnetMeridianRouterAbi from "../../abis/aptos-mainnet/meridian_router.json";
-import aptosMainnetMeridianVaultAbi from "../../abis/aptos-mainnet/meridian_vault.json";
+import { ABI as aptosMainnetFrameworkCoinAbi } from "../../abis/aptos-mainnet/aptos_framework_coin";
+import { ABI as aptosMainnetFrameworkMultisigAccountAbi } from "../../abis/aptos-mainnet/aptos_framework_multisig_account";
+import { ABI as aptosMainnetFrameworkObjectAbi } from "../../abis/aptos-mainnet/aptos_framework_object";
+import { ABI as aptosMainnetFrameworkPrimaryFungibleStoreAbi } from "../../abis/aptos-mainnet/aptos_framework_primary_fungible_store";
+import { ABI as aptosMainnetMeridianRegistryAbi } from "../../abis/aptos-mainnet/meridian_registry";
+import { ABI as aptosMainnetMeridianRegularV4Abi } from "../../abis/aptos-mainnet/meridian_regular_v4";
+import { ABI as aptosMainnetMeridianRegularV4EntryAbi } from "../../abis/aptos-mainnet/meridian_regular_v4_entry";
+import { ABI as aptosMainnetMeridianRouterAbi } from "../../abis/aptos-mainnet/meridian_router";
+import { ABI as aptosMainnetMeridianVaultAbi } from "../../abis/aptos-mainnet/meridian_vault";
 import { defineChainAbis } from "./define-chain-abis";
 
 export const aptosMainnetAbis = defineChainAbis("aptos-mainnet", {

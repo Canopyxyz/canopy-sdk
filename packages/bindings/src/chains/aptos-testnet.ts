@@ -1,23 +1,23 @@
-import aptosTestnetFrameworkCoinAbi from "../../abis/aptos-testnet/aptos_framework_coin.json";
-import aptosTestnetFrameworkMultisigAccountAbi from "../../abis/aptos-testnet/aptos_framework_multisig_account.json";
-import aptosTestnetFrameworkObjectAbi from "../../abis/aptos-testnet/aptos_framework_object.json";
-import aptosTestnetFrameworkPrimaryFungibleStoreAbi from "../../abis/aptos-testnet/aptos_framework_primary_fungible_store.json";
-import { ABI as canopyBaseStrategyAbiSource } from "../canopy-common/base_strategy";
-import { ABI as canopyProtocolAbiSource } from "../canopy-common/protocol";
-import { ABI as canopySatayAbiSource } from "../canopy-common/satay";
-import aptosTestnetCanopyRouterAbi from "../../abis/aptos-testnet/canopy_router.json";
-import aptosTestnetCanopyRouterDepositAbi from "../../abis/aptos-testnet/canopy_router_deposit.json";
-import aptosTestnetCanopyRouterWithdrawAbi from "../../abis/aptos-testnet/canopy_router_withdraw.json";
-import aptosTestnetCanopyStrategyEchelonSimpleAbi from "../../abis/aptos-testnet/canopy_strategy_echelon_simple.json";
-import aptosTestnetCanopyStrategyLayerbankSimpleAbi from "../../abis/aptos-testnet/canopy_strategy_layerbank_simple.json";
-import aptosTestnetCanopyStrategyMovepositionSimpleAbi from "../../abis/aptos-testnet/canopy_strategy_moveposition_simple.json";
-import aptosTestnetCanopyStrategyMovepositionTicketAbi from "../../abis/aptos-testnet/canopy_strategy_moveposition_ticket.json";
-import aptosTestnetCanopyVaultAbi from "../../abis/aptos-testnet/canopy_vault.json";
-import aptosTestnetMultiRewardsAbi from "../../abis/aptos-testnet/multi_rewards.json";
-import aptosTestnetMultiRewardsBatcherEntryAbi from "../../abis/aptos-testnet/multi_rewards_batcher_entry.json";
-import aptosTestnetMultiRewardsBatcherViewAbi from "../../abis/aptos-testnet/multi_rewards_batcher_view.json";
-import aptosTestnetMultiRewardsRouterAbi from "../../abis/aptos-testnet/multi_rewards_router.json";
-import { defineChainAbis, retargetMoveModuleAbi } from "./define-chain-abis";
+import { ABI as aptosTestnetFrameworkCoinAbi } from "../../abis/aptos-testnet/aptos_framework_coin";
+import { ABI as aptosTestnetFrameworkMultisigAccountAbi } from "../../abis/aptos-testnet/aptos_framework_multisig_account";
+import { ABI as aptosTestnetFrameworkObjectAbi } from "../../abis/aptos-testnet/aptos_framework_object";
+import { ABI as aptosTestnetFrameworkPrimaryFungibleStoreAbi } from "../../abis/aptos-testnet/aptos_framework_primary_fungible_store";
+import { ABI as aptosTestnetCanopyBaseStrategyAbi } from "../../abis/aptos-testnet/canopy_base_strategy";
+import { ABI as aptosTestnetCanopyProtocolAbi } from "../../abis/aptos-testnet/canopy_protocol";
+import { ABI as aptosTestnetCanopyRouterAbi } from "../../abis/aptos-testnet/canopy_router";
+import { ABI as aptosTestnetCanopyRouterDepositAbi } from "../../abis/aptos-testnet/canopy_router_deposit";
+import { ABI as aptosTestnetCanopyRouterWithdrawAbi } from "../../abis/aptos-testnet/canopy_router_withdraw";
+import { ABI as aptosTestnetCanopySatayAbi } from "../../abis/aptos-testnet/canopy_satay";
+import { ABI as aptosTestnetCanopyStrategyEchelonSimpleAbi } from "../../abis/aptos-testnet/canopy_strategy_echelon_simple";
+import { ABI as aptosTestnetCanopyStrategyLayerbankSimpleAbi } from "../../abis/aptos-testnet/canopy_strategy_layerbank_simple";
+import { ABI as aptosTestnetCanopyStrategyMovepositionSimpleAbi } from "../../abis/aptos-testnet/canopy_strategy_moveposition_simple";
+import { ABI as aptosTestnetCanopyStrategyMovepositionTicketAbi } from "../../abis/aptos-testnet/canopy_strategy_moveposition_ticket";
+import { ABI as aptosTestnetCanopyVaultAbi } from "../../abis/aptos-testnet/canopy_vault";
+import { ABI as aptosTestnetMultiRewardsAbi } from "../../abis/aptos-testnet/multi_rewards";
+import { ABI as aptosTestnetMultiRewardsBatcherEntryAbi } from "../../abis/aptos-testnet/multi_rewards_batcher_entry";
+import { ABI as aptosTestnetMultiRewardsBatcherViewAbi } from "../../abis/aptos-testnet/multi_rewards_batcher_view";
+import { ABI as aptosTestnetMultiRewardsRouterAbi } from "../../abis/aptos-testnet/multi_rewards_router";
+import { defineChainAbis } from "./define-chain-abis";
 
 export const aptosTestnetAbis = defineChainAbis("aptos-testnet", {
   aptosFrameworkObject: aptosTestnetFrameworkObjectAbi,
@@ -28,18 +28,9 @@ export const aptosTestnetAbis = defineChainAbis("aptos-testnet", {
   canopyRouter: aptosTestnetCanopyRouterAbi,
   canopyRouterDeposit: aptosTestnetCanopyRouterDepositAbi,
   canopyRouterWithdraw: aptosTestnetCanopyRouterWithdrawAbi,
-  canopySatay: retargetMoveModuleAbi(
-    canopySatayAbiSource,
-    aptosTestnetCanopyVaultAbi.address
-  ),
-  canopyProtocol: retargetMoveModuleAbi(
-    canopyProtocolAbiSource,
-    aptosTestnetCanopyVaultAbi.address
-  ),
-  canopyBaseStrategy: retargetMoveModuleAbi(
-    canopyBaseStrategyAbiSource,
-    aptosTestnetCanopyVaultAbi.address
-  ),
+  canopySatay: aptosTestnetCanopySatayAbi,
+  canopyProtocol: aptosTestnetCanopyProtocolAbi,
+  canopyBaseStrategy: aptosTestnetCanopyBaseStrategyAbi,
   multiRewards: aptosTestnetMultiRewardsAbi,
   multiRewardsRouter: aptosTestnetMultiRewardsRouterAbi,
   multiRewardsBatcherView: aptosTestnetMultiRewardsBatcherViewAbi,
