@@ -1,7 +1,7 @@
 import type {
   InputEntryFunctionData,
   InputViewFunctionData,
-} from "@moveindustries/ts-sdk";
+} from "@aptos-labs/ts-sdk";
 import { normalizeMoveAddress } from "./address";
 import { formatMoveUint, type MoveUintBits, type MoveUintInput } from "./amounts";
 

@@ -1,4 +1,4 @@
-import type { InputViewFunctionData } from "@moveindustries/ts-sdk";
+import type { InputViewFunctionData } from "@aptos-labs/ts-sdk";
 import { CanopyError, CanopyErrorCode } from "./errors";
 import { viewFunctionPayload, type ViewFunctionPayloadInput } from "./payloads";
 

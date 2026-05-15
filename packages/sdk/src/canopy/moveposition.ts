@@ -1,4 +1,3 @@
-import { Hex } from "@moveindustries/ts-sdk";
 import {
   CanopyError,
   CanopyErrorCode,
@@ -208,7 +207,7 @@ async function createMovePositionPacket(input: {
     body: JSON.stringify(requestBody),
   });
 
-  return Hex.fromHexString(packet.packet).toUint8Array();
+  return parseHexToUint8Array(packet.packet);
 }
 
 async function fetchJson<Result>(
@@ -236,4 +235,24 @@ async function fetchJson<Result>(
   }
 
   return (await response.json()) as Result;
+}
+
+function parseHexToUint8Array(value: string): Uint8Array {
+  const hex = value.startsWith("0x") ? value.slice(2) : value;
+
+  if (hex.length === 0 || hex.length % 2 !== 0 || !/^[\da-fA-F]+$/.test(hex)) {
+    throw new CanopyError(
+      "MovePosition packet is not valid hex",
+      CanopyErrorCode.NetworkError,
+      { packet: value }
+    );
+  }
+
+  const bytes = new Uint8Array(hex.length / 2);
+
+  for (let index = 0; index < hex.length; index += 2) {
+    bytes[index / 2] = Number.parseInt(hex.slice(index, index + 2), 16);
+  }
+
+  return bytes;
 }

@@ -1,4 +1,4 @@
-import type { Movement } from "@moveindustries/ts-sdk";
+import type { Aptos } from "@aptos-labs/ts-sdk";
 import { RewardsDiscoveryClient } from "./data";
 import type { CanopyProtocolClient } from "./canopy";
 import { CanopyProtocolClient as CanopyProtocolClientImpl } from "./canopy";
@@ -21,7 +21,7 @@ export class CanopySdk<Chain extends SdkChainName = SdkChainName> {
   };
   readonly rewards?: RewardsClient;
 
-  constructor(client: Movement, options: CanopySdkOptions<Chain>) {
+  constructor(client: Aptos, options: CanopySdkOptions<Chain>) {
     const context = createSdkContext(
       client,
       options.chain,
@@ -59,7 +59,7 @@ export class CanopySdk<Chain extends SdkChainName = SdkChainName> {
 }
 
 export function createCanopySdk<Chain extends SdkChainName>(
-  client: Movement,
+  client: Aptos,
   options: CanopySdkOptions<Chain>
 ): CanopySdk<Chain> {
   return new CanopySdk(client, options);

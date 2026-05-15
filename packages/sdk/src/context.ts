@@ -1,4 +1,4 @@
-import type { Movement } from "@moveindustries/ts-sdk";
+import type { Aptos } from "@aptos-labs/ts-sdk";
 import { getAbisForChain } from "@canopyhub/canopy-sdk/bindings";
 import { getDeployment, type ChainName } from "@canopyhub/canopy-sdk/deployments";
 import {
@@ -10,7 +10,7 @@ import type { SdkContext } from "./types";
 import type { MovePositionConfig } from "./canopy/moveposition";
 
 export function createSdkContext<Chain extends ChainName>(
-  client: Movement,
+  client: Aptos,
   chain: Chain,
   options?: { moveposition?: Partial<MovePositionConfig> }
 ): SdkContext<Chain> {
