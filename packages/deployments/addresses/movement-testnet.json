@@ -1,10 +1,5 @@
 {
   "chain": "movement-testnet",
   "chainId": 250,
-  "fullnode": "https://testnet.movementnetwork.xyz/v1",
-  "features": {
-    "canopy": false,
-    "rewards": false,
-    "almMeridian": false
-  }
+  "fullnode": "https://testnet.movementnetwork.xyz/v1"
 }

@@ -168,10 +168,6 @@ function requireAddressMapEntries(
 function withDeploymentDefaults(input: ChainDeploymentInput): ChainDeployment {
   const inferredFeatures = inferDeploymentFeatures(input);
 
-  if (input.features) {
-    validateFeatureOverrides(input.features, inferredFeatures, input.chain);
-  }
-
   return {
     ...input,
     fullnode: input.fullnode ?? FULLNODE_DEFAULTS[input.chain],
@@ -203,22 +199,4 @@ function inferDeploymentFeatures(
     rewards: input.rewards !== undefined,
     almMeridian: input.alm?.meridian !== undefined,
   };
-}
-
-function validateFeatureOverrides(
-  input: Partial<DeploymentFeatures>,
-  inferred: DeploymentFeatures,
-  chain: ChainName
-): void {
-  for (const key of Object.keys(inferred) as Array<keyof DeploymentFeatures>) {
-    const configured = input[key];
-    if (configured !== undefined && configured !== inferred[key]) {
-      throw new DeploymentError(`${chain}: features.${key} does not match deployed modules`, {
-        chain,
-        feature: key,
-        configured,
-        inferred: inferred[key],
-      });
-    }
-  }
 }

@@ -21,10 +21,5 @@
     "module": "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3",
     "router": "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3",
     "batcher": "0x266c450e37b89350e8f22c7d994fe5fbc489801221679d39a915d42e2f239e55"
-  },
-  "features": {
-    "canopy": true,
-    "rewards": true,
-    "almMeridian": false
   }
 }

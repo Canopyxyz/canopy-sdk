@@ -84,5 +84,4 @@ export interface ChainDeployment {
 
 export type ChainDeploymentInput = Omit<ChainDeployment, "fullnode" | "features"> & {
   fullnode?: string;
-  features?: Partial<DeploymentFeatures>;
 };

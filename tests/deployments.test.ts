@@ -1,5 +1,6 @@
 import { CanopyErrorCode, isCanopyError } from "../packages/core/src";
 import {
+  DeploymentError,
   getContractAddress,
   getDeployment,
   listDeployments,
@@ -147,31 +148,6 @@ describe("deployment registry", () => {
     });
   });
 
-  it("rejects feature flags that disagree with deployed modules", () => {
-    const deployment = structuredClone(getDeployment("aptos-testnet"));
-    deployment.features.canopy = false;
-
-    expect(() => validateDeployment(deployment)).toThrow(
-      "aptos-testnet: features.canopy does not match deployed modules"
-    );
-    try {
-      validateDeployment(deployment);
-      throw new Error("expected validateDeployment to fail");
-    } catch (error) {
-      expect(isCanopyError(error)).toBe(true);
-      expect(error).toMatchObject({
-        name: "DeploymentError",
-        code: CanopyErrorCode.InvalidDeployment,
-        details: expect.objectContaining({
-          chain: "aptos-testnet",
-          feature: "canopy",
-          configured: false,
-          inferred: true,
-        }),
-      });
-    }
-  });
-
   it("distinguishes nullable and required contract address lookup", () => {
     expect(getContractAddress("movement-testnet", "canopy.router")).toBeUndefined();
     expect(getContractAddress("movement-mainnet", "canopy.protocol")).toBe(
@@ -192,5 +168,20 @@ describe("deployment registry", () => {
     expect(() => getDeployment("aptos-devnet" as never)).toThrow(
       'Unknown chain "aptos-devnet". Supported deployment chains: movement-mainnet, movement-testnet, aptos-mainnet, aptos-testnet'
     );
+  });
+
+  it("stores deployment error causes using the standard error property", () => {
+    const originalError = new Error("broken fixture");
+    const error = new DeploymentError("invalid deployment", undefined, {
+      cause: originalError,
+    });
+
+    expect(error.cause).toBe(originalError);
+    expect(Object.prototype.propertyIsEnumerable.call(error, "cause")).toBe(false);
+    expect(error.toJSON()).toEqual({
+      name: "DeploymentError",
+      message: "invalid deployment",
+      code: "INVALID_DEPLOYMENT",
+    });
   });
 });

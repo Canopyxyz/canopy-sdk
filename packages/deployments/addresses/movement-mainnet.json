@@ -43,10 +43,5 @@
   },
   "sharedPackages": {
     "largePackages": "0x1f33887fba324884468f326ab741e937fb2b9563faa467dca15e4eb198817531"
-  },
-  "features": {
-    "canopy": true,
-    "rewards": true,
-    "almMeridian": true
   }
 }

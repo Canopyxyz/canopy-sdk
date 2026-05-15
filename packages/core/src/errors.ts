@@ -1,3 +1,5 @@
+import { defineErrorCause } from "../../shared/error-cause";
+
 export enum CanopyErrorCode {
   InvalidAddress = "INVALID_ADDRESS",
   InvalidAmount = "INVALID_AMOUNT",
@@ -96,7 +98,7 @@ export class CanopyError extends Error {
     this.name = "CanopyError";
     this.code = code;
     this.details = details;
-    this.cause = options?.cause;
+    defineErrorCause(this, options?.cause);
   }
 
   toJSON(): {

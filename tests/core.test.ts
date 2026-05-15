@@ -140,6 +140,24 @@ describe("core helpers", () => {
     });
   });
 
+  it("stores cause using the standard non-enumerable error property", () => {
+    const originalError = new Error("bad input");
+    const error = new CanopyError(
+      "wrapped",
+      CanopyErrorCode.InvalidInput,
+      undefined,
+      { cause: originalError }
+    );
+
+    expect(error.cause).toBe(originalError);
+    expect(Object.prototype.propertyIsEnumerable.call(error, "cause")).toBe(false);
+    expect(error.toJSON()).toEqual({
+      name: "CanopyError",
+      message: "wrapped",
+      code: CanopyErrorCode.InvalidInput,
+    });
+  });
+
   it("surfaces structured move abort details from view failures", async () => {
     const input = {
       moduleAddress: "0x1",

@@ -1,3 +1,5 @@
+import { defineErrorCause } from "../../shared/error-cause";
+
 export const INVALID_DEPLOYMENT = "INVALID_DEPLOYMENT";
 
 export type DeploymentErrorDetails = Record<string, unknown>;
@@ -19,7 +21,7 @@ export class DeploymentError extends Error {
     super(message);
     this.name = "DeploymentError";
     this.details = details;
-    this.cause = options?.cause;
+    defineErrorCause(this, options?.cause);
   }
 
   toJSON(): {

@@ -11,10 +11,5 @@
         "regularV4": "0xad879f655500986d56972c95817575b5ddc1a65c5181be15cbf1f5f6ad685d04"
       }
     }
-  },
-  "features": {
-    "canopy": false,
-    "rewards": false,
-    "almMeridian": true
   }
 }
