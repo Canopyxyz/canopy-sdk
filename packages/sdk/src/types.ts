@@ -1,4 +1,12 @@
-import type { Aptos, InputEntryFunctionData } from "@aptos-labs/ts-sdk";
+import type {
+  AccountAddressInput,
+  Aptos,
+  InputEntryFunctionData,
+  InputGenerateTransactionOptions,
+  InputSimulateTransactionOptions,
+  PublicKey,
+  UserTransactionResponse,
+} from "@aptos-labs/ts-sdk";
 import type { AbisForChain } from "@canopyhub/canopy-sdk-bindings";
 import type { ChainDeployment, ChainName } from "@canopyhub/canopy-sdk-deployments";
 import type { MovePositionConfig } from "./canopy/moveposition";
@@ -27,3 +35,13 @@ export interface SdkContext<Chain extends SdkChainName = SdkChainName> {
 }
 
 export type TransactionPayload = InputEntryFunctionData;
+
+export interface SimulateTransactionInput {
+  payload: TransactionPayload;
+  sender: AccountAddressInput;
+  signerPublicKey?: PublicKey;
+  transactionOptions?: InputGenerateTransactionOptions;
+  simulationOptions?: InputSimulateTransactionOptions;
+}
+
+export type TransactionSimulationResult = UserTransactionResponse;

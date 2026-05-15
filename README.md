@@ -246,9 +246,15 @@ await client.transaction.build.simple({
   sender: account.accountAddress,
   data: payload,
 });
+
+await sdk.simulateTransaction({
+  sender: account.accountAddress,
+  payload,
+});
 ```
 
 If you are using a wallet adapter, pass the same payload object into your wallet’s sign-and-submit flow.
+If simulation hits a known Move abort, the SDK throws a `CanopyError` with `code: "MOVE_ABORT"` and structured `details.moveAbort` metadata for UI handling.
 
 ## Offchain Helpers
 
