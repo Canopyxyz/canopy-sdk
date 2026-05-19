@@ -1,316 +1,386 @@
 # Canopy SDK
 
-TypeScript SDK for integrating Canopy Protocol vaults into your dApp.
+TypeScript SDK for Canopy Protocol on Movement and Aptos.
 
-## Features
+It includes:
 
-- 🏦 **Vault Operations** - Deposit and withdraw from Canopy vaults
-- 💰 **Staking & Rewards** - Stake LP tokens and claim rewards
-- 🔍 **View Functions** - Query vault data and user positions
-- 🎯 **Simple API** - Auto-detects token types, handles complexity internally
-- ⚡ **Movement Network** - Optimized for Movement mainnet
+- Canopy vault reads and transaction builders
+- rewards staking / claim helpers
+- Meridian ALM vault support
+- deployment + ABI registries
+- contract lookup helpers
+- Movement helper-module-backed batch reads
 
-## Installation
+## Packages
+
+The repo publishes four packages:
+
+- `@canopyhub/canopy-sdk`
+- `@canopyhub/canopy-sdk-core`
+- `@canopyhub/canopy-sdk-deployments`
+- `@canopyhub/canopy-sdk-bindings`
+
+Most applications should install only the root SDK:
 
 ```bash
-npm install @canopyhub/canopy-sdk
-# or
-yarn add @canopyhub/canopy-sdk
-# or
-bun add @canopyhub/canopy-sdk
+pnpm add @canopyhub/canopy-sdk
 ```
 
 ## Quick Start
 
-```typescript
+```ts
 import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
-import { CanopyClient } from "@canopyhub/canopy-sdk";
+import { createCanopySdk } from "@canopyhub/canopy-sdk";
 
-// Initialize Aptos client for Movement Network
-const aptos = new Aptos(
+const client = new Aptos(
   new AptosConfig({
-    network: Network.CUSTOM,
-    fullnode: "https://mainnet.movementnetwork.xyz/v1",
+    network: Network.MAINNET
   })
 );
 
-// Create Canopy client
-const canopyClient = new CanopyClient(aptos, {
-  network: "movement-mainnet", // optional, defaults to movement-mainnet
-  sentioApiKey: "your-sentio-api-key", // optional, for staking pool data
-});
-
-// Fetch available vaults
-const vaults = await canopyClient.getVaults();
-
-// Deposit into a vault
-const depositPayload = await canopyClient.deposit(
-  "0x123...", // vault address
-  1000000000n // amount with decimals
-);
-
-// Submit transaction (using wallet adapter)
-await signAndSubmitTransaction({ data: depositPayload });
-```
-
-## Core Functions
-
-### Vault Operations
-
-```typescript
-// Deposit funds into a vault
-const payload = await canopyClient.deposit(vaultAddress, amount);
-
-// Withdraw from a vault
-const payload = await canopyClient.withdraw(vaultAddress, shares);
-
-// Get all vaults
-const vaults = await canopyClient.getVaults();
-
-// Get specific vault details
-const vault = await canopyClient.getVault(vaultAddress);
-```
-
-### Staking Operations
-
-```typescript
-// Stake vault shares into reward pools
-// stakingToken should be the vault's shares token (vault.sharesAsset)
-// userAddress is optional for subscription checking
-// poolAddresses is optional - provide specific pool addresses to skip auto-discovery
-const payload = await canopyClient.stake(
-  stakingToken,
-  amount,
-  userAddress,
-  poolAddresses
-);
-
-// Unstake tokens (auto-detects coin vs FA based on format)
-// Fungible Asset: "0x123..."
-// Coin Type: "0x1::aptos_coin::AptosCoin"
-const payload = await canopyClient.unstake(tokenAddress, amount);
-
-// Claim all pending rewards for multiple staking tokens
-const payload = await canopyClient.claimRewards([stakingToken1, stakingToken2]);
-```
-
-### View Functions
-
-```typescript
-// Get user's complete staking position
-const position = await canopyClient.getUserStakingPosition(
-  userAddress,
-  stakingToken
-);
-// Returns: { totalStaked, subscribedPools, pendingRewards }
-
-// Get user's staked balance only
-const balance = await canopyClient.getUserStakedBalance(
-  userAddress,
-  stakingToken
-);
-
-// Get earned rewards for a specific pool
-const earned = await canopyClient.getUserEarned(userAddress, pool, rewardToken);
-```
-
-## React Example
-
-See the [examples/react](./examples/react) directory for a complete working application showing:
-
-- Wallet connection with Aptos Wallet Adapter
-- Depositing and withdrawing from vaults
-- Vault selection and shares staking workflow
-- Staking vault shares, unstaking, and claiming rewards
-- Displaying vault shares balance, staked balance, and earned rewards
-
-To run the example:
-
-```bash
-cd examples/react
-npm install
-npm run dev
-```
-
-## Decimal Handling
-
-All amounts in the SDK use `bigint` with full decimal precision. You need to scale your values:
-
-```typescript
-// Helper functions for decimal conversion
-function scaleToDecimals(amount: string, decimals: number): bigint {
-  const [whole, fraction = ""] = amount.split(".");
-  const paddedFraction = fraction.padEnd(decimals, "0").slice(0, decimals);
-  return BigInt(whole + paddedFraction);
-}
-
-function scaleFromDecimals(amount: bigint, decimals: number): string {
-  const str = amount.toString().padStart(decimals + 1, "0");
-  const whole = str.slice(0, -decimals) || "0";
-  const fraction = str.slice(-decimals).replace(/0+$/, "");
-  return fraction ? `${whole}.${fraction}` : whole;
-}
-
-// Example: Deposit 10.5 tokens (with 8 decimals)
-const amount = scaleToDecimals("10.5", 8); // 1050000000n
-const payload = await canopyClient.deposit(vaultAddress, amount);
-```
-
-## Staking Pool Resolution
-
-The SDK uses a multi-layer approach to find staking pools for your tokens, ensuring reliability even without API access:
-
-### Layer 1: Direct Pool Addresses
-
-```typescript
-// Provide specific pool addresses directly
-const poolAddresses = ["0xpool1...", "0xpool2..."];
-const payload = await canopyClient.stake(
-  stakingToken,
-  amount,
-  userAddress,
-  poolAddresses
-);
-```
-
-### Layer 2: Static Mapping Fallback
-
-Built-in mappings for common staking tokens. The SDK automatically checks these when no pool addresses are provided.
-
-### Layer 3: GraphQL API (Requires API Key)
-
-```typescript
-const canopyClient = new CanopyClient(aptos, {
-  sentioApiKey: "your-sentio-api-key", // For dynamic pool discovery
+const sdk = createCanopySdk(client, {
+  chain: "movement-mainnet",
+  offchain: {
+    sentioApiKey: process.env.SENTIO_API_KEY, // optional, enables dynamic rewards pool discovery
+  },
 });
 ```
 
-### Layer 4: Error Messages
+`CanopySdk` only exposes protocol clients that exist on the selected chain:
 
-If all layers fail, you'll get a error explaining your options:
+- `sdk.canopy`
+- `sdk.rewards`
+- `sdk.alm.meridian`
 
-```
-"No staking pools found for token. Options: 1) Provide poolAddresses parameter, 2) Ensure staking token is in static mapping, 3) Provide sentioApiKey for dynamic lookup"
-```
+## Chain Support
 
-**For Production Use:** We recommend using Layer 1 (direct pool addresses) for the most reliable and fastest staking operations.
+| Chain | Canopy | Rewards | Meridian ALM |
+| --- | --- | --- | --- |
+| `movement-mainnet` | yes | yes | yes |
+| `movement-testnet` | no | no | no |
+| `aptos-testnet` | yes | yes | no |
+| `aptos-mainnet` | no | no | yes |
 
-## External Data Integration
+## What The SDK Exposes
 
-The SDK provides on-chain data. For complete dApp integration, combine with external APIs for:
+### Canopy vaults
 
-- **APY/APR** - Real-time yield calculations
-- **TVL in USD** - Vault total value locked in dollars
-- **Token Prices** - For displaying USD values
+```ts
+const { vaults } = await sdk.canopy!.listVaults({ limit: 20, offset: 0 });
 
-Calculate user's vault position value:
+const vault = await sdk.canopy!.getVault(vaultAddress);
 
-```typescript
-// Get on-chain data
-const vault = await canopyClient.getVault(vaultAddress);
-const userShares = await getUserVaultShares(userAddress, vaultAddress); // You need to implement this
+const position = await sdk.canopy!.getUserVaultPosition(userAddress, vaultAddress);
 
-// Get external data
-const tvlUSD = await fetchTVLFromAPI(vaultAddress);
+const depositPayload = await sdk.canopy!.buildDepositPayload({
+  vaultAddress,
+  amount: 1_000_000n,
+  minSharesOut: 0n,
+});
 
-// Calculate user's position value
-const userValueUSD = (userShares / vault.totalSupply) * tvlUSD;
-```
-
-## Transaction Submission
-
-The SDK returns transaction payloads. Submit them using your preferred method:
-
-### With Aptos Wallet Adapter (React)
-
-```typescript
-import { useWallet } from "@aptos-labs/wallet-adapter-react";
-
-const { signAndSubmitTransaction } = useWallet();
-
-const payload = await canopyClient.deposit(vaultAddress, amount);
-const response = await signAndSubmitTransaction({ data: payload });
+const withdrawPayload = await sdk.canopy!.buildWithdrawPayload({
+  vaultAddress,
+  shares: 1_000_000n,
+  maxLossBps: 50n,
+  minAmountOut: 0n,
+});
 ```
 
-### Direct with Aptos SDK
+Other Canopy methods:
 
-```typescript
-const payload = await canopyClient.deposit(vaultAddress, amount);
-const transaction = await aptos.transaction.build.simple({
-  sender: account.address,
+- `unstakeAndWithdraw(...)`
+- `getStrategyDetails(...)`
+- `getVaultAllocation(...)`
+
+### Canopy batch helpers
+
+These are currently backed by the Movement helper module and are available on `movement-mainnet`.
+
+```ts
+const balances = await sdk.canopy!.getBatchFungibleAssetBalances(
+  [metadataA, metadataB],
+  userAddress
+);
+
+const shareBalances = await sdk.canopy!.getBatchVaultSharesBalances(
+  [vaultA, vaultB],
+  userAddress
+);
+
+const baseMetadata = await sdk.canopy!.getBatchVaultBaseMetadataAndBalances(
+  [vaultA, vaultB],
+  userAddress
+);
+
+const sharesMetadata = await sdk.canopy!.getBatchVaultSharesMetadataAndBalances(
+  [vaultA, vaultB],
+  userAddress
+);
+
+const fullMetadata = await sdk.canopy!.getBatchVaultAllMetadataAndBalances(
+  [vaultA, vaultB],
+  userAddress
+);
+```
+
+### Rewards
+
+Transaction builders:
+
+- `buildStakeCoinPayload(...)`
+- `buildStakeAndSubscribeCoinPayload(...)`
+- `buildStakeAssetPayload(...)`
+- `buildStakeAndSubscribeAssetPayload(...)`
+- `buildWithdrawCoinPayload(...)`
+- `buildWithdrawAssetPayload(...)`
+- `buildClaimRewardsPayload(...)`
+- `buildSubscribePayload(...)`
+- `buildUnsubscribePayload(...)`
+- `buildUnsubscribeAndWithdrawCoinPayload(...)`
+- `buildUnsubscribeAndWithdrawAssetPayload(...)`
+- `buildCreateStakingPoolPayload(...)`
+- `buildStakeTokenPayload(...)`
+- `buildStakeVaultSharesPayload(...)`
+
+Core rewards reads:
+
+```ts
+const earned = await sdk.rewards!.getEarned({
+  userAddress,
+  poolAddress,
+  rewardTokenAddress,
+});
+
+const poolInfo = await sdk.rewards!.getPoolInfo(poolAddress);
+
+const rewardData = await sdk.rewards!.getRewardData(poolAddress, rewardTokenAddress);
+
+const stakingPosition = await sdk.rewards!.getUserStakingPosition({
+  userAddress,
+  stakingAsset,
+});
+```
+
+`rewardRate`, `rewardPerTokenStored`, and `rewardPerToken` are returned as raw fixed-point values scaled by `1e12`.
+Divide by `10^12` in application code when you want a human decimal representation.
+
+### Rewards helper-module reads
+
+These helper-backed reads are currently available on `movement-mainnet`.
+
+```ts
+const snapshot = await sdk.rewards!.getRewardsSnapshot({
+  offset: 0,
+  limit: 20,
+  userAddress,
+});
+
+const overview = await sdk.rewards!.getRegistryOverview({
+  offset: 0,
+  limit: 20,
+  includePools: true,
+});
+
+const userOverview = await sdk.rewards!.getUserRewardsOverview({
+  userAddress,
+  offset: 0,
+  limit: 20,
+  includePools: true,
+});
+```
+
+Additional helper reads:
+
+- `getRegisteredPoolCount()`
+- `getPoolDetails(poolAddress)`
+- `getRewardTokenDetails(poolAddress)`
+- `getUserPoolPositions({ userAddress, offset, limit })`
+- `getUserPoolPositionsByToken({ userAddress, stakingAsset, offset, limit })`
+- `getUserPoolPositionsByTokens({ userAddress, stakingAssets, offset, limit })`
+- `isPoolRegistered(poolAddress)`
+- `getUnsubscribedPools(...)`
+- `getUserStakedBalance(...)`
+- `getUserSubscribedPools(...)`
+- `isUserSubscribed(...)`
+
+### Meridian ALM
+
+Available on `movement-mainnet` and `aptos-mainnet`.
+
+```ts
+const vaultAddresses = await sdk.alm.meridian!.listVaults({ limit: 20, offset: 0 });
+
+const count = await sdk.alm.meridian!.getVaultCount();
+
+const summary = await sdk.alm.meridian!.getVaultSummary(vaultAddress);
+
+const position = await sdk.alm.meridian!.getUserVaultPosition(vaultAddress, userAddress);
+
+const preview = await sdk.alm.meridian!.previewWithdraw(vaultAddress, 1_000_000n);
+
+const depositPayload = sdk.alm.meridian!.buildDepositPayload({
+  vaultAddress,
+  amount: 1_000_000n,
+  minSharesOut: 0n,
+});
+```
+
+Movement batch-view-backed Meridian reads:
+
+- `getBatchVaultInfo(vaultAddresses)`
+- `getBatchUserVaultBalances(vaultAddresses, userAddress)`
+- `getBatchVaultPositions(vaultAddresses)`
+
+## Transactions
+
+All `build*Payload` methods return `InputEntryFunctionData` compatible with `@aptos-labs/ts-sdk`.
+
+```ts
+const payload = await sdk.canopy!.buildDepositPayload({
+  vaultAddress,
+  amount: 1_000_000n,
+  minSharesOut: 0n,
+});
+
+await client.transaction.build.simple({
+  sender: account.accountAddress,
   data: payload,
 });
-const response = await aptos.signAndSubmitTransaction({
-  signer: account,
-  transaction,
+
+await sdk.simulateTransaction({
+  sender: account.accountAddress,
+  payload,
 });
 ```
 
-## Error Handling
+If you are using a wallet adapter, pass the same payload object into your wallet’s sign-and-submit flow.
+If simulation hits a known Move abort, the SDK throws a `CanopyError` with `code: "MOVE_ABORT"` and structured `details.moveAbort` metadata for UI handling.
 
-The SDK throws `CanopyError` with specific error codes:
+## Offchain Helpers
 
-```typescript
-import { CanopyError, CanopyErrorCode } from "@canopyhub/canopy-sdk";
+The SDK exposes one optional data client under `sdk.data`:
 
-try {
-  await canopyClient.deposit(vaultAddress, amount);
-} catch (error) {
-  if (error instanceof CanopyError) {
-    switch (error.code) {
-      case CanopyErrorCode.VAULT_NOT_FOUND:
-        console.error("Vault doesn't exist");
-        break;
-      case CanopyErrorCode.AMOUNT_TOO_SMALL:
-        console.error("Amount must be greater than zero");
-        break;
-      case CanopyErrorCode.TRANSACTION_BUILD_FAILED:
-        console.error("Failed to build transaction");
-        break;
-      case CanopyErrorCode.NETWORK_ERROR:
-        console.error("Network or API error");
-        break;
-      case CanopyErrorCode.STAKING_POOLS_NOT_FOUND:
-        console.error(
-          "No staking pools found - check pool addresses or API key"
-        );
-        break;
-    }
-  } else {
-    // Handle GraphQL API errors, network timeouts, etc.
-    console.error("Unexpected error:", error.message);
-  }
-}
+- `sdk.data.rewardsDiscovery`
+
+This is useful for rewards pool discovery. It is only constructed on chains with rewards support, or when you explicitly pass `offchain.sentioEndpoint`.
+
+Rewards pool resolution for `buildStakeVaultSharesPayload(...)` uses:
+
+1. explicit `poolAddresses`
+2. Sentio lookup, if configured for the chain
+
+You can inspect the active discovery source with:
+
+```ts
+const status = sdk.data.rewardsDiscovery?.getStatus();
 ```
 
-## Requirements
+## Contract And ABI Lookup
 
-- Node.js 20+
-- TypeScript 4.5+
-- `@aptos-labs/ts-sdk` ^4.0.0
+```ts
+import {
+  getContract,
+  requireContract,
+  getCanopyStrategyContract,
+  inferCanopyStrategyProtocol,
+} from "@canopyhub/canopy-sdk";
+import { getDeployment, getContractAddress } from "@canopyhub/canopy-sdk/deployments";
+import { getAbi, requireAbi } from "@canopyhub/canopy-sdk/bindings";
+
+const deployment = getDeployment("movement-mainnet");
+const vaultAddress = getContractAddress("movement-mainnet", "canopy.vault");
+const rewardsAbi = requireAbi("movement-mainnet", "rewards.module");
+const meridianRegistry = requireContract("movement-mainnet", "meridian.registry");
+const maybeCanopy = getContract("movement-testnet", "canopy.router");
+
+const protocol = inferCanopyStrategyProtocol("movement-mainnet", strategyAddress);
+const strategy = protocol
+  ? getCanopyStrategyContract("movement-mainnet", protocol)
+  : null;
+```
+
+Lookup semantics:
+
+- `get*` returns `undefined` or `null` when a supported chain lacks that deployment
+- `require*` throws for missing deployments or ABIs
+- unsupported chain names throw explicit errors
+
+## Subpath Imports
+
+The root package also exports three subpaths:
+
+```ts
+import { normalizeMoveAddress } from "@canopyhub/canopy-sdk/core";
+import { getDeployment } from "@canopyhub/canopy-sdk/deployments";
+import { requireAbi } from "@canopyhub/canopy-sdk/bindings";
+```
+
+If you need the leaf packages directly:
+
+```ts
+import { normalizeMoveAddress } from "@canopyhub/canopy-sdk-core";
+import { getDeployment } from "@canopyhub/canopy-sdk-deployments";
+import { requireAbi } from "@canopyhub/canopy-sdk-bindings";
+```
+
+## Repo Layout
+
+```text
+canopy-sdk/
+├── packages/
+│   ├── core/
+│   ├── deployments/
+│   ├── bindings/
+│   └── sdk/
+```
+
+## Surf Follow-Ups
+
+Possible next improvements on top of the current Surf integration:
+
+- Add typed `simulate*` SDK helpers for common Canopy, Rewards, and Meridian transaction flows.
+- Use Surf `useABI(...).view` / `useABI(...).entry` selectively for the simplest internal module calls where it reduces SDK plumbing.
+- Consider exposing typed resource readers for useful account resources if a real consumer needs them.
+- Keep generated ABI files as the source of truth, but consider using Surf `fetchABI(...)` in internal diagnostics or ABI drift tooling.
+- Continue reducing custom view plumbing only where Surf return typing stays readable and does not make the SDK API worse.
+├── scripts/
+├── tests/
+└── examples/
+```
+
+Package roles:
+
+- `packages/core`
+  shared Move/address/view/payload/error utilities
+- `packages/deployments`
+  chain registry, feature flags, contract addresses
+- `packages/bindings`
+  checked-in ABI registry by chain
+- `packages/sdk`
+  user-facing protocol clients
 
 ## Development
 
 ```bash
-# Install dependencies
-yarn install
-
-# Build the SDK
-yarn build
-
-# Run in development mode
-yarn dev
-
-# Type check
-yarn typecheck
-
-# Lint
-yarn lint
+pnpm install
+pnpm run hooks:install
+pnpm run typecheck
+pnpm test
+pnpm run check:exports
+pnpm run check:imports
+pnpm run abi:check-local
+pnpm build
 ```
 
-## Support
+`pnpm run hooks:install` configures the repo-local `.githooks/pre-commit` hook, which runs `abi:check-local` when staged changes touch deployment addresses, generated ABI files, chain bindings, or the ABI manifest.
 
-- [GitHub Issues](https://github.com/Canopyxyz/canopy-sdk/issues)
+For the example app:
+
+```bash
+cd examples/react
+pnpm install
+pnpm dev
+```
 
 ## License
 

@@ -1,0 +1,25 @@
+{
+  "chain": "aptos-testnet",
+  "chainId": 2,
+  "fullnode": "https://api.testnet.aptoslabs.com/v1",
+  "canopy": {
+    "core": "0xe5ec58845afb1cb164d1c260f2a284b2f1311318973e13355b9e4dc2908eed5a",
+    "router": "0x6db956973bb73aff8b6c3712a7b4fff18bfefd850cce81c558d20a7ab1fc37d9",
+    "blocks": {
+      "echelon": "0xa5d6e6dde6622d8532a67ebfe45a36617660c0b9107772c9c9d4e5f27ce08078",
+      "moveposition": "0x26edc07d3e9b3f89af3ecc2a3488391286ab06ae65eefc1c598816328e11a47e",
+      "layerbank": "0x9d4b014c145e1c926a570a4e1293397ec3999913f70a3e97146bbd8f50bc063f",
+      "placeholder": "0xae643384070b7e5772e29628a99098a8f7dd86ebb747eea70c6e210a66c7ef37"
+    },
+    "strategies": {
+      "echelonSimple": "0x1b4ec80d5161b9669974b051a3e2db1503304c69073afdbfc1e8d2cfb947a55b",
+      "movepositionSimple": "0x0374b4443dbd6cd1ce289b47b7cc8cdc468571871161b6d672157fac41f5c6ab",
+      "layerbankSimple": "0xbc95c89d0117335acb2e05401a8ff5978549fde3f7b789e88de7c685275f5b3c"
+    }
+  },
+  "rewards": {
+    "module": "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3",
+    "router": "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3",
+    "batcher": "0x266c450e37b89350e8f22c7d994fe5fbc489801221679d39a915d42e2f239e55"
+  }
+}
