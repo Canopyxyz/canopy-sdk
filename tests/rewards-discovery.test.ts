@@ -127,7 +127,7 @@ describe("RewardsDiscoveryClient", () => {
     expect(movementSdk.data.rewardsDiscovery?.getStatus()).toMatchObject({
       chain: "movement-mainnet",
       endpoint:
-        "https://app.sentio.xyz/api/v1/graphql/solo-labs/canopy-multi-rewards-movement",
+        "https://api.sentio.xyz/v1/graphql/solo-labs/canopy-multi-rewards-movement",
       endpointConfigured: true,
       cacheEntries: 0,
       cacheMaxEntries: 7,

@@ -9,7 +9,7 @@ import type {
 
 const DEFAULT_SENTIO_ENDPOINTS: Partial<Record<ChainName, string>> = {
   "movement-mainnet":
-    "https://app.sentio.xyz/api/v1/graphql/solo-labs/canopy-multi-rewards-movement",
+    "https://api.sentio.xyz/v1/graphql/solo-labs/canopy-multi-rewards-movement",
 };
 const DEFAULT_CACHE_MAX_ENTRIES = 32;
 const DEFAULT_CACHE_TIMEOUT_MS = 60_000;
