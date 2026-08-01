@@ -48,6 +48,21 @@ jobs:
       - name: Check Package Imports
         run: pnpm run check:imports
 
+      # Builds every entry payload against live fullnodes and reads every view the
+      # clients use. The unit tests assert payload shape only and never build a
+      # transaction, which is how unsubmittable payloads shipped in v1.1.0.
+      - name: Check Live Payloads And Views
+        run: pnpm run check:payloads
+
+      # Surf pulled @initia/initia.js in from its main entry, which needs Node's
+      # Buffer and killed the SDK in any browser. Unit tests run in Node, so nothing
+      # caught it; this builds the example app and greps the output.
+      - name: Build Example App
+        run: pnpm --filter @canopy-sdk-example/sdk-react run build
+
+      - name: Check Browser Bundle
+        run: pnpm run check:bundle
+
       - name: Check Local ABI Files
         run: pnpm run abi:check-local
 

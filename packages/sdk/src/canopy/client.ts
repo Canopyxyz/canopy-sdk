@@ -1,9 +1,9 @@
-import { createEntryPayload } from "@thalalabs/surf";
 import {
   CanopyError,
   CanopyErrorCode,
   callSingleViewPayloadResult,
   callViewPayloadFunction,
+  entryFunctionPayload,
   moveUintArgument,
   normalizeMoveAddress,
   normalizeMoveTypeTag,
@@ -35,11 +35,7 @@ import type {
   UnstakeAndWithdrawInput,
   UnstakeAndWithdrawPlan,
 } from "./types";
-import {
-  createSurfViewFunctionPayload,
-  type SurfViewFunctionArguments,
-  type SurfViewFunctionName,
-} from "../internal/surf";
+import { callAbiView, callAbiViewFunction } from "../internal/abi-views";
 import { mapAddressBatch } from "../internal/address-batches";
 
 export interface ListCanopyVaultsInput {
@@ -53,6 +49,40 @@ type CanopyProtocolClientDeps = Pick<
   SdkContext<"movement-mainnet" | "aptos-testnet">,
   "abis" | "chain" | "client" | "deployment" | "moveposition"
 >;
+
+/** View functions this client reads, by module. */
+export type CanopyVaultViewFunction =
+  | "vault_view"
+  | "vaults_view"
+  | "shares_to_amount"
+  | "strategy_debt"
+  | "strategy_debt_limit"
+  | "strategy_last_report"
+  | "strategy_total_profit"
+  | "strategy_total_loss";
+
+export type CanopyHelpersViewFunction =
+  | "batch_get_fa_balance"
+  | "batch_get_vault_balance"
+  | "batch_get_vault_base_metadata_and_balance"
+  | "batch_get_vault_shares_metadata_and_balance"
+  | "batch_get_vault_all_metadata_and_balance";
+
+/**
+ * Entry functions on the Canopy router that this client can build.
+ *
+ * A literal union replaces the compile-time function-name checking Surf provided;
+ * `tests/` asserts each name is an `is_entry` function on the bound ABI with
+ * matching arity. The `_fa` / `_fa_with_coin_type` pairs are selected at runtime by
+ * `selectFaFunction` based on what the deployed router actually exposes.
+ */
+export type CanopyRouterFunction =
+  | "deposit_coin"
+  | "deposit_fa"
+  | "deposit_fa_with_coin_type"
+  | "withdraw_coin"
+  | "withdraw_fa"
+  | "withdraw_fa_with_coin_type";
 
 export class CanopyProtocolClient {
   static fromContext(
@@ -95,54 +125,29 @@ export class CanopyProtocolClient {
       input.amount
     );
 
+    const depositArguments = [
+      normalizeMoveAddress(input.vaultAddress),
+      packetArguments.packetStrategies,
+      packetArguments.packetData,
+      moveUintArgument(input.amount),
+      input.minSharesOut !== undefined ? moveUintArgument(input.minSharesOut) : undefined,
+    ];
+
     if (vault.pairedCoinType) {
-      return createEntryPayload(this.context.abis.canopyRouter, {
-        function: "deposit_coin",
-        typeArguments: [vault.pairedCoinType, vault.pairedCoinType],
-        functionArguments: [
-          normalizeMoveAddress(input.vaultAddress),
-          packetArguments.packetStrategies,
-          packetArguments.packetData,
-          moveUintArgument(input.amount),
-          input.minSharesOut !== undefined ? moveUintArgument(input.minSharesOut) : undefined,
-        ],
-      });
+      return this.buildRouterPayload("deposit_coin", depositArguments, [
+        vault.pairedCoinType,
+        vault.pairedCoinType,
+      ]);
     }
 
-    const faDepositFunction:
-      | { functionName: "deposit_fa"; typeArguments: string[] }
-      | { functionName: "deposit_fa_with_coin_type"; typeArguments: [string] } =
-      hasRouterFunction(this.context, "deposit_fa")
-      ? packetArguments.packetStrategies.length === 0
-        ? {
-              functionName: "deposit_fa",
-              typeArguments: [],
-            }
-        : hasRouterFunction(this.context, "deposit_fa_with_coin_type")
-          ? {
-              functionName: "deposit_fa_with_coin_type",
-              typeArguments: [input.wrapperCoinType ?? "0x1::aptos_coin::AptosCoin"],
-            }
-          : {
-              functionName: "deposit_fa",
-              typeArguments: [] as string[],
-            }
-      : {
-          functionName: "deposit_fa_with_coin_type",
-          typeArguments: [input.wrapperCoinType ?? "0x1::aptos_coin::AptosCoin"],
-        };
+    const fa = this.selectFaFunction(
+      "deposit_fa",
+      "deposit_fa_with_coin_type",
+      packetArguments.packetStrategies.length > 0,
+      input.wrapperCoinType
+    );
 
-    return createEntryPayload(this.context.abis.canopyRouter, {
-      function: faDepositFunction.functionName as never,
-      typeArguments: faDepositFunction.typeArguments as never,
-      functionArguments: [
-        normalizeMoveAddress(input.vaultAddress),
-        packetArguments.packetStrategies,
-        packetArguments.packetData,
-        moveUintArgument(input.amount),
-        input.minSharesOut !== undefined ? moveUintArgument(input.minSharesOut) : undefined,
-      ] as never,
-    });
+    return this.buildRouterPayload(fa.functionName, depositArguments, fa.typeArguments);
   }
 
   async buildWithdrawPayload(
@@ -163,55 +168,83 @@ export class CanopyProtocolClient {
       input.shares
     );
 
+    const withdrawArguments = [
+      normalizeMoveAddress(input.vaultAddress),
+      packetArguments.packetStrategies,
+      packetArguments.packetData,
+      moveUintArgument(input.shares),
+      input.maxLossBps !== undefined ? moveUintArgument(input.maxLossBps) : undefined,
+      input.minAmountOut !== undefined ? moveUintArgument(input.minAmountOut) : undefined,
+    ];
+
     if (vault.pairedCoinType) {
-      return createEntryPayload(this.context.abis.canopyRouter, {
-        function: "withdraw_coin",
-        typeArguments: [vault.pairedCoinType, vault.pairedCoinType],
-        functionArguments: [
-          normalizeMoveAddress(input.vaultAddress),
-          packetArguments.packetStrategies,
-          packetArguments.packetData,
-          moveUintArgument(input.shares),
-          input.maxLossBps !== undefined ? moveUintArgument(input.maxLossBps) : undefined,
-          input.minAmountOut !== undefined ? moveUintArgument(input.minAmountOut) : undefined,
-        ],
-      });
+      return this.buildRouterPayload("withdraw_coin", withdrawArguments, [
+        vault.pairedCoinType,
+        vault.pairedCoinType,
+      ]);
     }
 
-    const faWithdrawFunction:
-      | { functionName: "withdraw_fa"; typeArguments: string[] }
-      | { functionName: "withdraw_fa_with_coin_type"; typeArguments: [string] } =
-      hasRouterFunction(this.context, "withdraw_fa")
-      ? packetArguments.packetStrategies.length === 0
-        ? {
-            functionName: "withdraw_fa",
-            typeArguments: [],
-          }
-        : hasRouterFunction(this.context, "withdraw_fa_with_coin_type")
-          ? {
-              functionName: "withdraw_fa_with_coin_type",
-              typeArguments: [input.wrapperCoinType ?? "0x1::aptos_coin::AptosCoin"],
-            }
-          : {
-              functionName: "withdraw_fa",
-              typeArguments: [] as string[],
-            }
-      : {
-          functionName: "withdraw_fa_with_coin_type",
-          typeArguments: [input.wrapperCoinType ?? "0x1::aptos_coin::AptosCoin"],
-        };
+    const fa = this.selectFaFunction(
+      "withdraw_fa",
+      "withdraw_fa_with_coin_type",
+      packetArguments.packetStrategies.length > 0,
+      input.wrapperCoinType
+    );
 
-    return createEntryPayload(this.context.abis.canopyRouter, {
-      function: faWithdrawFunction.functionName as never,
-      typeArguments: faWithdrawFunction.typeArguments as never,
-      functionArguments: [
-        normalizeMoveAddress(input.vaultAddress),
-        packetArguments.packetStrategies,
-        packetArguments.packetData,
-        moveUintArgument(input.shares),
-        input.maxLossBps !== undefined ? moveUintArgument(input.maxLossBps) : undefined,
-        input.minAmountOut !== undefined ? moveUintArgument(input.minAmountOut) : undefined,
-      ] as never,
+    return this.buildRouterPayload(fa.functionName, withdrawArguments, fa.typeArguments);
+  }
+
+  /**
+   * Picks between the bare FA entry function and the `_with_coin_type` variant.
+   *
+   * Deposit and withdraw shared an identical 20-line nested ternary; the logic is
+   * preserved exactly — prefer the bare variant when the router exposes it and there
+   * are no strategy packets, otherwise fall back to the coin-typed variant when it
+   * exists.
+   */
+  private selectFaFunction(
+    bare: "deposit_fa" | "withdraw_fa",
+    withCoinType: "deposit_fa_with_coin_type" | "withdraw_fa_with_coin_type",
+    hasStrategyPackets: boolean,
+    wrapperCoinType: string | undefined
+  ): { functionName: CanopyRouterFunction; typeArguments: string[] } {
+    const coinTyped = {
+      functionName: withCoinType,
+      typeArguments: [wrapperCoinType ?? "0x1::aptos_coin::AptosCoin"],
+    };
+
+    if (!hasRouterFunction(this.context, bare)) {
+      return coinTyped;
+    }
+
+    if (!hasStrategyPackets) {
+      return { functionName: bare, typeArguments: [] };
+    }
+
+    return hasRouterFunction(this.context, withCoinType)
+      ? coinTyped
+      : { functionName: bare, typeArguments: [] };
+  }
+
+  /**
+   * Plain entry payload with no `abi` field, so `@aptos-labs/ts-sdk` fetches the
+   * entry-function ABI itself and strips the leading `&signer`. Surf's
+   * `createEntryPayload` kept the signer in `abi.parameters` while omitting it from
+   * `functionArguments`, so every argument was matched off by one.
+   */
+  private buildRouterPayload(
+    functionName: CanopyRouterFunction,
+    functionArguments: unknown[],
+    typeArguments: string[] = []
+  ): TransactionPayload {
+    const abi = this.context.abis.canopyRouter;
+
+    return entryFunctionPayload({
+      moduleAddress: abi.address,
+      moduleName: abi.name,
+      functionName,
+      typeArguments,
+      functionArguments: functionArguments as never,
     });
   }
 
@@ -265,16 +298,12 @@ export class CanopyProtocolClient {
     vaultAddress: string
   ): Promise<CanopyUserVaultPosition> {
     const vault = await this.getVault(vaultAddress);
-    const sharesBalance = await callSingleViewPayloadResult(
+    const sharesBalance = await callAbiView(
       this.context.client,
-      createSurfViewFunctionPayload(this.context.abis.aptosFrameworkPrimaryFungibleStore, {
-        functionName: "balance",
-        typeArguments: ["0x1::fungible_asset::Metadata"],
-        functionArguments: [
-          normalizeMoveAddress(userAddress),
-          normalizeMoveAddress(vault.sharesAddress),
-        ],
-      })
+      this.context.abis.aptosFrameworkPrimaryFungibleStore,
+      "balance",
+      [normalizeMoveAddress(userAddress), normalizeMoveAddress(vault.sharesAddress)],
+      ["0x1::fungible_asset::Metadata"]
     );
 
     const parsedSharesBalance = readMoveU64(sharesBalance);
@@ -510,50 +539,38 @@ export class CanopyProtocolClient {
   }
 
   private callCanopyVaultViewResult<Result = unknown>(
-    functionName: SurfViewFunctionName<typeof this.context.abis.canopyVault>,
-    functionArguments?: SurfViewFunctionArguments<
-      typeof this.context.abis.canopyVault,
-      typeof functionName
-    >
+    functionName: CanopyVaultViewFunction,
+    functionArguments?: unknown[]
   ): Promise<Result> {
-    return callSingleViewPayloadResult(
+    return callAbiView(
       this.context.client,
-      createSurfViewFunctionPayload(this.context.abis.canopyVault, {
-        functionName,
-        ...(functionArguments ? { functionArguments } : {}),
-      })
+      this.context.abis.canopyVault,
+      functionName,
+      functionArguments
     );
   }
 
   private callHelpersViewResult<Result = unknown>(
-    functionName: SurfViewFunctionName<ReturnType<CanopyProtocolClient["getHelpersAbi"]>>,
-    functionArguments?: SurfViewFunctionArguments<
-      ReturnType<CanopyProtocolClient["getHelpersAbi"]>,
-      typeof functionName
-    >
+    functionName: CanopyHelpersViewFunction,
+    functionArguments?: unknown[]
   ): Promise<Result> {
-    return callSingleViewPayloadResult(
+    return callAbiView(
       this.context.client,
-      createSurfViewFunctionPayload(this.getHelpersAbi(), {
-        functionName,
-        ...(functionArguments ? { functionArguments } : {}),
-      })
+      this.getHelpersAbi(),
+      functionName,
+      functionArguments
     );
   }
 
   private callHelpersViewFunction<Result extends unknown[] = unknown[]>(
-    functionName: SurfViewFunctionName<ReturnType<CanopyProtocolClient["getHelpersAbi"]>>,
-    functionArguments?: SurfViewFunctionArguments<
-      ReturnType<CanopyProtocolClient["getHelpersAbi"]>,
-      typeof functionName
-    >
+    functionName: CanopyHelpersViewFunction,
+    functionArguments?: unknown[]
   ): Promise<Result> {
-    return callViewPayloadFunction(
+    return callAbiViewFunction(
       this.context.client,
-      createSurfViewFunctionPayload(this.getHelpersAbi(), {
-        functionName,
-        ...(functionArguments ? { functionArguments } : {}),
-      })
+      this.getHelpersAbi(),
+      functionName,
+      functionArguments
     );
   }
 }
@@ -653,9 +670,14 @@ function buildUnstakePayload(
   stakingAsset: string,
   amount: bigint
 ): TransactionPayload {
-  return createEntryPayload(context.abis.multiRewards, {
-    function: "withdraw",
-    typeArguments: [],
+  // Lives in the canopy client but targets the multiRewards ABI, which is why a
+  // per-client sweep of "canopy's own router calls" would miss it.
+  const abi = context.abis.multiRewards;
+
+  return entryFunctionPayload({
+    moduleAddress: abi.address,
+    moduleName: abi.name,
+    functionName: "withdraw",
     functionArguments: [normalizeMoveAddress(stakingAsset), moveUintArgument(amount)],
   });
 }
@@ -789,13 +811,10 @@ async function getAllocationMap(
       ? "get_allocations_view"
       : "get_withdrawal_map_view";
 
-  const rawMap = await callSingleViewPayloadResult(
-    context.client,
-    createSurfViewFunctionPayload(abi, {
-      functionName,
-      functionArguments: [normalizeMoveAddress(vaultAddress), moveUintArgument(amount)],
-    })
-  );
+  const rawMap = await callAbiView(context.client, abi, functionName, [
+    normalizeMoveAddress(vaultAddress),
+    moveUintArgument(amount),
+  ]);
 
   return parseAllocationMap(rawMap);
 }

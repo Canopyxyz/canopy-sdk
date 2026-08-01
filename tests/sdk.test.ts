@@ -251,7 +251,6 @@ describe("CanopySdk", () => {
         "10",
         "2",
       ],
-      abi: expect.any(Object),
     });
     expect(
       meridian.buildWithdrawPayload({
@@ -270,7 +269,6 @@ describe("CanopySdk", () => {
         "50",
         "3",
       ],
-      abi: expect.any(Object),
     });
 
     expect(() =>

@@ -1,7 +1,7 @@
-import { createEntryPayload } from "@thalalabs/surf";
 import {
   CanopyError,
   CanopyErrorCode,
+  entryFunctionPayload,
   callSingleViewResult,
   callSingleViewPayloadResult,
   callViewPayloadFunction,
@@ -18,11 +18,7 @@ import {
   readMoveU128,
   readMoveU64,
 } from "../../internal/move-readers";
-import {
-  createSurfViewFunctionPayload,
-  type SurfViewFunctionArguments,
-  type SurfViewFunctionName,
-} from "../../internal/surf";
+import { callAbiView, callAbiViewFunction } from "../../internal/abi-views";
 import { mapAddressBatch } from "../../internal/address-batches";
 import type { MoveModuleAbi } from "@canopyhub/canopy-sdk-bindings";
 import type { SdkContext, TransactionPayload } from "../../types";
@@ -38,6 +34,32 @@ import type {
   MeridianWithdrawalPreview,
   MeridianWithdrawPayloadInput,
 } from "./types";
+
+/**
+ * Entry functions on the Meridian router that this client can build.
+ *
+ * A literal union replaces the compile-time function-name checking Surf used to
+ * provide; `tests/` asserts every name here is an `is_entry` function on the bound
+ * ABI with matching arity.
+ */
+export type MeridianRouterFunction = "deposit" | "withdraw";
+
+/** View functions this client reads, by module. */
+export type MeridianRegistryViewFunction = "get_paginated_vaults" | "get_recognized_vault_count";
+
+export type MeridianVaultViewFunction =
+  | "get_shares_price_e18"
+  | "get_total_vault_holdings"
+  | "get_vault_deposit_and_quote_assets"
+  | "get_underlying_pool"
+  | "is_asset_0_deposit"
+  | "get_user_vault_balance"
+  | "get_shares_withdrawal_amounts";
+
+export type MeridianBatchViewFunction =
+  | "batch_get_vault_info"
+  | "batch_get_user_balances"
+  | "batch_get_vault_positions";
 
 type MeridianClientDeps = Pick<
   SdkContext<"movement-mainnet" | "aptos-mainnet">,
@@ -152,29 +174,43 @@ export class MeridianClient {
   }
 
   buildDepositPayload(input: MeridianDepositPayloadInput): TransactionPayload {
-    return createEntryPayload(this.context.abis.meridianRouter, {
-      function: "deposit",
-      typeArguments: [],
-      functionArguments: [
-        normalizeMoveAddress(input.vaultAddress),
-        moveUintArgument(input.amount),
-        moveUintArgument(input.minSharesOut),
-      ],
-    });
+    return this.buildRouterPayload("deposit", [
+      normalizeMoveAddress(input.vaultAddress),
+      moveUintArgument(input.amount),
+      moveUintArgument(input.minSharesOut),
+    ]);
   }
 
   buildWithdrawPayload(input: MeridianWithdrawPayloadInput): TransactionPayload {
     assertMeridianWithdrawInputShape(input);
 
-    return createEntryPayload(this.context.abis.meridianRouter, {
-      function: "withdraw",
-      typeArguments: [],
-      functionArguments: [
-        normalizeMoveAddress(input.vaultAddress),
-        moveUintArgument(input.shares),
-        moveUintArgument(input.minAsset0),
-        moveUintArgument(input.minAsset1),
-      ],
+    return this.buildRouterPayload("withdraw", [
+      normalizeMoveAddress(input.vaultAddress),
+      moveUintArgument(input.shares),
+      moveUintArgument(input.minAsset0),
+      moveUintArgument(input.minAsset1),
+    ]);
+  }
+
+  /**
+   * Builds a plain entry payload with no `abi` field, so `@aptos-labs/ts-sdk`
+   * fetches the entry-function ABI itself and strips the leading `&signer`.
+   *
+   * Surf's `createEntryPayload` attached an `abi` whose `parameters` still included
+   * the signer while `functionArguments` did not, so every argument was matched off
+   * by one and `transaction.build.simple` rejected argument 0.
+   */
+  private buildRouterPayload(
+    functionName: MeridianRouterFunction,
+    functionArguments: (string | undefined)[]
+  ): TransactionPayload {
+    const abi = this.context.abis.meridianRouter;
+
+    return entryFunctionPayload({
+      moduleAddress: abi.address,
+      moduleName: abi.name,
+      functionName,
+      functionArguments: functionArguments as never,
     });
   }
 
@@ -292,13 +328,11 @@ export class MeridianClient {
   }
 
   private callRegistryViewResult<Result = unknown>(
-    functionName: SurfViewFunctionName<typeof this.context.abis.meridianRegistry>,
-    functionArguments?: SurfViewFunctionArguments<
-      typeof this.context.abis.meridianRegistry,
-      typeof functionName
-    >
+    functionName: MeridianRegistryViewFunction,
+    functionArguments?: unknown[]
   ): Promise<Result> {
-    return this.callAbiViewResult(
+    return callAbiView(
+      this.context.client,
       this.context.abis.meridianRegistry,
       functionName,
       functionArguments
@@ -306,13 +340,11 @@ export class MeridianClient {
   }
 
   private callVaultViewResult<Result = unknown>(
-    functionName: SurfViewFunctionName<typeof this.context.abis.meridianVault>,
-    functionArguments?: SurfViewFunctionArguments<
-      typeof this.context.abis.meridianVault,
-      typeof functionName
-    >
+    functionName: MeridianVaultViewFunction,
+    functionArguments?: unknown[]
   ): Promise<Result> {
-    return this.callAbiViewResult(
+    return callAbiView(
+      this.context.client,
       this.context.abis.meridianVault,
       functionName,
       functionArguments
@@ -320,53 +352,23 @@ export class MeridianClient {
   }
 
   private callVaultViewFunction<Result extends unknown[] = unknown[]>(
-    functionName: SurfViewFunctionName<typeof this.context.abis.meridianVault>,
-    functionArguments?: SurfViewFunctionArguments<
-      typeof this.context.abis.meridianVault,
-      typeof functionName
-    >
+    functionName: MeridianVaultViewFunction,
+    functionArguments?: unknown[]
   ): Promise<Result> {
-    return this.callAbiViewFunction(
+    return callAbiViewFunction(
+      this.context.client,
       this.context.abis.meridianVault,
       functionName,
       functionArguments
     );
   }
 
-  private callAbiViewResult<
-    TAbi extends MoveModuleAbi,
-    TFn extends SurfViewFunctionName<TAbi>,
-    Result = unknown,
-  >(
-    abi: TAbi,
-    functionName: TFn,
-    functionArguments?: SurfViewFunctionArguments<TAbi, TFn>
+  private callAbiViewResult<Result = unknown>(
+    abi: MoveModuleAbi,
+    functionName: MeridianBatchViewFunction,
+    functionArguments?: unknown[]
   ): Promise<Result> {
-    return callSingleViewPayloadResult(
-      this.context.client,
-      createSurfViewFunctionPayload(abi, {
-        functionName,
-        ...(functionArguments ? { functionArguments } : {}),
-      })
-    );
-  }
-
-  private callAbiViewFunction<
-    TAbi extends MoveModuleAbi,
-    TFn extends SurfViewFunctionName<TAbi>,
-    Result extends unknown[] = unknown[],
-  >(
-    abi: TAbi,
-    functionName: TFn,
-    functionArguments?: SurfViewFunctionArguments<TAbi, TFn>
-  ): Promise<Result> {
-    return callViewPayloadFunction(
-      this.context.client,
-      createSurfViewFunctionPayload(abi, {
-        functionName,
-        ...(functionArguments ? { functionArguments } : {}),
-      })
-    );
+    return callAbiView(this.context.client, abi, functionName, functionArguments);
   }
 }
 
@@ -459,6 +461,10 @@ async function getFungibleAssetDecimals(
       moduleAddress: "0x1",
       moduleName: "fungible_asset",
       functionName: "decimals",
+      // `decimals<T: key>(metadata: Object<T>)` is generic, so the type argument is
+      // required. Omitting it failed with "Type argument count mismatch, expected 1,
+      // received 0" for every vault, which broke getVaultSummary outright.
+      typeArguments: ["0x1::fungible_asset::Metadata"],
       functionArguments: [normalizeMoveAddress(metadataAddress)],
     }
   );

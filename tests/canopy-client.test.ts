@@ -159,7 +159,6 @@ describe("Canopy client", () => {
         "10",
         "9",
       ],
-      abi: expect.any(Object),
     });
 
     await expect(
@@ -181,7 +180,6 @@ describe("Canopy client", () => {
         "50",
         "3",
       ],
-      abi: expect.any(Object),
     });
 
     await expect(
@@ -199,7 +197,6 @@ describe("Canopy client", () => {
         "10",
         undefined,
       ],
-      abi: expect.any(Object),
     });
 
     await expect(
@@ -218,7 +215,6 @@ describe("Canopy client", () => {
         undefined,
         undefined,
       ],
-      abi: expect.any(Object),
     });
   });
 
@@ -268,7 +264,6 @@ describe("Canopy client", () => {
           "50",
           "3",
         ],
-        abi: expect.any(Object),
       }),
     });
 
@@ -305,7 +300,6 @@ describe("Canopy client", () => {
           "50",
           "3",
         ],
-        abi: expect.any(Object),
       }),
     });
   });
@@ -434,7 +428,6 @@ describe("Canopy client", () => {
         "10",
         "8",
       ],
-      abi: expect.any(Object),
     });
 
     await expect(
@@ -456,7 +449,6 @@ describe("Canopy client", () => {
         "50",
         "3",
       ],
-      abi: expect.any(Object),
     });
 
     global.fetch = originalFetch;
@@ -561,7 +553,6 @@ describe("Canopy client", () => {
         "10",
         "8",
       ],
-      abi: expect.any(Object),
     });
 
     global.fetch = originalFetch;
@@ -663,7 +654,6 @@ describe("Canopy client", () => {
         "10",
         "8",
       ],
-      abi: expect.any(Object),
     });
 
     await expect(
@@ -686,7 +676,6 @@ describe("Canopy client", () => {
         "50",
         "3",
       ],
-      abi: expect.any(Object),
     });
 
     global.fetch = originalFetch;

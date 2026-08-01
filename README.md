@@ -332,17 +332,6 @@ canopy-sdk/
 │   ├── deployments/
 │   ├── bindings/
 │   └── sdk/
-```
-
-## Surf Follow-Ups
-
-Possible next improvements on top of the current Surf integration:
-
-- Add typed `simulate*` SDK helpers for common Canopy, Rewards, and Meridian transaction flows.
-- Use Surf `useABI(...).view` / `useABI(...).entry` selectively for the simplest internal module calls where it reduces SDK plumbing.
-- Consider exposing typed resource readers for useful account resources if a real consumer needs them.
-- Keep generated ABI files as the source of truth, but consider using Surf `fetchABI(...)` in internal diagnostics or ABI drift tooling.
-- Continue reducing custom view plumbing only where Surf return typing stays readable and does not make the SDK API worse.
 ├── scripts/
 ├── tests/
 └── examples/
@@ -370,9 +359,32 @@ pnpm run check:exports
 pnpm run check:imports
 pnpm run abi:check-local
 pnpm build
+pnpm run check:payloads
 ```
 
 `pnpm run hooks:install` configures the repo-local `.githooks/pre-commit` hook, which runs `abi:check-local` when staged changes touch deployment addresses, generated ABI files, chain bindings, or the ABI manifest.
+
+### Live payload and view checks
+
+`pnpm run check:payloads` builds every `build*Payload` against live fullnodes and asserts
+`transaction.build.simple` succeeds, then reads every view the clients use. It must run
+**after** `pnpm build`, because it exercises `dist/`.
+
+This exists because the unit tests assert payload *shape* and never build a transaction,
+which is how a release shipped where every entry payload was rejected with
+`Type mismatch for argument 0, type '&signer'`.
+
+`pnpm run check:bundle` inspects an already-built `examples/react/dist` and fails if a
+Node-only dependency path is bundled — a previous dependency pulled in Node's `Buffer`
+and made the SDK unusable in browsers. It does not build anything itself:
+
+```bash
+pnpm build
+pnpm --filter @canopy-sdk-example/sdk-react run build
+pnpm run check:bundle
+```
+
+Both run in CI. They need network access, as `abi:check` already does.
 
 For the example app:
 

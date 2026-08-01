@@ -70,13 +70,13 @@
     "hooks:install": "git config core.hooksPath .githooks",
     "check:exports": "node scripts/ci/check-exports.mjs",
     "check:imports": "node scripts/ci/check-imports.mjs",
-    "check:no-surf-public-api": "node scripts/ci/check-no-surf-public-api.mjs",
+    "check:payloads": "node scripts/ci/check-live-payloads.mjs",
+    "check:bundle": "node scripts/ci/check-browser-bundle.mjs",
     "validate:deployments": "node -e \"import('./dist/deployments.mjs').then(({listDeployments})=>{listDeployments(); console.log('deployments ok')})\"",
     "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
-    "@aptos-labs/ts-sdk": "^7.0.1",
-    "@thalalabs/surf": "^2.0.3"
+    "@aptos-labs/ts-sdk": "^7.0.1"
   },
   "devDependencies": {
     "@jest/globals": "^30.1.3",

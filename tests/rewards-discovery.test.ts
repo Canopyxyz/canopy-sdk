@@ -107,7 +107,6 @@ describe("RewardsDiscoveryClient", () => {
         "11",
         ["0x0000000000000000000000000000000000000000000000000000000000000123"],
       ],
-      abi: expect.any(Object),
     });
 
     global.fetch = originalFetch;

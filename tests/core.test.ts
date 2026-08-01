@@ -1,4 +1,5 @@
 import { jest } from "@jest/globals";
+import { readMoveU8, readMoveU64 } from "../packages/sdk/src/internal/move-readers";
 import {
   callSingleViewResult,
   callViewFunction,
@@ -219,5 +220,31 @@ describe("core helpers", () => {
       moduleName: "router",
       vmErrorCode: 42,
     });
+  });
+});
+
+describe("move readers against real fullnode shapes", () => {
+  it("accepts u8 fields as JSON numbers, which is how fullnodes send them", () => {
+    // Fullnodes serialize u8/u16/u32 as numbers and u64+ as strings. Rejecting
+    // numbers broke canopy.getVault / listVaults and the Meridian batch views on
+    // every chain; the client fixtures hid it by supplying decimals as "8".
+    expect(readMoveU8(8)).toBe(8);
+    expect(readMoveU8("8")).toBe(8);
+    expect(readMoveU8(0)).toBe(0);
+    expect(readMoveU8(255)).toBe(255);
+  });
+
+  it("still rejects numbers for the wide widths, where they would lose precision", () => {
+    // This is the intent behind the existing "rejects unsafe number scalars" case:
+    // a u64 arriving as a JS number means precision was already lost upstream.
+    expect(() => readMoveU64(42)).toThrow("Expected Move scalar");
+    expect(readMoveU64("12345678901234567890")).toBe(12345678901234567890n);
+  });
+
+  it("rejects numbers that cannot be an exact Move u8", () => {
+    expect(() => readMoveU8(8.5)).toThrow("safe integer");
+    expect(() => readMoveU8(-1)).toThrow("safe integer");
+    expect(() => readMoveU8(Number.MAX_VALUE)).toThrow("safe integer");
+    expect(() => readMoveU8(256)).toThrow("Expected Move u8");
   });
 });
