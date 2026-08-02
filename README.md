@@ -20,11 +20,18 @@ The repo publishes four packages:
 - `@canopyhub/canopy-sdk-deployments`
 - `@canopyhub/canopy-sdk-bindings`
 
-Most applications should install only the root SDK:
+Most applications should install only the root SDK, alongside `@aptos-labs/ts-sdk`:
 
 ```bash
-pnpm add @canopyhub/canopy-sdk
+pnpm add @canopyhub/canopy-sdk @aptos-labs/ts-sdk
 ```
+
+`@aptos-labs/ts-sdk` is a **peer dependency** (`^7.0.0`), not a bundled one. The SDK never
+imports it at runtime — every reference is `import type` — and its public API takes an
+`Aptos` client that you construct. Declaring it as a peer keeps a single copy in your tree,
+so the `Aptos` type in your code is the same nominal type the SDK's signatures refer to.
+Bundling it produced two copies whose types did not match at the API boundary, forcing
+consumers to cast.
 
 ## Quick Start
 
