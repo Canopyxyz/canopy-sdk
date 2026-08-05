@@ -2,33 +2,10 @@ import { jest } from "@jest/globals";
 import { CanopySdk } from "../packages/sdk/src";
 import { normalizeMoveAddress } from "../packages/core/src";
 import { DEFAULT_VIEW_BATCH_SIZE } from "../packages/sdk/src/internal/address-batches";
+import { createMovementMock } from "./fixtures/view-client-mock";
 
 const APTOS_COIN_TYPE =
   "0x0000000000000000000000000000000000000000000000000000000000000001::aptos_coin::AptosCoin";
-
-interface MockViewClient {
-  view: jest.MockedFunction<(input: unknown) => Promise<unknown[]>>;
-}
-
-function createMovementMock(
-  responses: Record<string, unknown[] | ((args: unknown[]) => unknown[])>
-): MockViewClient {
-  return {
-    view: jest.fn(async (input: unknown) => {
-      const payload = (input as { payload: { function: string; functionArguments?: unknown[] } })
-        .payload;
-      const response = responses[payload.function];
-
-      if (!response) {
-        throw new Error(`Missing mock response for ${payload.function}`);
-      }
-
-      return typeof response === "function"
-        ? response(payload.functionArguments ?? [])
-        : response;
-    }),
-  };
-}
 
 describe("Canopy client", () => {
   it("parses canopy vault views", async () => {
