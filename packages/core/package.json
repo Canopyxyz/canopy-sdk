@@ -17,5 +17,8 @@
   },
   "files": [
     "dist"
-  ]
+  ],
+  "peerDependencies": {
+    "@aptos-labs/ts-sdk": "^7.0.0"
+  }
 }

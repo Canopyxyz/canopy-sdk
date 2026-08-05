@@ -85,7 +85,11 @@ importers:
         specifier: workspace:*
         version: link:../deployments
 
-  packages/core: {}
+  packages/core:
+    dependencies:
+      '@aptos-labs/ts-sdk':
+        specifier: ^7.0.0
+        version: 7.0.1
 
   packages/deployments: {}
 
@@ -123,16 +127,19 @@ packages:
   '@aptos-labs/aptos-cli@3.0.0':
     resolution: {integrity: sha512-fw9Ph6pe9l/RW6LMqjpxrHiWo2T/gtYWZsRxgl4PqVroavGF13YEQWlUnjJfWgVi1wQHpQcoJ1eYbYsPFu2sVg==}
     engines: {node: '>=22'}
+    cpu: [x64, arm64]
     os: [darwin, linux, win32]
     hasBin: true
 
   '@aptos-labs/aptos-client@4.0.0':
     resolution: {integrity: sha512-hj2X9S932oq+bgXka+mZrBnPzYORutXugdRBsGBIGAOkhwunaroDeQVq6z2WqvwxDnBsxXxcWcchIWJmJnokww==}
     engines: {node: '>=22.0.0'}
+    deprecated: This version is deprecated. Please upgrade to 4.1.0 or later.
 
   '@aptos-labs/ts-sdk@7.0.1':
     resolution: {integrity: sha512-kKO43zDsUaLzrNAqVV5eC4OG9ZDtCwaKwmX5S9iN0T4bF/HY1TU/zPoEJvfZGv8ztPeBixC7iVXqU4jNHZ3QFA==}
     engines: {node: '>=22.0.0'}
+    deprecated: Please upgrade to v7.1.0 or later, due to a bug in HTTP/2 on node
 
   '@aptos-labs/wallet-adapter-core@7.10.2':
     resolution: {integrity: sha512-8my6jCfjLT0HqShGbnKXnqoERA1dTYuiH4of5WHEGHsB5OxYI5o+NHnDyCf/LQGtsZ8tEGaU5pOE+kGgFnlV8g==}
@@ -1010,6 +1017,7 @@ packages:
 
   '@ungap/structured-clone@1.3.0':
     resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
+    deprecated: Potential CWE-502 - Update to 1.3.1 or higher
 
   '@unrs/resolver-binding-android-arm-eabi@1.11.1':
     resolution: {integrity: sha512-ppLRUgHVaGRWUx0R0Ut06Mjo9gBaBkg3v/8AxusGLhsIotbBLuRk51rAzqLC8gq6NyyAojEXglNjzf6R948DNw==}
