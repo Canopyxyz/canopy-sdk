@@ -99,7 +99,7 @@ export function readMoveU8(value: unknown): number {
 }
 
 function numberToMoveInteger(value: number): bigint {
-  if (!Number.isInteger(value) || !Number.isSafeInteger(value) || value < 0) {
+  if (!Number.isSafeInteger(value) || value < 0) {
     throw new CanopyError(
       "Expected Move integer to be a non-negative safe integer",
       CanopyErrorCode.ViewCallFailed,
@@ -115,8 +115,12 @@ function numberToMoveInteger(value: number): bigint {
  *
  * Deliberately rejects JavaScript numbers: those widths exceed
  * `Number.MAX_SAFE_INTEGER`, so a number arriving here means precision was
- * already lost upstream. Fullnodes send them as strings. Small widths are handled
- * by `readMoveU8`, which accepts numbers because they cannot lose precision.
+ * already lost upstream. Fullnodes send them as strings.
+ *
+ * The one narrow width the SDK reads is u8, via `readMoveU8`, which accepts numbers
+ * because a u8 cannot lose precision in a JS number. There is deliberately no u16 or
+ * u32 reader — no view the clients call returns those widths. Add one here if that
+ * changes rather than routing them through this function.
  */
 export function stringifyMoveScalar(value: unknown): string {
   if (typeof value === "string" || typeof value === "bigint") {
