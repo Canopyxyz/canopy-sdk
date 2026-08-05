@@ -31,15 +31,50 @@
  * Deliberately does NOT assert on simulation outcome — that depends on live vault
  * state (pause flags, idle breach, balances) and would flake for reasons
  * unrelated to the payload.
+ *
+ * WHAT GATES, AND WHY IT DIFFERS PER CHAIN
+ * ----------------------------------------
+ * Results land in four buckets: `passed`, `failed` (the chain rejected our payload),
+ * `infra` (we could not reach the chain, after retries) and `xfail` (known broken on-chain,
+ * asserted to still be broken). `failed` and `infra` are non-zero exits on every chain.
+ *
+ * Skips are the interesting case. A skip means coverage silently disappeared — the early
+ * `return` on an empty Meridian registry alone drops eight checks — so with `--strict` any
+ * skip is a failure. movement-mainnet is the leading chain: it is the only one binding every
+ * optional ABI (`canopyHelpers`, `canopyRewardsView`, `meridianBatchViews`) and it reaches
+ * zero skips, so it runs `--strict` and needs no allowlist of tolerated skips. The Aptos legs
+ * cannot: aptos-testnet has no Meridian deployment and aptos-mainnet's Meridian registry is
+ * empty, so they run non-strict and report their skips instead.
+ *
+ * XFAIL, NOT SKIP
+ * ---------------
+ * `canopy.getStrategyDetails` is broken on-chain (see `checkXfail` below). It used to be an
+ * unconditional `skipped.push`, which would have kept printing SKIP forever after the fix
+ * landed. It is now actually called and asserted to still fail, so the day the Move
+ * annotation ships, this check goes red and names the follow-up.
  */
 import process from "node:process";
 import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
+// Classification lives entirely behind `withRetry`, which reports `transport` on its result —
+// so nothing here calls `isTransportError` directly.
+import {
+  fullErrorText,
+  message,
+  withRetry,
+  withTimeout,
+} from "./lib/payload-check-helpers.mjs";
 
 const { createCanopySdk } = await import("../../dist/index.mjs");
 const { getAbisForChain } = await import("../../dist/bindings.mjs");
 
 const args = new Set(process.argv.slice(2));
 const requestedChain = getArgValue("--chain");
+/** Any skip becomes a failure. Used for the leading chain; see the header. */
+const strict = args.has("--strict");
+
+/** A single fullnode call should never hang CI; three attempts on transport errors only. */
+const CALL_TIMEOUT_MS = 45_000;
+const RETRY_ATTEMPTS = 3;
 
 const SENDER = "0x1";
 const ANY_ADDRESS = "0x1"; // Fixtures need not exist; see header.
@@ -68,7 +103,7 @@ const CHAINS = {
   "aptos-mainnet": { network: Network.MAINNET },
 };
 
-const results = { passed: [], failed: [], skipped: [] };
+const results = { passed: [], failed: [], infra: [], skipped: [], xfail: [] };
 
 for (const chain of requestedChain ? [requestedChain] : Object.keys(CHAINS)) {
   const chainConfig = CHAINS[chain];
@@ -125,6 +160,17 @@ async function checkCanopy(chain, aptos, sdk) {
     );
   }
 
+  // Every fixture above passes minSharesOut / maxLossBps / minAmountOut explicitly, so the
+  // `undefined` -> `option::none` branch in the builders was never actually built. These two
+  // omit them, which is the only way that arm reaches a real fullnode.
+  const [firstBranch, firstVault] = Object.entries(vaults)[0];
+  await checkEntry(chain, `canopy.buildDepositPayload[${firstBranch},no-optionals]`, aptos, () =>
+    canopy.buildDepositPayload({ vaultAddress: firstVault, amount: 1000n })
+  );
+  await checkEntry(chain, `canopy.buildWithdrawPayload[${firstBranch},no-optionals]`, aptos, () =>
+    canopy.buildWithdrawPayload({ vaultAddress: firstVault, shares: 1000n })
+  );
+
   // unstakeAndWithdraw returns a plan carrying TWO payloads, one of them built by
   // the module-level buildUnstakePayload against the multiRewards ABI from inside
   // the canopy client. Easy to miss in a per-client sweep, so it is explicit here.
@@ -152,11 +198,23 @@ async function checkCanopy(chain, aptos, sdk) {
 
   // KNOWN BROKEN, and not fixable from the SDK: getStrategyDetails calls
   // `vault::get_strategy_shares_balance`, which the deployed module does not mark
-  // `#[view]`, so the fullnode rejects it with "is not an view function". Recorded
-  // as a skip rather than dropped, so the gap stays visible. Needs a contract change.
-  results.skipped.push(
-    `${chain} canopy.getStrategyDetails: vault::get_strategy_shares_balance is not marked #[view] on-chain (contract-side gap)`
-  );
+  // `#[view]`, so the fullnode rejects it. Asserted as an xfail rather than pushed as an
+  // unconditional skip, so this flips to a failure the day the annotation lands instead of
+  // printing SKIP forever. `tests/abi-conformance.test.ts` pins the same fact offline.
+  const strategyAddress = vault?.strategies?.[0]?.strategyAddress;
+  if (strategyAddress) {
+    await checkXfail(
+      chain,
+      "canopy.getStrategyDetails",
+      /is not an? view function/i,
+      "vault::get_strategy_shares_balance is not marked #[view] on-chain; needs a Move annotation and a republish",
+      () => canopy.getStrategyDetails(vaultAddress, strategyAddress)
+    );
+  } else {
+    results.skipped.push(
+      `${chain} canopy.getStrategyDetails: vault fixture exposes no strategy to read`
+    );
+  }
 
   // canopyHelpers is an optional ABI, present only where the helper module is deployed.
   if (hasAbi(chain, "canopyHelpers")) {
@@ -320,23 +378,23 @@ async function checkMeridian(chain, aptos, sdk) {
   // Must not swallow the error: a broken registry view would otherwise be recorded
   // as a pass and silently skip every Meridian builder and vault view below. Only an
   // empty result from a *successful* read is a legitimate skip.
-  let vaults;
-  try {
-    vaults = await meridian.listVaults({ limit: 1, offset: 0 });
-    results.passed.push(`${chain} meridian.listVaults`);
-  } catch (error) {
-    results.failed.push({
-      name: `${chain} meridian.listVaults`,
-      stage: "view",
-      message: message(error),
-    });
+  //
+  // Routed through checkView rather than a hand-rolled try/catch so the failure is
+  // transport-classified like every other call. Pushing straight to `failed` here meant an
+  // unreachable fullnode reported this one view as a payload defect while the other 38 calls
+  // correctly landed in `infra`.
+  const listed = await checkView(chain, "meridian.listVaults", () =>
+    meridian.listVaults({ limit: 1, offset: 0 })
+  );
+
+  if (!listed.ok) {
     results.skipped.push(
       `${chain} meridian entry builders + vault views: listVaults failed, no vault fixture`
     );
     return;
   }
 
-  const vaultAddress = vaults[0];
+  const vaultAddress = listed.value[0];
   if (!vaultAddress) {
     // Real condition, not a harness bug: the aptos-mainnet registry is empty.
     results.skipped.push(
@@ -377,6 +435,35 @@ async function checkMeridian(chain, aptos, sdk) {
 
 // ── primitives ──────────────────────────────────────────────────────────────
 
+/**
+ * Runs one live call with a timeout and transport-only retries, then files the outcome.
+ *
+ * The bucket split is the point: a 502 used to be recorded as `stage: "build.simple"`,
+ * visually identical to `Type mismatch for argument 0` — the exact bug this check exists to
+ * catch. `isTransportError` keeps those apart, and always resolves ambiguity toward "payload
+ * defect" so a real failure can never be downgraded to infra.
+ */
+async function runCheck(name, stage, call) {
+  const outcome = await withRetry(() => withTimeout(call(), CALL_TIMEOUT_MS, name), {
+    attempts: RETRY_ATTEMPTS,
+  });
+
+  if (outcome.ok) {
+    results.passed.push(name);
+    return { ok: true, value: outcome.value };
+  }
+
+  const record = { name, stage, message: message(outcome.error), attempts: outcome.attempts };
+
+  if (outcome.transport) {
+    results.infra.push(record);
+  } else {
+    results.failed.push(record);
+  }
+
+  return { ok: false, error: outcome.error };
+}
+
 async function checkEntry(chain, label, aptos, build) {
   await checkEntryPlan(chain, label, aptos, async () => [await build()]);
 }
@@ -384,47 +471,99 @@ async function checkEntry(chain, label, aptos, build) {
 async function checkEntryPlan(chain, label, aptos, buildAll) {
   const name = `${chain} ${label}`;
 
+  // Building the payload can itself read chain state, so it gets the same treatment.
   let payloads;
   try {
-    payloads = await buildAll();
+    payloads = await withRetry(() => withTimeout(buildAll(), CALL_TIMEOUT_MS, name), {
+      attempts: RETRY_ATTEMPTS,
+    });
   } catch (error) {
     results.failed.push({ name, stage: "build-payload", message: message(error) });
     return;
   }
 
-  for (const [index, payload] of payloads.entries()) {
-    const suffix = payloads.length > 1 ? `#${index}` : "";
-    try {
-      await aptos.transaction.build.simple({ sender: SENDER, data: payload });
-      results.passed.push(`${name}${suffix}`);
-    } catch (error) {
-      results.failed.push({
-        name: `${name}${suffix}`,
-        stage: "build.simple",
-        message: message(error),
-      });
-    }
+  if (!payloads.ok) {
+    const record = {
+      name,
+      stage: "build-payload",
+      message: message(payloads.error),
+      attempts: payloads.attempts,
+    };
+    (payloads.transport ? results.infra : results.failed).push(record);
+    return;
+  }
+
+  for (const [index, payload] of payloads.value.entries()) {
+    const suffix = payloads.value.length > 1 ? `#${index}` : "";
+    await runCheck(`${name}${suffix}`, "build.simple", () =>
+      aptos.transaction.build.simple({ sender: SENDER, data: payload })
+    );
   }
 }
 
 async function checkView(chain, label, read) {
+  return runCheck(`${chain} ${label}`, "view", read);
+}
+
+/**
+ * A check that is expected to FAIL for a known, recorded, contract-side reason.
+ *
+ * Replaces an unconditional `skipped.push`, which could only ever print SKIP — including
+ * long after the underlying gap was fixed. Four outcomes:
+ *
+ *   - fails with the expected message -> XFAIL, does not gate. The gap is still there.
+ *   - SUCCEEDS                        -> FAILED. The contract was fixed; delete the xfail.
+ *   - transport error, retries spent  -> INFRA, same as any other call.
+ *   - fails some other way            -> FAILED, so an unrelated break is not masked.
+ *
+ * Goes through `withRetry` like every other live call. Retrying costs nothing on the
+ * expected path: the rejection we are looking for is a Move error, which
+ * `isTransportError` classifies as a payload defect, so `withRetry` returns after one
+ * attempt without sleeping. Only a genuine transport failure consumes the retries — which
+ * is the point, since this runs on the strict leading-chain gate and a single transient
+ * RPC blip should not be the one call in the sweep that goes straight to INFRA.
+ */
+async function checkXfail(chain, label, expectedPattern, reason, read) {
   const name = `${chain} ${label}`;
-  try {
-    await read();
-    results.passed.push(name);
-  } catch (error) {
-    results.failed.push({ name, stage: "view", message: message(error) });
+
+  const outcome = await withRetry(() => withTimeout(read(), CALL_TIMEOUT_MS, name), {
+    attempts: RETRY_ATTEMPTS,
+  });
+
+  if (outcome.ok) {
+    results.failed.push({
+      name,
+      stage: "xfail",
+      message: `now SUCCEEDS — the on-chain gap is fixed, so remove this xfail (${reason})`,
+    });
+    return;
   }
+
+  const text = message(outcome.error);
+
+  // Checked before the transport branch, and matched against the whole cause chain: the SDK
+  // wraps a fullnode rejection in a CanopyError whose own message is just "View function
+  // call failed", so matching `error.message` alone would never recognise it.
+  if (expectedPattern.test(fullErrorText(outcome.error))) {
+    results.xfail.push({ name, reason });
+    return;
+  }
+
+  if (outcome.transport) {
+    results.infra.push({ name, stage: "xfail", message: text, attempts: outcome.attempts });
+    return;
+  }
+
+  results.failed.push({
+    name,
+    stage: "xfail",
+    message: `expected /${expectedPattern.source}/ but got: ${text}`,
+  });
 }
 
 /** Optional ABIs (helper/batch modules) exist only on some chains. */
 function hasAbi(chain, key) {
   return key in getAbisForChain(chain);
-}
-
-function message(error) {
-  const text = error instanceof Error ? error.message : String(error);
-  return text.replace(/\s+/g, " ").slice(0, 160);
 }
 
 function getArgValue(flag) {
@@ -437,10 +576,19 @@ function getArgValue(flag) {
 }
 
 function report() {
-  console.log(`\npayload/view check: ${results.passed.length} passed, ${results.failed.length} failed, ${results.skipped.length} skipped\n`);
+  const mode = strict ? " [strict: skips gate]" : "";
+  console.log(
+    `\npayload/view check: ${results.passed.length} passed, ${results.failed.length} failed, ` +
+      `${results.infra.length} infra, ${results.xfail.length} xfail, ` +
+      `${results.skipped.length} skipped${mode}\n`
+  );
 
   for (const name of results.passed) {
     console.log(`  pass  ${name}`);
+  }
+
+  for (const entry of results.xfail) {
+    console.log(`  XFAIL ${entry.name}\n          expected failure: ${entry.reason}`);
   }
 
   // Skips are printed loudly: a silently narrowed check reads as full coverage.
@@ -448,12 +596,41 @@ function report() {
     console.log(`  SKIP  ${reason}`);
   }
 
+  // Separated from FAIL so a fullnode outage is never mistaken for a bad payload.
+  for (const entry of results.infra) {
+    console.log(
+      `  INFRA ${entry.name}\n          [${entry.stage}] ${entry.message}` +
+        `\n          could not reach the chain after ${entry.attempts} attempt(s) — ` +
+        `not a payload defect, but coverage was lost`
+    );
+  }
+
   for (const failure of results.failed) {
     console.log(`  FAIL  ${failure.name}\n          [${failure.stage}] ${failure.message}`);
   }
 
+  const problems = [];
+
   if (results.failed.length > 0) {
-    console.log(`\n${results.failed.length} check(s) failed.`);
+    problems.push(`${results.failed.length} check(s) failed`);
+  }
+
+  // Still gates: a sustained outage would otherwise report green with no coverage at all.
+  if (results.infra.length > 0) {
+    problems.push(`${results.infra.length} check(s) could not reach the chain`);
+  }
+
+  // The leading chain must skip nothing. A skip there means coverage vanished — an emptied
+  // registry, an unresolvable fixture — and the old script stayed green through exactly that.
+  if (strict && results.skipped.length > 0) {
+    problems.push(
+      `${results.skipped.length} check(s) skipped under --strict; ` +
+        `the leading chain must cover everything`
+    );
+  }
+
+  if (problems.length > 0) {
+    console.log(`\n${problems.join("\n")}.`);
     process.exit(1);
   }
 
