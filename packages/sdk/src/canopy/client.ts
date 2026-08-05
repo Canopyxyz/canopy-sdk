@@ -36,6 +36,9 @@ import type {
   UnstakeAndWithdrawPlan,
 } from "./types";
 import { callAbiView, callAbiViewFunction } from "../internal/abi-views";
+// Type-only: `buildUnstakePayload` below targets the multi_rewards module, so the name
+// belongs to that client's union. Erased at compile time, so no runtime import cycle.
+import type { RewardsModuleFunction } from "../rewards/client";
 import { mapAddressBatch } from "../internal/address-batches";
 
 export interface ListCanopyVaultsInput {
@@ -67,6 +70,29 @@ export type CanopyHelpersViewFunction =
   | "batch_get_vault_base_metadata_and_balance"
   | "batch_get_vault_shares_metadata_and_balance"
   | "batch_get_vault_all_metadata_and_balance";
+
+/**
+ * Allocation-map views on the deposit and withdraw router modules. Read only on the
+ * MovePosition packet path, which is why they are easy to miss.
+ */
+export type CanopyRouterDepositViewFunction = "get_allocations_view";
+export type CanopyRouterWithdrawViewFunction = "get_withdrawal_map_view";
+
+/** The one `0x1::primary_fungible_store` view the client reads. */
+export type PrimaryFungibleStoreViewFunction = "balance";
+
+/**
+ * `canopyVault` functions read through the view endpoint that the deployed module does
+ * **not** mark `#[view]`.
+ *
+ * Kept separate from `CanopyVaultViewFunction` because the ABI conformance test asserts
+ * `is_view` on that union, and this name would fail it — correctly, since the fullnode
+ * really does reject the call. `getStrategyDetails` is broken on-chain as a result; the
+ * live check records it as an xfail. When the Move annotation lands, both the conformance
+ * assertion and the xfail flip, which is the point of naming it here rather than inlining
+ * the string.
+ */
+export type CanopyVaultNonViewRead = "get_strategy_shares_balance";
 
 /**
  * Entry functions on the Canopy router that this client can build.
@@ -298,10 +324,11 @@ export class CanopyProtocolClient {
     vaultAddress: string
   ): Promise<CanopyUserVaultPosition> {
     const vault = await this.getVault(vaultAddress);
+    const balanceView: PrimaryFungibleStoreViewFunction = "balance";
     const sharesBalance = await callAbiView(
       this.context.client,
       this.context.abis.aptosFrameworkPrimaryFungibleStore,
-      "balance",
+      balanceView,
       [normalizeMoveAddress(userAddress), normalizeMoveAddress(vault.sharesAddress)],
       ["0x1::fungible_asset::Metadata"]
     );
@@ -458,6 +485,7 @@ export class CanopyProtocolClient {
   ): Promise<CanopyStrategyDetails> {
     const normalizedVault = normalizeMoveAddress(vaultAddress);
     const normalizedStrategy = normalizeMoveAddress(strategyAddress);
+    const strategySharesRead: CanopyVaultNonViewRead = "get_strategy_shares_balance";
 
     const [debt, debtLimit, lastReport, totalProfit, totalLoss, sharesBalance] =
       await Promise.all([
@@ -480,12 +508,15 @@ export class CanopyProtocolClient {
         ]),
         callSingleViewPayloadResult(
           this.context.client,
-          // The on-chain ABI marks this function as non-view, but the chain still accepts it
-          // through the view endpoint, so we intentionally bypass Surf's view-only guard here.
+          // KNOWN BROKEN, and not fixable from the SDK. The deployed module does not mark
+          // this function `#[view]`, so the fullnode rejects the call outright with "is not
+          // an view function" — an earlier comment here claimed the chain accepted it
+          // anyway, which `check:payloads` disproves. `getStrategyDetails` therefore fails
+          // on every chain until the Move annotation lands and the module is republished.
           viewFunctionPayload({
             moduleAddress: this.context.abis.canopyVault.address,
             moduleName: this.context.abis.canopyVault.name,
-            functionName: "get_strategy_shares_balance",
+            functionName: strategySharesRead,
             functionArguments: [normalizedVault, normalizedStrategy],
           })
         ),
@@ -671,13 +702,15 @@ function buildUnstakePayload(
   amount: bigint
 ): TransactionPayload {
   // Lives in the canopy client but targets the multiRewards ABI, which is why a
-  // per-client sweep of "canopy's own router calls" would miss it.
+  // per-client sweep of "canopy's own router calls" would miss it. Typed against the
+  // rewards client's union for the same reason: the name belongs to that module.
   const abi = context.abis.multiRewards;
+  const functionName: RewardsModuleFunction = "withdraw";
 
   return entryFunctionPayload({
     moduleAddress: abi.address,
     moduleName: abi.name,
-    functionName: "withdraw",
+    functionName,
     functionArguments: [normalizeMoveAddress(stakingAsset), moveUintArgument(amount)],
   });
 }
@@ -806,7 +839,7 @@ async function getAllocationMap(
     operation === "deposit"
       ? context.abis.canopyRouterDeposit
       : context.abis.canopyRouterWithdraw;
-  const functionName =
+  const functionName: CanopyRouterDepositViewFunction | CanopyRouterWithdrawViewFunction =
     operation === "deposit"
       ? "get_allocations_view"
       : "get_withdrawal_map_view";

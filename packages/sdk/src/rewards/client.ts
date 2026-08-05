@@ -76,6 +76,42 @@ export type RewardsRouterFunction =
 
 export type RewardsModuleFunction = "stake" | "withdraw" | "subscribe" | "unsubscribe";
 
+/**
+ * View functions this client reads, split by the module that hosts them exactly as the
+ * entry unions above are.
+ *
+ * These names had no compile-time check at all after Surf was removed — Surf typed them
+ * via `SurfViewFunctionName<TAbi>`, and the replacement literal unions initially covered
+ * only entry functions. Every name below is reached through a typed helper
+ * (`rewardsViewPayload` / `multiRewardsView`) so a typo or a rename fails to compile, and
+ * `tests/abi-conformance.test.ts` asserts each one is an `is_view` function on the bound
+ * ABI.
+ */
+export type RewardsViewFunction =
+  | "get_pool_details"
+  | "get_reward_token_details"
+  | "get_rewards_snapshot"
+  | "get_registry_overview"
+  | "get_registered_pool_count"
+  | "get_user_pool_positions"
+  | "get_user_pool_positions_by_token"
+  | "get_user_pool_positions_by_tokens"
+  | "is_pool_registered";
+
+/**
+ * Views on the `multi_rewards` module itself, as opposed to the optional
+ * `canopyRewardsView` helper module that `RewardsViewFunction` covers. Easy to miss in a
+ * sweep for `abiViewPayload` call sites, because these build their module id inline.
+ */
+export type RewardsModuleViewFunction =
+  | "get_earned"
+  | "get_pool_info"
+  | "is_user_subscribed"
+  | "get_user_staked_balance"
+  | "get_user_subscribed_pools"
+  | "get_reward_data"
+  | "get_unallocated_rewards";
+
 export class RewardsClient {
   static fromContext(
     context: SdkContext<"movement-mainnet" | "aptos-testnet">,
@@ -277,9 +313,7 @@ export class RewardsClient {
     const earned = await callSingleViewResult(
       this.context.client,
       {
-        moduleAddress: this.context.abis.multiRewards.address,
-        moduleName: this.context.abis.multiRewards.name,
-        functionName: "get_earned",
+        ...this.multiRewardsView("get_earned"),
         functionArguments: [
           normalizeMoveAddress(input.userAddress),
           normalizeMoveAddress(input.poolAddress),
@@ -297,9 +331,7 @@ export class RewardsClient {
     >(
       this.context.client,
       {
-        moduleAddress: this.context.abis.multiRewards.address,
-        moduleName: this.context.abis.multiRewards.name,
-        functionName: "get_pool_info",
+        ...this.multiRewardsView("get_pool_info"),
         functionArguments: [normalizeMoveAddress(poolAddress)],
       }
     );
@@ -312,10 +344,9 @@ export class RewardsClient {
   }
 
   async getPoolDetails(poolAddress: string): Promise<RewardsPoolDetails> {
-    const rewardsView = this.getRewardsViewAbi();
     const pool = await callSingleViewPayloadResult(
       this.context.client,
-      abiViewPayload(rewardsView, "get_pool_details", [normalizeMoveAddress(poolAddress)])
+      this.rewardsViewPayload("get_pool_details", [normalizeMoveAddress(poolAddress)])
     );
 
     return readPoolDetails(pool);
@@ -324,10 +355,9 @@ export class RewardsClient {
   async getRewardTokenDetails(
     poolAddress: string
   ): Promise<RewardsRewardTokenDetails[]> {
-    const rewardsView = this.getRewardsViewAbi();
     const rewardTokens = await callSingleViewPayloadResult(
       this.context.client,
-      abiViewPayload(rewardsView, "get_reward_token_details", [normalizeMoveAddress(poolAddress)])
+      this.rewardsViewPayload("get_reward_token_details", [normalizeMoveAddress(poolAddress)])
     );
 
     return readRewardTokenDetailsVector(rewardTokens);
@@ -336,14 +366,13 @@ export class RewardsClient {
   async getRewardsSnapshot(
     input: RewardsSnapshotInput = {}
   ): Promise<RewardsSnapshot> {
-    const rewardsView = this.getRewardsViewAbi();
     const [pools, userPositions] = await callViewPayloadFunction<[unknown, unknown]>(
       this.context.client,
-        abiViewPayload(rewardsView, "get_rewards_snapshot", [
-            moveOptionU64Argument(input.offset),
-            moveOptionU64Argument(input.limit),
-            moveOptionAddressArgument(input.userAddress),
-          ])
+      this.rewardsViewPayload("get_rewards_snapshot", [
+        moveOptionU64Argument(input.offset),
+        moveOptionU64Argument(input.limit),
+        moveOptionAddressArgument(input.userAddress),
+      ])
     );
 
     return {
@@ -355,15 +384,14 @@ export class RewardsClient {
   async getRegistryOverview(
     input: RewardsRegistryOverviewInput = {}
   ): Promise<RewardsRegistryOverview> {
-    const rewardsView = this.getRewardsViewAbi();
     const [snapshotTimestamp, statusFlag0, statusFlag1, poolsIncluded, pools] =
       await callViewPayloadFunction<[unknown, unknown, unknown, unknown, unknown]>(
         this.context.client,
-        abiViewPayload(rewardsView, "get_registry_overview", [
-            moveOptionU64Argument(input.offset),
-            moveOptionU64Argument(input.limit),
-            input.includePools ?? true,
-          ])
+        this.rewardsViewPayload("get_registry_overview", [
+          moveOptionU64Argument(input.offset),
+          moveOptionU64Argument(input.limit),
+          input.includePools ?? true,
+        ])
       );
 
     return {
@@ -378,10 +406,9 @@ export class RewardsClient {
   }
 
   async getRegisteredPoolCount(): Promise<bigint> {
-    const rewardsView = this.getRewardsViewAbi();
     const count = await callSingleViewPayloadResult(
       this.context.client,
-      abiViewPayload(rewardsView, "get_registered_pool_count")
+      this.rewardsViewPayload("get_registered_pool_count")
     );
 
     return readMoveU64(count);
@@ -390,14 +417,13 @@ export class RewardsClient {
   async getUserPoolPositions(
     input: RewardsUserPoolPositionsInput
   ): Promise<RewardsUserPoolPosition[]> {
-    const rewardsView = this.getRewardsViewAbi();
     const positions = await callSingleViewPayloadResult(
       this.context.client,
-      abiViewPayload(rewardsView, "get_user_pool_positions", [
-          normalizeMoveAddress(input.userAddress),
-          moveOptionU64Argument(input.offset),
-          moveOptionU64Argument(input.limit),
-        ])
+      this.rewardsViewPayload("get_user_pool_positions", [
+        normalizeMoveAddress(input.userAddress),
+        moveOptionU64Argument(input.offset),
+        moveOptionU64Argument(input.limit),
+      ])
     );
 
     return readUserPoolPositionVector(positions);
@@ -406,15 +432,14 @@ export class RewardsClient {
   async getUserPoolPositionsByToken(
     input: RewardsUserPoolPositionsByTokenInput
   ): Promise<RewardsUserPoolPosition[]> {
-    const rewardsView = this.getRewardsViewAbi();
     const positions = await callSingleViewPayloadResult(
       this.context.client,
-      abiViewPayload(rewardsView, "get_user_pool_positions_by_token", [
-          normalizeMoveAddress(input.userAddress),
-          normalizeMoveAddress(input.stakingAsset),
-          moveOptionU64Argument(input.offset),
-          moveOptionU64Argument(input.limit),
-        ])
+      this.rewardsViewPayload("get_user_pool_positions_by_token", [
+        normalizeMoveAddress(input.userAddress),
+        normalizeMoveAddress(input.stakingAsset),
+        moveOptionU64Argument(input.offset),
+        moveOptionU64Argument(input.limit),
+      ])
     );
 
     return readUserPoolPositionVector(positions);
@@ -423,30 +448,23 @@ export class RewardsClient {
   async getUserPoolPositionsByTokens(
     input: RewardsUserPoolPositionsByTokensInput
   ): Promise<RewardsUserPoolPosition[]> {
-    const rewardsView = this.getRewardsViewAbi();
     const positions = await callSingleViewPayloadResult(
       this.context.client,
-      abiViewPayload(rewardsView, "get_user_pool_positions_by_tokens", [
-          normalizeMoveAddress(input.userAddress),
-          input.stakingAssets.map((address) => normalizeMoveAddress(address)),
-          moveOptionU64Argument(input.offset),
-          moveOptionU64Argument(input.limit),
-        ])
+      this.rewardsViewPayload("get_user_pool_positions_by_tokens", [
+        normalizeMoveAddress(input.userAddress),
+        input.stakingAssets.map((address) => normalizeMoveAddress(address)),
+        moveOptionU64Argument(input.offset),
+        moveOptionU64Argument(input.limit),
+      ])
     );
 
     return readUserPoolPositionVector(positions);
   }
 
   async isPoolRegistered(poolAddress: string): Promise<boolean> {
-    const rewardsView = this.getRewardsViewAbi();
-    const registered = await callSingleViewResult(
+    const registered = await callSingleViewPayloadResult(
       this.context.client,
-      {
-        moduleAddress: rewardsView.address,
-        moduleName: rewardsView.name,
-        functionName: "is_pool_registered",
-        functionArguments: [normalizeMoveAddress(poolAddress)],
-      }
+      this.rewardsViewPayload("is_pool_registered", [normalizeMoveAddress(poolAddress)])
     );
 
     return readMoveBool(registered);
@@ -485,9 +503,7 @@ export class RewardsClient {
         const isSubscribed = await callSingleViewResult(
           this.context.client,
           {
-            moduleAddress: this.context.abis.multiRewards.address,
-            moduleName: this.context.abis.multiRewards.name,
-            functionName: "is_user_subscribed",
+            ...this.multiRewardsView("is_user_subscribed"),
             functionArguments: [
               normalizeMoveAddress(input.userAddress),
               normalizeMoveAddress(poolAddress),
@@ -511,9 +527,7 @@ export class RewardsClient {
     const balance = await callSingleViewResult(
       this.context.client,
       {
-        moduleAddress: this.context.abis.multiRewards.address,
-        moduleName: this.context.abis.multiRewards.name,
-        functionName: "get_user_staked_balance",
+        ...this.multiRewardsView("get_user_staked_balance"),
         functionArguments: [
           normalizeMoveAddress(input.userAddress),
           normalizeMoveAddress(input.stakingAsset),
@@ -528,9 +542,7 @@ export class RewardsClient {
     const pools = await callSingleViewResult(
       this.context.client,
       {
-        moduleAddress: this.context.abis.multiRewards.address,
-        moduleName: this.context.abis.multiRewards.name,
-        functionName: "get_user_subscribed_pools",
+        ...this.multiRewardsView("get_user_subscribed_pools"),
         functionArguments: [
           normalizeMoveAddress(input.userAddress),
           normalizeMoveAddress(input.stakingAsset),
@@ -548,18 +560,14 @@ export class RewardsClient {
       callViewFunction<[unknown, unknown, unknown, unknown, unknown, unknown]>(
         this.context.client,
         {
-          moduleAddress: this.context.abis.multiRewards.address,
-          moduleName: this.context.abis.multiRewards.name,
-          functionName: "get_reward_data",
+          ...this.multiRewardsView("get_reward_data"),
           functionArguments: args,
         }
       ),
       callSingleViewResult(
         this.context.client,
         {
-          moduleAddress: this.context.abis.multiRewards.address,
-          moduleName: this.context.abis.multiRewards.name,
-          functionName: "get_unallocated_rewards",
+          ...this.multiRewardsView("get_unallocated_rewards"),
           functionArguments: args,
         }
       ),
@@ -580,9 +588,7 @@ export class RewardsClient {
     const result = await callSingleViewResult(
       this.context.client,
       {
-        moduleAddress: this.context.abis.multiRewards.address,
-        moduleName: this.context.abis.multiRewards.name,
-        functionName: "is_user_subscribed",
+        ...this.multiRewardsView("is_user_subscribed"),
         functionArguments: [
           normalizeMoveAddress(userAddress),
           normalizeMoveAddress(poolAddress),
@@ -683,6 +689,30 @@ export class RewardsClient {
     }
 
     return abi;
+  }
+
+  /**
+   * View payload against the optional `canopyRewardsView` helper module, with the function
+   * name constrained to `RewardsViewFunction`. Throws via `getRewardsViewAbi` on chains
+   * where that module is not deployed, exactly as the inline call sites did.
+   */
+  private rewardsViewPayload(
+    functionName: RewardsViewFunction,
+    functionArguments?: unknown[]
+  ) {
+    return abiViewPayload(this.getRewardsViewAbi(), functionName, functionArguments);
+  }
+
+  /**
+   * Module id for a view on the `multi_rewards` module, with the name constrained to
+   * `RewardsModuleViewFunction`. Spread into a view input alongside `functionArguments`.
+   */
+  private multiRewardsView(functionName: RewardsModuleViewFunction) {
+    return {
+      moduleAddress: this.context.abis.multiRewards.address,
+      moduleName: this.context.abis.multiRewards.name,
+      functionName,
+    };
   }
 }
 
