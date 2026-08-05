@@ -6,6 +6,10 @@ on:
     branches:
       - main
 
+# Read-only by default; nothing here needs to write to the repo.
+permissions:
+  contents: read
+
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -51,8 +55,28 @@ jobs:
       # Builds every entry payload against live fullnodes and reads every view the
       # clients use. The unit tests assert payload shape only and never build a
       # transaction, which is how unsubmittable payloads shipped in v1.1.0.
-      - name: Check Live Payloads And Views
-        run: pnpm run check:payloads
+      #
+      # Split by chain because the legs do not deserve equal authority. movement-mainnet is
+      # the leading chain — the only one binding every optional ABI (canopyHelpers,
+      # canopyRewardsView, meridianBatchViews) — and it reaches zero skips, so it runs
+      # --strict, where a skip is a failure. That is what stops coverage vanishing silently:
+      # an emptied registry drops eight checks behind a single early return.
+      #
+      # The Aptos legs cannot be strict. aptos-testnet has no Meridian deployment, and
+      # aptos-mainnet's Meridian registry is empty (3 passes, 3 skips), so both legitimately
+      # skip. Payload failures and unreachable-chain errors still gate on aptos-testnet.
+      - name: Check Live Payloads And Views (movement-mainnet, leading chain)
+        run: pnpm run check:payloads -- --chain=movement-mainnet --strict
+
+      - name: Check Live Payloads And Views (aptos-testnet)
+        run: pnpm run check:payloads -- --chain=aptos-testnet
+
+      # Informational only. Movement mainnet already covers the same Meridian builders, so
+      # gating merges on Aptos mainnet RPC availability buys ~3 extra passes and costs a
+      # third-party dependency in the merge path.
+      - name: Check Live Payloads And Views (aptos-mainnet, informational)
+        run: pnpm run check:payloads -- --chain=aptos-mainnet
+        continue-on-error: true
 
       # Surf pulled @initia/initia.js in from its main entry, which needs Node's
       # Buffer and killed the SDK in any browser. Unit tests run in Node, so nothing
