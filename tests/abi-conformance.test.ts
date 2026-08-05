@@ -1,10 +1,16 @@
 import { jest } from "@jest/globals";
 import { getAbisForChain, type MoveModuleAbi } from "../packages/bindings/src";
 import { CanopySdk } from "../packages/sdk/src";
+import { normalizeMoveAddress } from "../packages/core/src";
+import { createMovementMock } from "./fixtures/view-client-mock";
 import type {
   CanopyHelpersViewFunction,
+  CanopyRouterDepositViewFunction,
   CanopyRouterFunction,
+  CanopyRouterWithdrawViewFunction,
+  CanopyVaultNonViewRead,
   CanopyVaultViewFunction,
+  PrimaryFungibleStoreViewFunction,
 } from "../packages/sdk/src/canopy/client";
 import type {
   MeridianBatchViewFunction,
@@ -14,7 +20,9 @@ import type {
 } from "../packages/sdk/src/alm/meridian/client";
 import type {
   RewardsModuleFunction,
+  RewardsModuleViewFunction,
   RewardsRouterFunction,
+  RewardsViewFunction,
 } from "../packages/sdk/src/rewards/client";
 
 /**
@@ -33,12 +41,28 @@ import type {
  *   3. every built payload passes exactly `params.length - 1` arguments — the `-1`
  *      being the signer. This is the arity relationship the bug violated.
  *
- * Coverage limit, stated precisely: (2) and (3) are asserted for all 17 **rewards and
- * Meridian** builders — the 16 synchronous ones plus async
- * `buildStakeVaultSharesPayload`, which resolves offline when given explicit
- * `poolAddresses`. Canopy's three builders are excluded: they are async and read vault
- * state first, so their arity is covered by `check:payloads` against live fullnodes
- * rather than here.
+ * (2) and (3) are asserted for **every** builder in the SDK: the 17 rewards and Meridian
+ * ones, plus canopy's async deposit/withdraw/unstake builders, which read vault state and
+ * so are driven here through a mocked `client.view` (and, for the MovePosition packet
+ * path, a mocked `fetch`). Excluding canopy previously left a hole on exactly the path
+ * where an `abi` key could return unnoticed: the 21 removed `abi: expect.any(Object)`
+ * assertions all sat inside `toMatchObject`, a subset match, so their removal neither
+ * requires nor forbids `abi`.
+ *
+ * NOT covered here, deliberately:
+ *
+ *   - **Argument order.** These tests assert argument *count*, not order. Two adjacent
+ *     `u64` parameters — `minAsset0`/`minAsset1` on Meridian withdraw,
+ *     `maxLossBps`/`minAmountOut` on canopy withdraw — can be transposed with every check
+ *     in this repo green. Nothing derivable from the ABI can catch it, because fullnode
+ *     ABIs carry no parameter *names*; only their types and order. Surf did not catch this
+ *     either. Pinning it would mean asserting exact argument arrays against hand-written
+ *     expectations, which is a deliberate non-goal here — do not assume the arity check
+ *     implies order is safe.
+ *   - **`0x1::fungible_asset::decimals`** (`alm/meridian/client.ts`). There is no bound
+ *     `aptos_framework_fungible_asset` ABI to conform against, and binding one to check a
+ *     single stable framework name is not worth a new pinned ABI on three chains. It is
+ *     exercised live by `meridian.getVaultSummary` in `check:payloads` instead.
  *
  * `abi:check` covers drift between these checked-in ABIs and the chains.
  */
@@ -93,6 +117,49 @@ const REWARDS_MODULE_FUNCTIONS = [
   "subscribe",
   "unsubscribe",
 ] as const satisfies readonly RewardsModuleFunction[];
+
+/**
+ * Views the rewards client reads. These had no offline check at all until now — Surf typed
+ * them via `SurfViewFunctionName<TAbi>`, and the literal unions that replaced Surf covered
+ * only entry functions. Split by host module, mirroring the client's two unions.
+ */
+const REWARDS_VIEW_FUNCTIONS = [
+  "get_pool_details",
+  "get_reward_token_details",
+  "get_rewards_snapshot",
+  "get_registry_overview",
+  "get_registered_pool_count",
+  "get_user_pool_positions",
+  "get_user_pool_positions_by_token",
+  "get_user_pool_positions_by_tokens",
+  "is_pool_registered",
+] as const satisfies readonly RewardsViewFunction[];
+
+const REWARDS_MODULE_VIEW_FUNCTIONS = [
+  "get_earned",
+  "get_pool_info",
+  "is_user_subscribed",
+  "get_user_staked_balance",
+  "get_user_subscribed_pools",
+  "get_reward_data",
+  "get_unallocated_rewards",
+] as const satisfies readonly RewardsModuleViewFunction[];
+
+const CANOPY_ROUTER_DEPOSIT_VIEWS = [
+  "get_allocations_view",
+] as const satisfies readonly CanopyRouterDepositViewFunction[];
+
+const CANOPY_ROUTER_WITHDRAW_VIEWS = [
+  "get_withdrawal_map_view",
+] as const satisfies readonly CanopyRouterWithdrawViewFunction[];
+
+const PRIMARY_FUNGIBLE_STORE_VIEWS = [
+  "balance",
+] as const satisfies readonly PrimaryFungibleStoreViewFunction[];
+
+const CANOPY_VAULT_NON_VIEW_READS = [
+  "get_strategy_shares_balance",
+] as const satisfies readonly CanopyVaultNonViewRead[];
 
 const MERIDIAN_ROUTER_FUNCTIONS = [
   "deposit",
@@ -186,6 +253,54 @@ describe("client function names conform to the bound ABIs", () => {
     expect(entryFunctionProblems(movementMainnet.multiRewards, REWARDS_MODULE_FUNCTIONS)).toEqual([]);
     expect(entryFunctionProblems(aptosTestnet.multiRewardsRouter, REWARDS_ROUTER_FUNCTIONS)).toEqual([]);
     expect(entryFunctionProblems(aptosTestnet.multiRewards, REWARDS_MODULE_FUNCTIONS)).toEqual([]);
+  });
+
+  it("rewards view functions exist and are views", () => {
+    // canopyRewardsView is optional and bound only on movement-mainnet.
+    const rewardsView = movementMainnet.canopyRewardsView;
+    expect(rewardsView).toBeDefined();
+    expect(viewFunctionProblems(rewardsView as MoveModuleAbi, REWARDS_VIEW_FUNCTIONS)).toEqual([]);
+
+    // The multi_rewards module itself is bound on both rewards chains.
+    expect(
+      viewFunctionProblems(movementMainnet.multiRewards, REWARDS_MODULE_VIEW_FUNCTIONS)
+    ).toEqual([]);
+    expect(
+      viewFunctionProblems(aptosTestnet.multiRewards, REWARDS_MODULE_VIEW_FUNCTIONS)
+    ).toEqual([]);
+  });
+
+  it("canopy allocation-map and framework views exist and are views", () => {
+    expect(
+      viewFunctionProblems(movementMainnet.canopyRouterDeposit, CANOPY_ROUTER_DEPOSIT_VIEWS)
+    ).toEqual([]);
+    expect(
+      viewFunctionProblems(movementMainnet.canopyRouterWithdraw, CANOPY_ROUTER_WITHDRAW_VIEWS)
+    ).toEqual([]);
+    expect(
+      viewFunctionProblems(
+        movementMainnet.aptosFrameworkPrimaryFungibleStore,
+        PRIMARY_FUNGIBLE_STORE_VIEWS
+      )
+    ).toEqual([]);
+  });
+
+  /**
+   * The inverse assertion, and deliberately so.
+   *
+   * `getStrategyDetails` reads `vault::get_strategy_shares_balance` through the view
+   * endpoint, but the deployed module does not mark it `#[view]`, so the fullnode rejects
+   * the call and that method is broken on every chain. `check:payloads` records it as an
+   * xfail. Asserting `is_view === false` here means the day someone adds the annotation and
+   * republishes, this test fails and names the follow-up work — rather than the gap sitting
+   * fixed-but-unnoticed behind a permanent skip.
+   */
+  it("get_strategy_shares_balance is still not marked #[view] on-chain", () => {
+    for (const name of CANOPY_VAULT_NON_VIEW_READS) {
+      const fn = findFunction(movementMainnet.canopyVault, name);
+      expect(fn).toBeDefined();
+      expect({ name, isView: fn?.is_view }).toEqual({ name, isView: false });
+    }
   });
 
   it("meridian entry and view functions exist on both deployed chains", () => {
@@ -309,5 +424,269 @@ describe("built payloads are plain and correctly sized", () => {
     ]) {
       expectPlainPayload(payload);
     }
+  });
+
+  /**
+   * Canopy's builders, which this file used to exclude for being async.
+   *
+   * They are async only because they read vault state through `client.view`, which the
+   * suite already mocks — so the exclusion cost real coverage for no reason. It mattered
+   * because the removed `abi: expect.any(Object)` assertions were subset matches: if `abi`
+   * came back on the canopy deposit/withdraw path specifically, every offline check stayed
+   * green and only live `check:payloads` would catch it.
+   *
+   * All six `CanopyRouterFunction` names are driven here, which needs three vault shapes:
+   *
+   *   - `paired_coin_type` present            -> deposit_coin / withdraw_coin
+   *   - absent, no MovePosition strategy      -> deposit_fa / withdraw_fa
+   *   - absent, MovePosition strategy present -> *_fa_with_coin_type
+   *
+   * The third is the awkward one. `selectFaFunction` only picks `_with_coin_type` when the
+   * bare variant is missing from the router or when strategy packets exist, and `deposit_fa`
+   * exists on every chain we bind — so packets are the only route, and building one pulls in
+   * the allocation-map view, a strategy withdrawal view, and two MovePosition REST calls.
+   * That whole path is covered by nothing else: `check:payloads` deliberately avoids
+   * MovePosition vaults because they need that external API.
+   */
+  describe("canopy builders", () => {
+    const canopyAbis = getAbisForChain("movement-mainnet");
+    const mpAbi = canopyAbis.canopyStrategyMovepositionSimple as MoveModuleAbi;
+
+    const VAULT = "0xabc";
+    /**
+     * A real movement-mainnet USDC FA metadata address. Using a genuine one means the
+     * chain's default MovePosition `virtualCoinMap` / `nameMap` resolve it, so the fixture
+     * exercises the shipped config rather than a hand-made override.
+     */
+    const USDC_FA = "0x83121c9f9b0527d1f056e21a950d6bf3b9e9e2e8353d0e95ccea726713cbea39";
+    const MP_CONCRETE = "0xd7c7b27e361434e18d2410fd02f7140a8c10d174c9be0efd5324578d243953bd";
+    const MP_STRATEGY = "0x5741";
+    /** Unresolvable on purpose: if the fetch stub ever fails to install, the test errors
+     *  instead of reaching the real MovePosition API. */
+    const API_URL = "https://moveposition.invalid";
+    const AMOUNT = 1000n;
+
+    const viewId = (abi: MoveModuleAbi, fn: string) =>
+      `${normalizeMoveAddress(abi.address)}::${abi.name}::${fn}`;
+
+    const VAULT_VIEW = viewId(canopyAbis.canopyVault, "vault_view");
+    const ALLOCATIONS_VIEW = viewId(canopyAbis.canopyRouterDeposit, "get_allocations_view");
+    const WITHDRAWAL_MAP_VIEW = viewId(
+      canopyAbis.canopyRouterWithdraw,
+      "get_withdrawal_map_view"
+    );
+    const WITHDRAWAL_AMOUNT_VIEW = viewId(mpAbi, "withdrawal_amount_view_fa");
+
+    const realFetch = globalThis.fetch;
+    afterEach(() => {
+      globalThis.fetch = realFetch;
+    });
+
+    /**
+     * Stubs the two MovePosition REST calls a packet needs and returns the URL list, so a
+     * test can assert the packet path was actually entered rather than silently falling
+     * back to the bare `_fa` variant.
+     */
+    function stubMovePositionFetch(): string[] {
+      const calls: string[] = [];
+
+      globalThis.fetch = (async (input: unknown) => {
+        const url = String(input);
+        calls.push(url);
+
+        return {
+          ok: true,
+          json: async () =>
+            url.includes("/portfolios/")
+              ? { collaterals: [], liabilities: [] }
+              : { packet: "0xaabb" },
+        } as unknown as Response;
+      }) as typeof globalThis.fetch;
+
+      return calls;
+    }
+
+    function strategyFixture(strategyAddress: string, concreteAddress: string) {
+      return {
+        strategy_address: strategyAddress,
+        asset_address: USDC_FA,
+        concrete_address: concreteAddress,
+        current_vault_debt: "4",
+        debt_limit: "5",
+        // A number, not a string: fullnodes serialize u8 as a JSON number, and the old
+        // fixtures' `"6"` is exactly what hid the `readMoveU8` bug.
+        decimals: 6,
+        last_report: "7",
+        shares_address: "0x8",
+        total_asset: "9",
+        total_debt: "10",
+        total_idle: "11",
+        total_loss: "12",
+        total_profit: "13",
+        total_shares: "14",
+        vault_address: VAULT,
+      };
+    }
+
+    function vaultViewFixture(options: {
+      pairedCoinType?: string;
+      strategies?: unknown[];
+    }): unknown[] {
+      return [
+        {
+          decimals: 8,
+          total_debt: "1",
+          total_idle: "2",
+          total_shares: "3",
+          total_asset: "4",
+          asset_name: "USDC",
+          shares_name: "Canopy USDC",
+          vault_address: VAULT,
+          asset_address: USDC_FA,
+          shares_address: "0x123",
+          paired_coin_type: {
+            vec: options.pairedCoinType ? [options.pairedCoinType] : [],
+          },
+          strategies: options.strategies ?? [],
+        },
+      ];
+    }
+
+    /** The allocation map shape `parseAllocationMap` expects: a `data` array of key/value. */
+    const allocationMap = [{ data: [{ key: MP_STRATEGY, value: AMOUNT.toString() }] }];
+
+    function createSdk(responses: Record<string, unknown[]>) {
+      return new CanopySdk(createMovementMock(responses) as never, {
+        chain: "movement-mainnet",
+        moveposition: { apiUrl: API_URL },
+      });
+    }
+
+    it("builds plain, correctly sized payloads on the coin and bare-fa paths", async () => {
+      const built: string[] = [];
+
+      for (const pairedCoinType of ["0x1::aptos_coin::AptosCoin", undefined]) {
+        const sdk = createSdk({
+          [VAULT_VIEW]: vaultViewFixture({ ...(pairedCoinType ? { pairedCoinType } : {}) }),
+        });
+        const canopy = sdk.canopy!;
+
+        for (const payload of [
+          await canopy.buildDepositPayload({
+            vaultAddress: VAULT,
+            amount: AMOUNT,
+            minSharesOut: 0n,
+          }),
+          await canopy.buildWithdrawPayload({
+            vaultAddress: VAULT,
+            shares: AMOUNT,
+            maxLossBps: 0n,
+            minAmountOut: 0n,
+          }),
+        ]) {
+          expectPlainPayload(payload);
+          built.push((payload as { function: string }).function.split("::")[2] as string);
+        }
+      }
+
+      expect(built).toEqual([
+        "deposit_coin",
+        "withdraw_coin",
+        "deposit_fa",
+        "withdraw_fa",
+      ]);
+    });
+
+    it("builds plain, correctly sized payloads on the MovePosition _with_coin_type path", async () => {
+      const built: string[] = [];
+      const fetchCalls = stubMovePositionFetch();
+
+      const sdk = createSdk({
+        [VAULT_VIEW]: vaultViewFixture({
+          strategies: [strategyFixture(MP_STRATEGY, MP_CONCRETE)],
+        }),
+        [ALLOCATIONS_VIEW]: allocationMap,
+        [WITHDRAWAL_MAP_VIEW]: allocationMap,
+        [WITHDRAWAL_AMOUNT_VIEW]: [AMOUNT.toString()],
+      });
+      const canopy = sdk.canopy!;
+
+      for (const payload of [
+        await canopy.buildDepositPayload({
+          vaultAddress: VAULT,
+          amount: AMOUNT,
+          minSharesOut: 0n,
+        }),
+        await canopy.buildWithdrawPayload({
+          vaultAddress: VAULT,
+          shares: AMOUNT,
+          maxLossBps: 0n,
+          minAmountOut: 0n,
+        }),
+      ]) {
+        expectPlainPayload(payload);
+        const typed = payload as { function: string; typeArguments: string[] };
+        built.push(typed.function.split("::")[2] as string);
+        // A silent fallback to the bare variant would still satisfy expectPlainPayload,
+        // so pin the coin-typed shape: exactly one type argument.
+        expect(typed.typeArguments).toHaveLength(1);
+      }
+
+      expect(built).toEqual(["deposit_fa_with_coin_type", "withdraw_fa_with_coin_type"]);
+      // Two REST calls per packet, one packet per operation.
+      expect(fetchCalls.filter((url) => url.includes("/portfolios/"))).toHaveLength(2);
+      expect(fetchCalls.filter((url) => url.includes("/brokers/lend/v2"))).toHaveLength(1);
+      expect(fetchCalls.filter((url) => url.includes("/brokers/redeem/v2"))).toHaveLength(1);
+    });
+
+    /**
+     * `unstakeAndWithdraw` returns a plan carrying two payloads, and the unstake one is
+     * built against the multiRewards ABI from inside the canopy client — so a per-client
+     * sweep misses it.
+     */
+    it("builds plain, correctly sized payloads for the unstakeAndWithdraw plan", async () => {
+      const sdk = createSdk({
+        [VAULT_VIEW]: vaultViewFixture({ pairedCoinType: "0x1::aptos_coin::AptosCoin" }),
+      });
+
+      const plan = await sdk.canopy!.unstakeAndWithdraw({
+        vaultAddress: VAULT,
+        shares: AMOUNT,
+        walletShares: 0n,
+        stakedShares: AMOUNT,
+        maxLossBps: 0n,
+        minAmountOut: 0n,
+      });
+
+      // `UnstakeAndWithdrawPlan` is a discriminated union; only the `requiresUnstake: true`
+      // arm carries an unstake payload, so narrow rather than optional-chaining past it —
+      // otherwise a plan that stopped producing the unstake leg would pass silently.
+      if (!plan.requiresUnstake) {
+        throw new Error("fixture should require an unstake leg");
+      }
+
+      for (const payload of [plan.unstakePayload, plan.withdrawPayload]) {
+        expect(payload).toBeDefined();
+        expectPlainPayload(payload);
+      }
+    });
+
+    /**
+     * Every name in the union must be reachable from a builder. A name that no branch can
+     * produce is either dead or a branch nothing covers — both worth failing on, and
+     * cheaper to catch here than by reading `selectFaFunction` again.
+     */
+    it("covers all six CanopyRouterFunction names across the branches above", () => {
+      expect([...CANOPY_ROUTER_FUNCTIONS].sort()).toEqual(
+        [
+          "deposit_coin",
+          "deposit_fa",
+          "deposit_fa_with_coin_type",
+          "withdraw_coin",
+          "withdraw_fa",
+          "withdraw_fa_with_coin_type",
+        ].sort()
+      );
+    });
   });
 });
