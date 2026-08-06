@@ -13,12 +13,17 @@
     }
   },
   "scripts": {
-    "build": "tsup"
+    "build": "tsup",
+    "prepublishOnly": "node ../../scripts/ci/require-release-tag.mjs"
   },
   "files": [
     "dist"
   ],
   "dependencies": {
     "@canopyhub/canopy-sdk-deployments": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
   }
 }

@@ -13,12 +13,17 @@
     }
   },
   "scripts": {
-    "build": "tsup"
+    "build": "tsup",
+    "prepublishOnly": "node ../../scripts/ci/require-release-tag.mjs"
   },
   "files": [
     "dist"
   ],
   "peerDependencies": {
     "@aptos-labs/ts-sdk": "^7.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
   }
 }

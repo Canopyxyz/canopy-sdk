@@ -73,7 +73,9 @@
     "check:payloads": "node scripts/ci/check-live-payloads.mjs",
     "check:bundle": "node scripts/ci/check-browser-bundle.mjs",
     "validate:deployments": "node -e \"import('./dist/deployments.mjs').then(({listDeployments})=>{listDeployments(); console.log('deployments ok')})\"",
-    "prepublishOnly": "pnpm run build"
+    "release:next": "node scripts/release.mjs next",
+    "release:latest": "node scripts/release.mjs latest",
+    "prepublishOnly": "node scripts/ci/require-release-tag.mjs && pnpm run build"
   },
   "peerDependencies": {
     "@aptos-labs/ts-sdk": "^7.0.0"
