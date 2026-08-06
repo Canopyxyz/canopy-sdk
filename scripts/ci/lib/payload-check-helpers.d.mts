@@ -7,11 +7,23 @@
  * suppressed genuine mistakes in those tests.
  */
 
-/** One-line summary for a report row, including the `cause` when present. */
+/**
+ * One-line summary for a report row: the `cause` when present, prefixed with the structured
+ * status when there is one.
+ */
 export function message(error: unknown): string;
 
-/** The error's message joined with its nested `cause` chain, for matching and classifying. */
+/** The error's message joined with its nested `cause` chain. Textual only, no status. */
 export function fullErrorText(error: unknown): string;
+
+/**
+ * First numeric `status` on the error or its cause chain, whatever its value. For reporting —
+ * use `isTransportStatus` to classify.
+ */
+export function firstStatus(error: unknown): number | undefined;
+
+/** Whether a status means the chain could not serve the request: 408, 429, or any 5xx. */
+export function isTransportStatus(status: unknown): boolean;
 
 /**
  * True only for errors meaning the fullnode could not be reached or failed to serve the

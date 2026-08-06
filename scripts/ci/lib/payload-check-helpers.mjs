@@ -12,9 +12,25 @@
  * the check's whole purpose. It is deliberately a narrow allowlist of transport symptoms
  * rather than a broad "looks like a network problem" heuristic, and
  * `tests/payload-check-helpers.test.ts` pins both directions.
+ *
+ * That claim was not true of an earlier version. It carried two bare numeric patterns,
+ * `/\b429\b/` and `/\b5\d{2}\b/`, which matched any three-digit number *anywhere* in the
+ * flattened error text — so `EINSUFFICIENT_SHARES: have 512, need 600`,
+ * `Move abort code 429 in module vault` and `…at position 501` all classified as transport.
+ * Checking `PAYLOAD_PATTERNS` first did not help: that protects the *known* rejection strings,
+ * and the exposure was precisely the unknown ones. The numeric signal now comes from the
+ * structured `status` field instead of from prose. Do not reintroduce a bare numeric pattern
+ * here; tightening it to require `status`/`code`/`HTTP` adjacency was tried and still matched
+ * `Move abort code 429`.
  */
 
-/** Symptoms of the request never reaching, or not surviving, the fullnode. */
+/**
+ * Symptoms of the request never reaching, or not surviving, the fullnode.
+ *
+ * Textual only, on purpose — see the header. Every canonical HTTP failure carries a reason
+ * phrase (`bad gateway`, `service unavailable`, …); the bare-status case with no phrase is
+ * handled structurally by `isTransportStatus`.
+ */
 const TRANSPORT_PATTERNS = [
   /fetch failed/i,
   /network (?:error|request failed)/i,
@@ -26,10 +42,8 @@ const TRANSPORT_PATTERNS = [
   /\bEAI_AGAIN\b/,
   /\bEPIPE\b/,
   /timed? ?out/i,
-  /\b429\b/,
   /too many requests/i,
   /rate limit/i,
-  /\b5\d{2}\b/,
   /bad gateway/i,
   /service unavailable/i,
   /gateway time-?out/i,
@@ -64,9 +78,50 @@ const PAYLOAD_PATTERNS = [
 export function message(error) {
   const own = error instanceof Error ? error.message : String(error);
   const cause = error instanceof Error && error.cause instanceof Error ? error.cause.message : "";
-  const text = cause && !own.includes(cause) ? `${own}: ${cause}` : own;
+  const joined = cause && !own.includes(cause) ? `${own}: ${cause}` : own;
+
+  // Any status, not just the transport ones: a 404 belongs in a report row even though it must
+  // never make something transport. A 502 otherwise prints as a bare "Request failed".
+  const status = firstStatus(error);
+  const text = status === undefined ? joined : `[status ${status}] ${joined}`;
 
   return text.replace(/\s+/g, " ").slice(0, 240);
+}
+
+/**
+ * First numeric `status` found on the error or its cause chain, **whatever its value**.
+ *
+ * For reporting. Deliberately separate from `isTransportStatus`: reports want every status,
+ * classification wants only the ones that mean the chain could not serve the request. Folding
+ * the two together would make any `AptosApiError` — including a 400 carrying a type mismatch —
+ * look like infrastructure.
+ */
+export function firstStatus(error) {
+  let current = error;
+
+  for (let depth = 0; current && depth < 5; depth += 1) {
+    if (typeof current === "object" && current !== null && typeof current.status === "number") {
+      return current.status;
+    }
+    current = current instanceof Error ? current.cause : undefined;
+  }
+
+  return undefined;
+}
+
+/**
+ * Whether an HTTP status means the fullnode could not serve the request.
+ *
+ * `408` request timeout, `429` rate limited, and any `5xx`. Explicitly **not** 4xx in general:
+ * a `400` is the shape a Move argument rejection arrives in, and a `404` means the module or
+ * endpoint is wrong. Both are defects to fix, not infrastructure to retry.
+ */
+export function isTransportStatus(status) {
+  if (typeof status !== "number") {
+    return false;
+  }
+
+  return status === 408 || status === 429 || (status >= 500 && status <= 599);
 }
 
 /**
@@ -81,9 +136,6 @@ export function fullErrorText(error) {
 
   for (let depth = 0; current && depth < 5; depth += 1) {
     parts.push(current instanceof Error ? current.message : String(current));
-    if (typeof current === "object" && current !== null && "status" in current) {
-      parts.push(String(current.status));
-    }
     current = current instanceof Error ? current.cause : undefined;
   }
 
@@ -93,12 +145,21 @@ export function fullErrorText(error) {
 /**
  * True only for errors that indicate the fullnode could not be reached or failed to serve
  * the request. A payload rejection always wins, so a real defect can never be downgraded.
+ *
+ * Order is deliberate. `PAYLOAD_PATTERNS` runs first so a 500 whose body quotes
+ * `Type mismatch` is still reported as a defect — ambiguity resolves toward "our bug", which
+ * gates, rather than toward "their outage", which reads as noise. The structured status check
+ * comes next because it is exact, and the textual patterns last.
  */
 export function isTransportError(error) {
   const text = fullErrorText(error);
 
   if (PAYLOAD_PATTERNS.some((pattern) => pattern.test(text))) {
     return false;
+  }
+
+  if (isTransportStatus(firstStatus(error))) {
+    return true;
   }
 
   return TRANSPORT_PATTERNS.some((pattern) => pattern.test(text));
