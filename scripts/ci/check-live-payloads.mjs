@@ -71,6 +71,20 @@ const args = new Set(process.argv.slice(2));
 const requestedChain = getArgValue("--chain");
 /** Any skip becomes a failure. Used for the leading chain; see the header. */
 const strict = args.has("--strict");
+/**
+ * Overrides the chain's fullnode URL.
+ *
+ * Exists so the `infra` path is verifiable by command rather than by editing this file. Point
+ * a leg at an unreachable host and every call should land in `infra` with `failed == 0`, which
+ * is what proves a transport failure is not being misfiled as a payload defect:
+ *
+ *   node scripts/ci/check-live-payloads.mjs --chain=movement-mainnet \
+ *     --fullnode=https://definitely-not-a-real-fullnode.invalid/v1
+ *
+ * Expect skips alongside the infra rows — fixture discovery swallows its own errors — so judge
+ * the run on `failed == 0`, not on the skip count.
+ */
+const fullnodeOverride = getArgValue("--fullnode");
 
 /** A single fullnode call should never hang CI; three attempts on transport errors only. */
 const CALL_TIMEOUT_MS = 45_000;
@@ -111,11 +125,10 @@ for (const chain of requestedChain ? [requestedChain] : Object.keys(CHAINS)) {
     throw new Error(`Unknown chain: ${chain}`);
   }
 
+  const fullnode = fullnodeOverride ?? chainConfig.fullnode;
   const aptos = new Aptos(
     new AptosConfig(
-      chainConfig.fullnode
-        ? { network: chainConfig.network, fullnode: chainConfig.fullnode }
-        : { network: chainConfig.network }
+      fullnode ? { network: chainConfig.network, fullnode } : { network: chainConfig.network }
     )
   );
   const sdk = createCanopySdk(aptos, { chain });
