@@ -70,6 +70,11 @@ import type {
 // The unions are type-only, so the names are duplicated here as runtime values.
 // `satisfies` ties them back to the union, so a rename or removal in the client
 // breaks this file rather than silently narrowing coverage.
+//
+// `satisfies` only proves every *listed* name is a union member — not the converse. Adding a
+// name to a union would leave the table, and so the sweep, silently narrower with everything
+// green: exactly the failure this file exists to prevent. `_TABLES_COVER_THEIR_UNIONS` at the
+// bottom closes that direction for every table below.
 const CANOPY_ROUTER_FUNCTIONS = [
   "deposit_coin",
   "deposit_fa",
@@ -186,6 +191,47 @@ const MERIDIAN_BATCH_VIEWS = [
   "batch_get_user_balances",
   "batch_get_vault_positions",
 ] as const satisfies readonly MeridianBatchViewFunction[];
+
+/**
+ * The other half of `satisfies`: proves a table lists *every* member of its union.
+ *
+ * Resolves to `true` when the table is complete, and otherwise to an object type naming the
+ * members that are missing — so the compiler error points at the union member somebody added
+ * without extending the table, rather than just saying the types do not match.
+ *
+ * The `[…] extends [never]` wrapping is deliberate: a bare `Exclude<…> extends never` would
+ * distribute over the union and answer per-member instead of for the union as a whole.
+ */
+type MustCover<Union extends string, Table extends readonly string[]> =
+  [Exclude<Union, Table[number]>] extends [never]
+    ? true
+    : { missingFromTable: Exclude<Union, Table[number]> };
+
+/**
+ * Compile-time only; `tests/` is inside `tsc --noEmit`, so this is enforced by the existing
+ * typecheck step with no new CI wiring. Adding a name to any of these unions fails the build
+ * until the corresponding table above is extended, which is what keeps the sweep honest.
+ *
+ * Every table gets an entry. A table with no entry here is unprotected against additions.
+ */
+const _TABLES_COVER_THEIR_UNIONS: [
+  MustCover<CanopyRouterFunction, typeof CANOPY_ROUTER_FUNCTIONS>,
+  MustCover<CanopyVaultViewFunction, typeof CANOPY_VAULT_VIEWS>,
+  MustCover<CanopyHelpersViewFunction, typeof CANOPY_HELPERS_VIEWS>,
+  MustCover<CanopyRouterDepositViewFunction, typeof CANOPY_ROUTER_DEPOSIT_VIEWS>,
+  MustCover<CanopyRouterWithdrawViewFunction, typeof CANOPY_ROUTER_WITHDRAW_VIEWS>,
+  MustCover<CanopyVaultNonViewRead, typeof CANOPY_VAULT_NON_VIEW_READS>,
+  MustCover<PrimaryFungibleStoreViewFunction, typeof PRIMARY_FUNGIBLE_STORE_VIEWS>,
+  MustCover<RewardsRouterFunction, typeof REWARDS_ROUTER_FUNCTIONS>,
+  MustCover<RewardsModuleFunction, typeof REWARDS_MODULE_FUNCTIONS>,
+  MustCover<RewardsViewFunction, typeof REWARDS_VIEW_FUNCTIONS>,
+  MustCover<RewardsModuleViewFunction, typeof REWARDS_MODULE_VIEW_FUNCTIONS>,
+  MustCover<MeridianRouterFunction, typeof MERIDIAN_ROUTER_FUNCTIONS>,
+  MustCover<MeridianRegistryViewFunction, typeof MERIDIAN_REGISTRY_VIEWS>,
+  MustCover<MeridianVaultViewFunction, typeof MERIDIAN_VAULT_VIEWS>,
+  MustCover<MeridianBatchViewFunction, typeof MERIDIAN_BATCH_VIEWS>,
+] = [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true];
+void _TABLES_COVER_THEIR_UNIONS;
 
 function findFunction(abi: MoveModuleAbi, name: string) {
   return abi.exposed_functions.find((fn) => fn.name === name);
