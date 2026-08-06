@@ -1,5 +1,7 @@
 import {
+  firstStatus,
   isTransportError,
+  isTransportStatus,
   message,
   withRetry,
   withTimeout,
@@ -27,6 +29,14 @@ import {
 function errorWithCause(text: string, cause: string): Error {
   const error = new Error(text) as Error & { cause?: unknown };
   error.cause = new Error(cause);
+  return error;
+}
+
+/** An `AptosApiError`-shaped error: a message plus a structured numeric `status`. */
+function errorWithStatus(text: string, status: number, cause?: Error): Error {
+  const error = new Error(text) as Error & { status?: number; cause?: unknown };
+  error.status = status;
+  if (cause) error.cause = cause;
   return error;
 }
 
@@ -85,9 +95,104 @@ describe("payload-check helpers", () => {
       expect(isTransportError(wrapped)).toBe(true);
     });
 
+    it("classifies a bare status with no reason phrase", () => {
+      // The one case the textual patterns cannot reach, and the reason the structured check
+      // exists: a 502 whose message carries no "bad gateway" to match on.
+      expect(isTransportError(errorWithStatus("Request failed", 502))).toBe(true);
+    });
+
+    it("finds a status on the cause chain, not just the outer error", () => {
+      // The real shape: CanopyError carries no status, the AptosApiError underneath does.
+      const wrapped = new Error("View function call failed") as Error & { cause?: unknown };
+      wrapped.cause = errorWithStatus("api error", 503);
+
+      expect(isTransportError(wrapped)).toBe(true);
+    });
+
     it("does not classify an unrecognised error as transport", () => {
       // Default to "payload": a mystery failure should gate, not be waved through.
       expect(isTransportError(new Error("something else entirely"))).toBe(false);
+    });
+
+    /**
+     * Regression: an earlier version carried bare `/\b429\b/` and `/\b5\d{2}\b/` patterns,
+     * which matched any three-digit number anywhere in the flattened text. Every case here
+     * classified as transport, so a real payload defect was reported as
+     * "could not reach the chain" and retried three times.
+     *
+     * The case above passed throughout — its fixture simply has no digits in it. That is why
+     * these exist: the invariant was being satisfied by accident, not tested.
+     */
+    const numericPayloadDefects = [
+      "something else entirely, amount 550",
+      "Move abort code 429 in module vault",
+      "EINSUFFICIENT_SHARES: have 512, need 600",
+      "Unexpected argument at position 501 for entry function",
+      // Amounts in the u64 range are ordinary in this codebase's error messages.
+      "withdraw of 1000 exceeds available 500",
+    ];
+
+    it.each(numericPayloadDefects)(
+      "does not classify %s as transport just because it contains a number",
+      (text) => {
+        expect(isTransportError(new Error(text))).toBe(false);
+      }
+    );
+
+    it("does not treat a 4xx as transport, even though it is an HTTP status", () => {
+      // A 400 is the shape a Move argument rejection arrives in, and a 404 means the module or
+      // endpoint is wrong. Both are defects to fix, not infrastructure to retry.
+      expect(isTransportError(errorWithStatus("Bad Request", 400))).toBe(false);
+      expect(isTransportError(errorWithStatus("Not Found", 404))).toBe(false);
+    });
+
+    it("keeps a payload rejection a payload rejection even behind a 5xx status", () => {
+      // PAYLOAD_PATTERNS runs before the status check on purpose: ambiguity resolves toward
+      // "our bug", which gates, rather than "their outage", which reads as noise.
+      const wrapped = errorWithStatus(
+        "Internal error",
+        500,
+        new Error("Type mismatch for argument 0, type '&signer'")
+      );
+
+      expect(isTransportError(wrapped)).toBe(false);
+    });
+  });
+
+  /**
+   * Split from `isTransportError` because reporting and classification need different answers
+   * for the same input: a 404 belongs in a report row but must never make something transport.
+   * Folding them together is how a 400 carrying a type mismatch would look like an outage.
+   */
+  describe("firstStatus and isTransportStatus", () => {
+    it("reports any status, including ones that are not transport", () => {
+      expect(firstStatus(errorWithStatus("Not Found", 404))).toBe(404);
+      expect(isTransportStatus(404)).toBe(false);
+    });
+
+    it("returns undefined when nothing in the chain carries a status", () => {
+      expect(firstStatus(new Error("fetch failed"))).toBeUndefined();
+      expect(firstStatus("not even an error")).toBeUndefined();
+    });
+
+    it.each([
+      [407, false],
+      [408, true],
+      [428, false],
+      [429, true],
+      [499, false],
+      [500, true],
+      [503, true],
+      [599, true],
+      [600, false],
+      [200, false],
+    ])("isTransportStatus(%i) is %s", (status, expected) => {
+      expect(isTransportStatus(status)).toBe(expected);
+    });
+
+    it("rejects non-numeric input rather than coercing", () => {
+      expect(isTransportStatus("502")).toBe(false);
+      expect(isTransportStatus(undefined)).toBe(false);
     });
   });
 
@@ -187,6 +292,20 @@ describe("payload-check helpers", () => {
 
     it("handles non-Error throws", () => {
       expect(message("plain string")).toBe("plain string");
+    });
+
+    it("prefixes the structured status when there is one", () => {
+      // Without this a 502 prints as a bare "Request failed" and every transport row in CI
+      // reads identically.
+      expect(message(errorWithStatus("Request failed", 502))).toBe("[status 502] Request failed");
+    });
+
+    it("prefixes non-transport statuses too, since reports want them", () => {
+      expect(message(errorWithStatus("Not Found", 404))).toBe("[status 404] Not Found");
+    });
+
+    it("omits the prefix when nothing carries a status", () => {
+      expect(message(new Error("fetch failed"))).toBe("fetch failed");
     });
   });
 });
