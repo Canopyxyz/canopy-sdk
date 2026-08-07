@@ -123,24 +123,47 @@ export function discoverPublishedPackages(rootDir) {
 /**
  * Every file path a manifest promises, as `[label, target]` pairs.
  *
+ * Walks `exports` recursively instead of assuming `{subpath: {condition: string}}`, because the
+ * export map has several legal shapes and only one of them is a flat condition object:
+ *
+ *   "./x": "./file.js"                        string shorthand
+ *   ".":   { node: { import: … }, default: … } nested conditions
+ *   "exports": "./dist/index.js"               bare string, no subpaths
+ *   "./x": [{ import: … }, "./fallback.js"]    array fallback
+ *   "./x": null                                deliberately blocked
+ *
+ * The previous flat walk iterated a string shorthand character by character — asserting on a
+ * file named `p` — and handed `path.join` an object for nested conditions, crashing with
+ * `ERR_INVALID_ARG_TYPE` and naming no package. Both failed closed, so nothing shipped, but both
+ * pointed away from the cause. Recursion covers every shape in fewer lines than the special
+ * cases did, and arrays fall out for free since `Object.entries` yields indices.
+ *
  * Pure: returns targets, resolves nothing. The caller decides what "exists" means.
  */
 export function collectManifestTargets(manifest) {
   const targets = [];
 
-  for (const [subpath, conditions] of Object.entries(manifest.exports ?? {})) {
-    for (const [condition, target] of Object.entries(conditions)) {
-      targets.push([`exports["${subpath}"].${condition}`, target]);
+  const push = (label, node) => {
+    if (typeof node === "string") {
+      targets.push([label, node]);
+      return;
     }
+    // `null` blocks an export deliberately; anything non-object is not a path.
+    if (node === null || typeof node !== "object") return;
+
+    for (const [key, child] of Object.entries(node)) {
+      // Subpath keys read better bracketed (`exports["./core"]`), condition names as fields
+      // (`.import`), which keeps the labels matching how the manifest is written.
+      push(key.startsWith(".") ? `${label}[${JSON.stringify(key)}]` : `${label}.${key}`, child);
+    }
+  };
+
+  for (const field of ["main", "module", "types"]) {
+    if (manifest[field]) targets.push([field, manifest[field]]);
   }
 
-  for (const [range, mapping] of Object.entries(manifest.typesVersions ?? {})) {
-    for (const [key, entries] of Object.entries(mapping)) {
-      for (const target of entries) {
-        targets.push([`typesVersions["${range}"].${key}`, target]);
-      }
-    }
-  }
+  push("exports", manifest.exports);
+  push("typesVersions", manifest.typesVersions);
 
   return targets;
 }
