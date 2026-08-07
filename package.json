@@ -75,7 +75,7 @@
     "validate:deployments": "node -e \"import('./dist/deployments.mjs').then(({listDeployments})=>{listDeployments(); console.log('deployments ok')})\"",
     "release:next": "node scripts/release.mjs next",
     "release:latest": "node scripts/release.mjs latest",
-    "prepublishOnly": "node scripts/ci/require-release-tag.mjs && pnpm run build"
+    "prepublishOnly": "node scripts/ci/require-release-tag.mjs && tsup"
   },
   "peerDependencies": {
     "@aptos-labs/ts-sdk": "^7.0.0"

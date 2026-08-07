@@ -14,7 +14,7 @@
   },
   "scripts": {
     "build": "tsup",
-    "prepublishOnly": "node ../../scripts/ci/require-release-tag.mjs"
+    "prepublishOnly": "node ../../scripts/ci/require-release-tag.mjs && pnpm run build"
   },
   "files": [
     "dist"
