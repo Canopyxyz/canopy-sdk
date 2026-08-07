@@ -199,8 +199,18 @@ const MERIDIAN_BATCH_VIEWS = [
  * members that are missing — so the compiler error points at the union member somebody added
  * without extending the table, rather than just saying the types do not match.
  *
- * The `[…] extends [never]` wrapping is deliberate: a bare `Exclude<…> extends never` would
- * distribute over the union and answer per-member instead of for the union as a whole.
+ * The `[…] extends [never]` wrapping is deliberate, but not for the reason usually given.
+ * Conditional types distribute only over a **naked type parameter**, and `Exclude<…>` is a
+ * computed type — so here the unwrapped form answers for the union as a whole too, and the two
+ * behave identically:
+ *
+ *   type Naked<T>       = T extends never ? "empty" : "nonempty";
+ *   Naked<never>                             // never   <- distributes over the empty union
+ *   Exclude<"a", "a"> extends never ? …      // "empty" <- computed, so it does not
+ *
+ * Keep the brackets anyway: they are unconditionally correct, and they become load-bearing the
+ * moment the checked type is refactored into a naked parameter — a real risk if `MustCover` is
+ * ever generalised. The habit is right; the usual justification for it is not.
  */
 type MustCover<Union extends string, Table extends readonly string[]> =
   [Exclude<Union, Table[number]>] extends [never]

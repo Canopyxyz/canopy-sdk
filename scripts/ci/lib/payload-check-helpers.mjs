@@ -22,6 +22,16 @@
  * structured `status` field instead of from prose. Do not reintroduce a bare numeric pattern
  * here; tightening it to require `status`/`code`/`HTTP` adjacency was tried and still matched
  * `Move abort code 429`.
+ *
+ * KNOWN LIMIT, ACCEPTED
+ * ---------------------
+ * An error whose status appears **only in prose** — `HTTP 502`, `Request failed with status
+ * 503` — with no reason phrase to match textually and no structured `status` field, is now
+ * classified as a payload defect rather than transport. That over-gates: it reports a real
+ * outage as our bug, which is noisy but safe, where the reverse would hide a real defect. Real
+ * `AptosApiError`s carry `status`, so this is a hypothetical shape rather than one seen in
+ * practice. Recorded because the fix for it looks like "just add a regex for HTTP \\d+", which
+ * is how the original bug got in.
  */
 
 /**

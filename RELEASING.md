@@ -90,14 +90,42 @@ waives it for rehearsals, and also passes `--publish-branch` so the prompt never
 
 ## What `pnpm publish -r` covers
 
-All four packages, **including the repo root**. Confirm it rather than trusting it:
+All four packages, **including the repo root**. Confirm it rather than trusting it — and read
+the output unfiltered:
 
 ```bash
-pnpm publish -r --tag next --dry-run --publish-branch "$(git branch --show-current)" \
-  | grep '^npm notice name:'
+pnpm publish -r --tag next --dry-run --publish-branch "$(git branch --show-current)"
 ```
 
-Four names must appear. The wrapper prints the expected list before running for this reason.
+Do not pipe this through `grep`. The file rows are the point: a filter that keeps only the
+summary lines hides exactly the evidence the checklist below asks you to look at.
+
+### What to check in that output
+
+Names alone are not enough. A package that failed to build still *appears* — it just packs
+nothing, and a version burned on an empty tarball cannot be un-published. Check all four:
+
+1. **All four names present.** The wrapper prints the expected list before running.
+2. **`public access` on every line.** Scoped packages default to restricted; a package that
+   publishes restricted is invisible to everyone outside the org.
+3. **`total files` is never `1`.** That is the empty-tarball signature — just `package.json`,
+   no `dist`.
+4. **`dist` entries actually listed**, not only `package.json`.
+
+Do not treat any particular count as the threshold; they move whenever the export surface does,
+and a stale number in this file would teach people to skim the step. For orientation only, at
+the time of writing a healthy run packs:
+
+```
+@canopyhub/canopy-sdk               34 files
+@canopyhub/canopy-sdk-core           7 files
+@canopyhub/canopy-sdk-deployments   11 files
+@canopyhub/canopy-sdk-bindings       7 files
+```
+
+`pnpm run check:exports` enforces the manifest side of this — that every published package runs
+the release guard, runs a build, and sets `access: "public"` — so the manual read above is a
+backstop, not the only line of defence.
 
 This is worth stating because the obvious inference from `pnpm-workspace.yaml` is wrong. It
 lists only `packages/*` and `examples/*`, and other recursive commands really do skip the root:
