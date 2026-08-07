@@ -1,28 +1,6 @@
 import { jest } from "@jest/globals";
 import { CanopySdk } from "../packages/sdk/src";
-
-interface MockViewClient {
-  view: jest.MockedFunction<(input: unknown) => Promise<unknown[]>>;
-}
-
-function createMovementMock(
-  responses: Record<string, unknown[] | ((args: unknown[]) => unknown[])>
-): MockViewClient {
-  return {
-    view: jest.fn(async (input: unknown) => {
-      const payload = (input as { payload: { function: string; functionArguments?: unknown[] } }).payload;
-      const response = responses[payload.function];
-
-      if (!response) {
-        throw new Error(`Missing mock response for ${payload.function}`);
-      }
-
-      return typeof response === "function"
-        ? response(payload.functionArguments ?? [])
-        : response;
-    }),
-  };
-}
+import { createMovementMock } from "./fixtures/view-client-mock";
 
 describe("RewardsDiscoveryClient", () => {
   it("is only constructed on chains with rewards support or an explicit endpoint", () => {
@@ -107,7 +85,6 @@ describe("RewardsDiscoveryClient", () => {
         "11",
         ["0x0000000000000000000000000000000000000000000000000000000000000123"],
       ],
-      abi: expect.any(Object),
     });
 
     global.fetch = originalFetch;

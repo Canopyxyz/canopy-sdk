@@ -1,29 +1,5 @@
-import { jest } from "@jest/globals";
 import { CanopySdk } from "../packages/sdk/src";
-
-interface MockViewClient {
-  view: jest.MockedFunction<(input: unknown) => Promise<unknown[]>>;
-}
-
-function createMovementMock(
-  responses: Record<string, unknown[] | ((args: unknown[]) => unknown[])>
-): MockViewClient {
-  return {
-    view: jest.fn(async (input: unknown) => {
-      const payload = (input as { payload: { function: string; functionArguments?: unknown[] } })
-        .payload;
-      const response = responses[payload.function];
-
-      if (!response) {
-        throw new Error(`Missing mock response for ${payload.function}`);
-      }
-
-      return typeof response === "function"
-        ? response(payload.functionArguments ?? [])
-        : response;
-    }),
-  };
-}
+import { createMovementMock } from "./fixtures/view-client-mock";
 
 describe("Rewards client", () => {
   it("builds rewards payloads and parses rewards views", async () => {
@@ -48,7 +24,6 @@ describe("Rewards client", () => {
         "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3::router::stake",
       typeArguments: ["0x1::aptos_coin::AptosCoin"],
       functionArguments: ["10"],
-      abi: expect.any(Object),
     });
 
     expect(
@@ -69,7 +44,6 @@ describe("Rewards client", () => {
           "0x000000000000000000000000000000000000000000000000000000000000000c",
         ],
       ],
-      abi: expect.any(Object),
     });
 
     expect(
@@ -120,7 +94,6 @@ describe("Rewards client", () => {
         "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3::multi_rewards::subscribe",
       typeArguments: [],
       functionArguments: ["0x000000000000000000000000000000000000000000000000000000000000000a"],
-      abi: expect.any(Object),
     });
 
     expect(rewards.buildUnsubscribePayload({ poolAddress: "0xA" })).toMatchObject({
@@ -128,7 +101,6 @@ describe("Rewards client", () => {
         "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3::multi_rewards::unsubscribe",
       typeArguments: [],
       functionArguments: ["0x000000000000000000000000000000000000000000000000000000000000000a"],
-      abi: expect.any(Object),
     });
 
     expect(
@@ -146,7 +118,6 @@ describe("Rewards client", () => {
         "5",
         ["0x000000000000000000000000000000000000000000000000000000000000000a"],
       ],
-      abi: expect.any(Object),
     });
 
     expect(
@@ -158,7 +129,6 @@ describe("Rewards client", () => {
         "0xd56da69b420f88aa56d713e0453f4dba2ccc6ebd1d1810c821c80b4874ae81d3::router::create_staking_pool",
       typeArguments: ["0x1::aptos_coin::AptosCoin"],
       functionArguments: [],
-      abi: expect.any(Object),
     });
 
     expect(
@@ -182,7 +152,6 @@ describe("Rewards client", () => {
         "VSHARE",
         "8",
       ],
-      abi: expect.any(Object),
     });
 
     await expect(

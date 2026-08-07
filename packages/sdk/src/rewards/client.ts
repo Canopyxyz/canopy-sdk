@@ -1,4 +1,3 @@
-import { createEntryPayload } from "@thalalabs/surf";
 import {
   CanopyError,
   CanopyErrorCode,
@@ -6,9 +5,11 @@ import {
   callSingleViewPayloadResult,
   callViewFunction,
   callViewPayloadFunction,
+  entryFunctionPayload,
   moveUintArgument,
   normalizeMoveAddress,
 } from "@canopyhub/canopy-sdk-core";
+import type { MoveModuleAbi } from "@canopyhub/canopy-sdk-bindings";
 import type { SdkContext, TransactionPayload } from "../types";
 import {
   readMoveAddress,
@@ -52,9 +53,64 @@ import type {
   RewardsUserPoolPositionsByTokensInput,
   UserStakingPosition,
 } from "./types";
-import {
-  createSurfViewFunctionPayload,
-} from "../internal/surf";
+import { abiViewPayload } from "../internal/abi-views";
+
+/**
+ * Entry functions this client builds, split by the module they live on.
+ *
+ * Literal unions replace the compile-time function-name checking Surf provided;
+ * `tests/` asserts each name is an `is_entry` function on the bound ABI with
+ * matching arity.
+ */
+export type RewardsRouterFunction =
+  | "stake"
+  | "stake_and_subscribe"
+  | "stake_and_subscribe_fa"
+  | "stake_token"
+  | "stake_and_subscribe_token"
+  | "withdraw"
+  | "claim_rewards"
+  | "unsubscribe_and_withdraw"
+  | "unsubscribe_and_withdraw_fa"
+  | "create_staking_pool";
+
+export type RewardsModuleFunction = "stake" | "withdraw" | "subscribe" | "unsubscribe";
+
+/**
+ * View functions this client reads, split by the module that hosts them exactly as the
+ * entry unions above are.
+ *
+ * These names had no compile-time check at all after Surf was removed — Surf typed them
+ * via `SurfViewFunctionName<TAbi>`, and the replacement literal unions initially covered
+ * only entry functions. Every name below is reached through a typed helper
+ * (`rewardsViewPayload` / `multiRewardsView`) so a typo or a rename fails to compile, and
+ * `tests/abi-conformance.test.ts` asserts each one is an `is_view` function on the bound
+ * ABI.
+ */
+export type RewardsViewFunction =
+  | "get_pool_details"
+  | "get_reward_token_details"
+  | "get_rewards_snapshot"
+  | "get_registry_overview"
+  | "get_registered_pool_count"
+  | "get_user_pool_positions"
+  | "get_user_pool_positions_by_token"
+  | "get_user_pool_positions_by_tokens"
+  | "is_pool_registered";
+
+/**
+ * Views on the `multi_rewards` module itself, as opposed to the optional
+ * `canopyRewardsView` helper module that `RewardsViewFunction` covers. Easy to miss in a
+ * sweep for `abiViewPayload` call sites, because these build their module id inline.
+ */
+export type RewardsModuleViewFunction =
+  | "get_earned"
+  | "get_pool_info"
+  | "is_user_subscribed"
+  | "get_user_staked_balance"
+  | "get_user_subscribed_pools"
+  | "get_reward_data"
+  | "get_unallocated_rewards";
 
 export class RewardsClient {
   static fromContext(
@@ -73,161 +129,164 @@ export class RewardsClient {
   ) {}
 
   buildStakeCoinPayload(input: BuildCoinStakePayloadInput): TransactionPayload {
-    return createEntryPayload(this.context.abis.multiRewardsRouter, {
-      function: "stake",
-      typeArguments: [input.coinType],
-      functionArguments: [moveUintArgument(input.amount)],
-    });
+    return this.buildRouterPayload("stake", [moveUintArgument(input.amount)], [
+      input.coinType,
+    ]);
   }
 
   buildStakeAndSubscribeCoinPayload(
     input: BuildSubscribeStakeCoinPayloadInput
   ): TransactionPayload {
-    return createEntryPayload(this.context.abis.multiRewardsRouter, {
-      function: "stake_and_subscribe",
-      typeArguments: [input.coinType],
-      functionArguments: [
+    return this.buildRouterPayload(
+      "stake_and_subscribe",
+      [
         input.poolAddresses.map((address) => normalizeMoveAddress(address)),
         moveUintArgument(input.amount),
       ],
-    });
+      [input.coinType]
+    );
   }
 
   buildStakeAssetPayload(input: BuildAssetStakePayloadInput): TransactionPayload {
-    return createEntryPayload(this.context.abis.multiRewards, {
-      function: "stake",
-      typeArguments: [],
-      functionArguments: [
-        normalizeMoveAddress(input.stakingAsset),
-        moveUintArgument(input.amount),
-      ],
-    });
+    return this.buildModulePayload("stake", [
+      normalizeMoveAddress(input.stakingAsset),
+      moveUintArgument(input.amount),
+    ]);
   }
 
   buildStakeAndSubscribeAssetPayload(
     input: BuildSubscribeStakeAssetPayloadInput
   ): TransactionPayload {
-    return createEntryPayload(this.context.abis.multiRewardsRouter, {
-      function: "stake_and_subscribe_fa",
-      typeArguments: [],
-      functionArguments: [
-        normalizeMoveAddress(input.stakingAsset),
-        moveUintArgument(input.amount),
-        input.poolAddresses.map((address) => normalizeMoveAddress(address)),
-      ],
-    });
+    return this.buildRouterPayload("stake_and_subscribe_fa", [
+      normalizeMoveAddress(input.stakingAsset),
+      moveUintArgument(input.amount),
+      input.poolAddresses.map((address) => normalizeMoveAddress(address)),
+    ]);
   }
 
   buildWithdrawCoinPayload(input: BuildCoinStakePayloadInput): TransactionPayload {
-    return createEntryPayload(this.context.abis.multiRewardsRouter, {
-      function: "withdraw",
-      typeArguments: [input.coinType],
-      functionArguments: [moveUintArgument(input.amount)],
-    });
+    return this.buildRouterPayload("withdraw", [moveUintArgument(input.amount)], [
+      input.coinType,
+    ]);
   }
 
   buildWithdrawAssetPayload(input: BuildAssetStakePayloadInput): TransactionPayload {
-    return createEntryPayload(this.context.abis.multiRewards, {
-      function: "withdraw",
-      typeArguments: [],
-      functionArguments: [
-        normalizeMoveAddress(input.stakingAsset),
-        moveUintArgument(input.amount),
-      ],
-    });
+    return this.buildModulePayload("withdraw", [
+      normalizeMoveAddress(input.stakingAsset),
+      moveUintArgument(input.amount),
+    ]);
   }
 
   buildClaimRewardsPayload(input: BuildClaimRewardsPayloadInput): TransactionPayload {
-    return createEntryPayload(this.context.abis.multiRewardsRouter, {
-      function: "claim_rewards",
-      typeArguments: [],
-      functionArguments: [
-        input.rewardTokenAddresses.map((address) => normalizeMoveAddress(address)),
-      ],
-    });
+    return this.buildRouterPayload("claim_rewards", [
+      input.rewardTokenAddresses.map((address) => normalizeMoveAddress(address)),
+    ]);
   }
 
   buildSubscribePayload(input: BuildSubscribePayloadInput): TransactionPayload {
-    return createEntryPayload(this.context.abis.multiRewards, {
-      function: "subscribe",
-      typeArguments: [],
-      functionArguments: [normalizeMoveAddress(input.poolAddress)],
-    });
+    return this.buildModulePayload("subscribe", [
+      normalizeMoveAddress(input.poolAddress),
+    ]);
   }
 
   buildUnsubscribePayload(input: BuildSubscribePayloadInput): TransactionPayload {
-    return createEntryPayload(this.context.abis.multiRewards, {
-      function: "unsubscribe",
-      typeArguments: [],
-      functionArguments: [normalizeMoveAddress(input.poolAddress)],
-    });
+    return this.buildModulePayload("unsubscribe", [
+      normalizeMoveAddress(input.poolAddress),
+    ]);
   }
 
   buildUnsubscribeAndWithdrawCoinPayload(
     input: BuildUnsubscribeAndWithdrawCoinPayloadInput
   ): TransactionPayload {
-    return createEntryPayload(this.context.abis.multiRewardsRouter, {
-      function: "unsubscribe_and_withdraw",
-      typeArguments: [input.coinType],
-      functionArguments: [
+    return this.buildRouterPayload(
+      "unsubscribe_and_withdraw",
+      [
         input.poolAddresses.map((address) => normalizeMoveAddress(address)),
         moveUintArgument(input.amount),
       ],
-    });
+      [input.coinType]
+    );
   }
 
   buildUnsubscribeAndWithdrawAssetPayload(
     input: BuildUnsubscribeAndWithdrawAssetPayloadInput
   ): TransactionPayload {
-    return createEntryPayload(this.context.abis.multiRewardsRouter, {
-      function: "unsubscribe_and_withdraw_fa",
-      typeArguments: [],
-      functionArguments: [
-        normalizeMoveAddress(input.stakingAsset),
-        moveUintArgument(input.amount),
-        input.poolAddresses.map((address) => normalizeMoveAddress(address)),
-      ],
-    });
+    return this.buildRouterPayload("unsubscribe_and_withdraw_fa", [
+      normalizeMoveAddress(input.stakingAsset),
+      moveUintArgument(input.amount),
+      input.poolAddresses.map((address) => normalizeMoveAddress(address)),
+    ]);
   }
 
   buildCreateStakingPoolPayload(
     input: BuildCreateStakingPoolPayloadInput
   ): TransactionPayload {
-    return createEntryPayload(this.context.abis.multiRewardsRouter, {
-      function: "create_staking_pool",
-      typeArguments: [input.coinType],
-      functionArguments: [],
-    });
+    return this.buildRouterPayload("create_staking_pool", [], [input.coinType]);
   }
 
   buildStakeTokenPayload(input: BuildStakeTokenPayloadInput): TransactionPayload {
-    const functionName =
-      input.poolAddresses && input.poolAddresses.length > 0
-        ? "stake_and_subscribe_token"
-        : "stake_token";
+    const subscribing = Boolean(input.poolAddresses && input.poolAddresses.length > 0);
+    const tokenArguments = [
+      moveUintArgument(input.amount),
+      normalizeMoveAddress(input.tokenCreator),
+      input.tokenName,
+      input.tokenSymbol,
+      String(input.tokenDecimals),
+    ];
 
-    return createEntryPayload(this.context.abis.multiRewardsRouter, {
-      function: functionName as never,
-      typeArguments: [] as never,
-      functionArguments:
-        (
-          input.poolAddresses && input.poolAddresses.length > 0
-            ? [
-                input.poolAddresses.map((address) => normalizeMoveAddress(address)),
-                moveUintArgument(input.amount),
-                normalizeMoveAddress(input.tokenCreator),
-                input.tokenName,
-                input.tokenSymbol,
-                String(input.tokenDecimals),
-              ]
-            : [
-                moveUintArgument(input.amount),
-                normalizeMoveAddress(input.tokenCreator),
-                input.tokenName,
-                input.tokenSymbol,
-                String(input.tokenDecimals),
-              ]
-        ) as never,
+    return subscribing
+      ? this.buildRouterPayload("stake_and_subscribe_token", [
+          (input.poolAddresses ?? []).map((address) => normalizeMoveAddress(address)),
+          ...tokenArguments,
+        ])
+      : this.buildRouterPayload("stake_token", tokenArguments);
+  }
+
+  /**
+   * Plain entry payloads carry no `abi` field, so `@aptos-labs/ts-sdk` fetches the
+   * entry-function ABI itself and strips the leading `&signer`. Surf's
+   * `createEntryPayload` attached an `abi` whose `parameters` still included the
+   * signer while `functionArguments` did not, so every argument was matched off by
+   * one and `transaction.build.simple` rejected argument 0.
+   */
+  private buildRouterPayload(
+    functionName: RewardsRouterFunction,
+    functionArguments: unknown[],
+    typeArguments: string[] = []
+  ): TransactionPayload {
+    return this.buildAbiPayload(
+      this.context.abis.multiRewardsRouter,
+      functionName,
+      functionArguments,
+      typeArguments
+    );
+  }
+
+  private buildModulePayload(
+    functionName: RewardsModuleFunction,
+    functionArguments: unknown[],
+    typeArguments: string[] = []
+  ): TransactionPayload {
+    return this.buildAbiPayload(
+      this.context.abis.multiRewards,
+      functionName,
+      functionArguments,
+      typeArguments
+    );
+  }
+
+  private buildAbiPayload(
+    abi: MoveModuleAbi,
+    functionName: string,
+    functionArguments: unknown[],
+    typeArguments: string[]
+  ): TransactionPayload {
+    return entryFunctionPayload({
+      moduleAddress: abi.address,
+      moduleName: abi.name,
+      functionName,
+      typeArguments,
+      functionArguments: functionArguments as never,
     });
   }
 
@@ -254,9 +313,7 @@ export class RewardsClient {
     const earned = await callSingleViewResult(
       this.context.client,
       {
-        moduleAddress: this.context.abis.multiRewards.address,
-        moduleName: this.context.abis.multiRewards.name,
-        functionName: "get_earned",
+        ...this.multiRewardsView("get_earned"),
         functionArguments: [
           normalizeMoveAddress(input.userAddress),
           normalizeMoveAddress(input.poolAddress),
@@ -274,9 +331,7 @@ export class RewardsClient {
     >(
       this.context.client,
       {
-        moduleAddress: this.context.abis.multiRewards.address,
-        moduleName: this.context.abis.multiRewards.name,
-        functionName: "get_pool_info",
+        ...this.multiRewardsView("get_pool_info"),
         functionArguments: [normalizeMoveAddress(poolAddress)],
       }
     );
@@ -289,13 +344,9 @@ export class RewardsClient {
   }
 
   async getPoolDetails(poolAddress: string): Promise<RewardsPoolDetails> {
-    const rewardsView = this.getRewardsViewAbi();
     const pool = await callSingleViewPayloadResult(
       this.context.client,
-      createSurfViewFunctionPayload(rewardsView, {
-        functionName: "get_pool_details",
-        functionArguments: [normalizeMoveAddress(poolAddress)],
-      })
+      this.rewardsViewPayload("get_pool_details", [normalizeMoveAddress(poolAddress)])
     );
 
     return readPoolDetails(pool);
@@ -304,13 +355,9 @@ export class RewardsClient {
   async getRewardTokenDetails(
     poolAddress: string
   ): Promise<RewardsRewardTokenDetails[]> {
-    const rewardsView = this.getRewardsViewAbi();
     const rewardTokens = await callSingleViewPayloadResult(
       this.context.client,
-      createSurfViewFunctionPayload(rewardsView, {
-        functionName: "get_reward_token_details",
-        functionArguments: [normalizeMoveAddress(poolAddress)],
-      })
+      this.rewardsViewPayload("get_reward_token_details", [normalizeMoveAddress(poolAddress)])
     );
 
     return readRewardTokenDetailsVector(rewardTokens);
@@ -319,17 +366,13 @@ export class RewardsClient {
   async getRewardsSnapshot(
     input: RewardsSnapshotInput = {}
   ): Promise<RewardsSnapshot> {
-    const rewardsView = this.getRewardsViewAbi();
     const [pools, userPositions] = await callViewPayloadFunction<[unknown, unknown]>(
       this.context.client,
-        createSurfViewFunctionPayload(rewardsView, {
-          functionName: "get_rewards_snapshot",
-          functionArguments: [
-            moveOptionU64Argument(input.offset),
-            moveOptionU64Argument(input.limit),
-            moveOptionAddressArgument(input.userAddress),
-          ],
-        })
+      this.rewardsViewPayload("get_rewards_snapshot", [
+        moveOptionU64Argument(input.offset),
+        moveOptionU64Argument(input.limit),
+        moveOptionAddressArgument(input.userAddress),
+      ])
     );
 
     return {
@@ -341,18 +384,14 @@ export class RewardsClient {
   async getRegistryOverview(
     input: RewardsRegistryOverviewInput = {}
   ): Promise<RewardsRegistryOverview> {
-    const rewardsView = this.getRewardsViewAbi();
     const [snapshotTimestamp, statusFlag0, statusFlag1, poolsIncluded, pools] =
       await callViewPayloadFunction<[unknown, unknown, unknown, unknown, unknown]>(
         this.context.client,
-        createSurfViewFunctionPayload(rewardsView, {
-          functionName: "get_registry_overview",
-          functionArguments: [
-            moveOptionU64Argument(input.offset),
-            moveOptionU64Argument(input.limit),
-            input.includePools ?? true,
-          ],
-        })
+        this.rewardsViewPayload("get_registry_overview", [
+          moveOptionU64Argument(input.offset),
+          moveOptionU64Argument(input.limit),
+          input.includePools ?? true,
+        ])
       );
 
     return {
@@ -367,12 +406,9 @@ export class RewardsClient {
   }
 
   async getRegisteredPoolCount(): Promise<bigint> {
-    const rewardsView = this.getRewardsViewAbi();
     const count = await callSingleViewPayloadResult(
       this.context.client,
-      createSurfViewFunctionPayload(rewardsView, {
-        functionName: "get_registered_pool_count",
-      })
+      this.rewardsViewPayload("get_registered_pool_count")
     );
 
     return readMoveU64(count);
@@ -381,17 +417,13 @@ export class RewardsClient {
   async getUserPoolPositions(
     input: RewardsUserPoolPositionsInput
   ): Promise<RewardsUserPoolPosition[]> {
-    const rewardsView = this.getRewardsViewAbi();
     const positions = await callSingleViewPayloadResult(
       this.context.client,
-      createSurfViewFunctionPayload(rewardsView, {
-        functionName: "get_user_pool_positions",
-        functionArguments: [
-          normalizeMoveAddress(input.userAddress),
-          moveOptionU64Argument(input.offset),
-          moveOptionU64Argument(input.limit),
-        ],
-      })
+      this.rewardsViewPayload("get_user_pool_positions", [
+        normalizeMoveAddress(input.userAddress),
+        moveOptionU64Argument(input.offset),
+        moveOptionU64Argument(input.limit),
+      ])
     );
 
     return readUserPoolPositionVector(positions);
@@ -400,18 +432,14 @@ export class RewardsClient {
   async getUserPoolPositionsByToken(
     input: RewardsUserPoolPositionsByTokenInput
   ): Promise<RewardsUserPoolPosition[]> {
-    const rewardsView = this.getRewardsViewAbi();
     const positions = await callSingleViewPayloadResult(
       this.context.client,
-      createSurfViewFunctionPayload(rewardsView, {
-        functionName: "get_user_pool_positions_by_token",
-        functionArguments: [
-          normalizeMoveAddress(input.userAddress),
-          normalizeMoveAddress(input.stakingAsset),
-          moveOptionU64Argument(input.offset),
-          moveOptionU64Argument(input.limit),
-        ],
-      })
+      this.rewardsViewPayload("get_user_pool_positions_by_token", [
+        normalizeMoveAddress(input.userAddress),
+        normalizeMoveAddress(input.stakingAsset),
+        moveOptionU64Argument(input.offset),
+        moveOptionU64Argument(input.limit),
+      ])
     );
 
     return readUserPoolPositionVector(positions);
@@ -420,33 +448,23 @@ export class RewardsClient {
   async getUserPoolPositionsByTokens(
     input: RewardsUserPoolPositionsByTokensInput
   ): Promise<RewardsUserPoolPosition[]> {
-    const rewardsView = this.getRewardsViewAbi();
     const positions = await callSingleViewPayloadResult(
       this.context.client,
-      createSurfViewFunctionPayload(rewardsView, {
-        functionName: "get_user_pool_positions_by_tokens",
-        functionArguments: [
-          normalizeMoveAddress(input.userAddress),
-          input.stakingAssets.map((address) => normalizeMoveAddress(address)),
-          moveOptionU64Argument(input.offset),
-          moveOptionU64Argument(input.limit),
-        ],
-      })
+      this.rewardsViewPayload("get_user_pool_positions_by_tokens", [
+        normalizeMoveAddress(input.userAddress),
+        input.stakingAssets.map((address) => normalizeMoveAddress(address)),
+        moveOptionU64Argument(input.offset),
+        moveOptionU64Argument(input.limit),
+      ])
     );
 
     return readUserPoolPositionVector(positions);
   }
 
   async isPoolRegistered(poolAddress: string): Promise<boolean> {
-    const rewardsView = this.getRewardsViewAbi();
-    const registered = await callSingleViewResult(
+    const registered = await callSingleViewPayloadResult(
       this.context.client,
-      {
-        moduleAddress: rewardsView.address,
-        moduleName: rewardsView.name,
-        functionName: "is_pool_registered",
-        functionArguments: [normalizeMoveAddress(poolAddress)],
-      }
+      this.rewardsViewPayload("is_pool_registered", [normalizeMoveAddress(poolAddress)])
     );
 
     return readMoveBool(registered);
@@ -485,9 +503,7 @@ export class RewardsClient {
         const isSubscribed = await callSingleViewResult(
           this.context.client,
           {
-            moduleAddress: this.context.abis.multiRewards.address,
-            moduleName: this.context.abis.multiRewards.name,
-            functionName: "is_user_subscribed",
+            ...this.multiRewardsView("is_user_subscribed"),
             functionArguments: [
               normalizeMoveAddress(input.userAddress),
               normalizeMoveAddress(poolAddress),
@@ -511,9 +527,7 @@ export class RewardsClient {
     const balance = await callSingleViewResult(
       this.context.client,
       {
-        moduleAddress: this.context.abis.multiRewards.address,
-        moduleName: this.context.abis.multiRewards.name,
-        functionName: "get_user_staked_balance",
+        ...this.multiRewardsView("get_user_staked_balance"),
         functionArguments: [
           normalizeMoveAddress(input.userAddress),
           normalizeMoveAddress(input.stakingAsset),
@@ -528,9 +542,7 @@ export class RewardsClient {
     const pools = await callSingleViewResult(
       this.context.client,
       {
-        moduleAddress: this.context.abis.multiRewards.address,
-        moduleName: this.context.abis.multiRewards.name,
-        functionName: "get_user_subscribed_pools",
+        ...this.multiRewardsView("get_user_subscribed_pools"),
         functionArguments: [
           normalizeMoveAddress(input.userAddress),
           normalizeMoveAddress(input.stakingAsset),
@@ -548,18 +560,14 @@ export class RewardsClient {
       callViewFunction<[unknown, unknown, unknown, unknown, unknown, unknown]>(
         this.context.client,
         {
-          moduleAddress: this.context.abis.multiRewards.address,
-          moduleName: this.context.abis.multiRewards.name,
-          functionName: "get_reward_data",
+          ...this.multiRewardsView("get_reward_data"),
           functionArguments: args,
         }
       ),
       callSingleViewResult(
         this.context.client,
         {
-          moduleAddress: this.context.abis.multiRewards.address,
-          moduleName: this.context.abis.multiRewards.name,
-          functionName: "get_unallocated_rewards",
+          ...this.multiRewardsView("get_unallocated_rewards"),
           functionArguments: args,
         }
       ),
@@ -580,9 +588,7 @@ export class RewardsClient {
     const result = await callSingleViewResult(
       this.context.client,
       {
-        moduleAddress: this.context.abis.multiRewards.address,
-        moduleName: this.context.abis.multiRewards.name,
-        functionName: "is_user_subscribed",
+        ...this.multiRewardsView("is_user_subscribed"),
         functionArguments: [
           normalizeMoveAddress(userAddress),
           normalizeMoveAddress(poolAddress),
@@ -683,6 +689,30 @@ export class RewardsClient {
     }
 
     return abi;
+  }
+
+  /**
+   * View payload against the optional `canopyRewardsView` helper module, with the function
+   * name constrained to `RewardsViewFunction`. Throws via `getRewardsViewAbi` on chains
+   * where that module is not deployed, exactly as the inline call sites did.
+   */
+  private rewardsViewPayload(
+    functionName: RewardsViewFunction,
+    functionArguments?: unknown[]
+  ) {
+    return abiViewPayload(this.getRewardsViewAbi(), functionName, functionArguments);
+  }
+
+  /**
+   * Module id for a view on the `multi_rewards` module, with the name constrained to
+   * `RewardsModuleViewFunction`. Spread into a view input alongside `functionArguments`.
+   */
+  private multiRewardsView(functionName: RewardsModuleViewFunction) {
+    return {
+      moduleAddress: this.context.abis.multiRewards.address,
+      moduleName: this.context.abis.multiRewards.name,
+      functionName,
+    };
   }
 }
 

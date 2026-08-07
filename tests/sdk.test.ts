@@ -1,4 +1,3 @@
-import { jest } from "@jest/globals";
 import {
   CanopySdk,
   createCanopySdk,
@@ -8,29 +7,7 @@ import {
   requireContract,
   movementTestnetMovePositionConfig,
 } from "../packages/sdk/src";
-
-interface MockViewClient {
-  view: jest.MockedFunction<(input: unknown) => Promise<unknown[]>>;
-}
-
-function createMovementMock(
-  responses: Record<string, unknown[] | ((args: unknown[]) => unknown[])>
-): MockViewClient {
-  return {
-    view: jest.fn(async (input: unknown) => {
-      const payload = (input as { payload: { function: string; functionArguments?: unknown[] } }).payload;
-      const response = responses[payload.function];
-
-      if (!response) {
-        throw new Error(`Missing mock response for ${payload.function}`);
-      }
-
-      return typeof response === "function"
-        ? response(payload.functionArguments ?? [])
-        : response;
-    }),
-  };
-}
+import { createMovementMock } from "./fixtures/view-client-mock";
 
 describe("CanopySdk", () => {
   it("composes protocol modules from deployment features", () => {
@@ -251,7 +228,6 @@ describe("CanopySdk", () => {
         "10",
         "2",
       ],
-      abi: expect.any(Object),
     });
     expect(
       meridian.buildWithdrawPayload({
@@ -270,7 +246,6 @@ describe("CanopySdk", () => {
         "50",
         "3",
       ],
-      abi: expect.any(Object),
     });
 
     expect(() =>

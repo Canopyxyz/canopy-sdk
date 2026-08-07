@@ -74,8 +74,21 @@ export function readMoveU128(value: unknown): bigint {
   return parseU128(stringifyMoveScalar(value));
 }
 
+/**
+ * Reads a Move `u8`.
+ *
+ * Fullnodes serialize u8 / u16 / u32 as JSON **numbers** and only u64 and wider as
+ * strings, so a number is the normal wire shape here — `decimals` being the common
+ * case. Delegating to `readMoveU64` (which rejects numbers to prevent u64
+ * precision loss) meant every u8 field threw `Expected Move scalar`, breaking
+ * `canopy.getVault`, `canopy.listVaults` and the Meridian batch views on every
+ * chain. The client fixtures hid it by supplying `decimals` as `"8"`.
+ *
+ * A u8 cannot lose precision in a JS number, so accepting one is safe.
+ */
 export function readMoveU8(value: unknown): number {
-  const parsed = readMoveU64(value);
+  const parsed = typeof value === "number" ? numberToMoveInteger(value) : readMoveU64(value);
+
   if (parsed > 255n) {
     throw new CanopyError("Expected Move u8", CanopyErrorCode.ViewCallFailed, {
       value: parsed.toString(),
@@ -85,6 +98,30 @@ export function readMoveU8(value: unknown): number {
   return Number(parsed);
 }
 
+function numberToMoveInteger(value: number): bigint {
+  if (!Number.isSafeInteger(value) || value < 0) {
+    throw new CanopyError(
+      "Expected Move integer to be a non-negative safe integer",
+      CanopyErrorCode.ViewCallFailed,
+      { value }
+    );
+  }
+
+  return BigInt(value);
+}
+
+/**
+ * Stringifies a Move integer scalar for the wide types (u64 / u128 / u256).
+ *
+ * Deliberately rejects JavaScript numbers: those widths exceed
+ * `Number.MAX_SAFE_INTEGER`, so a number arriving here means precision was
+ * already lost upstream. Fullnodes send them as strings.
+ *
+ * The one narrow width the SDK reads is u8, via `readMoveU8`, which accepts numbers
+ * because a u8 cannot lose precision in a JS number. There is deliberately no u16 or
+ * u32 reader — no view the clients call returns those widths. Add one here if that
+ * changes rather than routing them through this function.
+ */
 export function stringifyMoveScalar(value: unknown): string {
   if (typeof value === "string" || typeof value === "bigint") {
     return String(value);
