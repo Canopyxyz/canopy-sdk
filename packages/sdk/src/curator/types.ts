@@ -199,6 +199,8 @@ export interface CuratorRedemptionRequest {
   requestAddress: string;
   /** `"Pending" | "Funded" | "Claimed" | "Cancelled" | "Denied" | "Expired" | "Frozen" | "Recovered"`. */
   status: string;
+  /** Unix timestamp when the request entered the queue. */
+  submittedAt: bigint;
 }
 
 // ── Inputs ──────────────────────────────────────────────────────────────────
@@ -235,6 +237,16 @@ export interface CuratorRedeemPreviewInput {
   minAssetsOut?: bigint | number | string;
   shares: bigint | number | string;
   user: string;
+  vaultAddress: string;
+}
+
+export interface CuratorUserVaultInput {
+  userAddress: string;
+  vaultAddress: string;
+}
+
+export interface CuratorQueueOwnerInput {
+  ownerAddress: string;
   vaultAddress: string;
 }
 

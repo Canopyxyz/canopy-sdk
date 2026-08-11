@@ -37,7 +37,7 @@ interface TransactionResultLike {
  */
 export function findRedemptionRequest(
   txResult: unknown,
-  filter: { userAddress?: string; vaultAddress?: string } = {}
+  filter: { packageAddress?: string; userAddress?: string; vaultAddress?: string } = {}
 ): CuratorRedemptionRequestedEvent | undefined {
   return findRedemptionRequests(txResult, filter)[0];
 }
@@ -45,7 +45,7 @@ export function findRedemptionRequest(
 /** Every `RedemptionRequestedEvent` in the transaction, in emission order. */
 export function findRedemptionRequests(
   txResult: unknown,
-  filter: { userAddress?: string; vaultAddress?: string } = {}
+  filter: { packageAddress?: string; userAddress?: string; vaultAddress?: string } = {}
 ): CuratorRedemptionRequestedEvent[] {
   const view = txResult as TransactionResultLike;
 
@@ -57,6 +57,9 @@ export function findRedemptionRequests(
   const wantedVault = filter.vaultAddress
     ? normalizeMoveAddress(filter.vaultAddress)
     : undefined;
+  const wantedPackage = filter.packageAddress
+    ? normalizeMoveAddress(filter.packageAddress)
+    : undefined;
 
   const parsed: CuratorRedemptionRequestedEvent[] = [];
 
@@ -65,6 +68,14 @@ export function findRedemptionRequests(
     // vault package address is chain-specific and the event may be re-emitted from
     // an upgraded package at the same address.
     if (typeof event.type !== "string" || !event.type.endsWith("::vault::RedemptionRequestedEvent")) {
+      continue;
+    }
+
+    const eventPackage = event.type.split("::")[0];
+    if (
+      wantedPackage !== undefined &&
+      (!eventPackage || normalizeMoveAddress(eventPackage) !== wantedPackage)
+    ) {
       continue;
     }
 

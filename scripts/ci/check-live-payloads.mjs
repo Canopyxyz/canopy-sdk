@@ -334,10 +334,10 @@ async function checkCurator(chain, aptos, sdk) {
     curator.getLiquidityBreakdown(vaultAddress)
   );
   await checkView(chain, "curator.getUserVaultPosition", () =>
-    curator.getUserVaultPosition(CURATOR_DEPOSITOR, vaultAddress)
+    curator.getUserVaultPosition({ userAddress: CURATOR_DEPOSITOR, vaultAddress })
   );
   await checkView(chain, "curator.getShareBalance", () =>
-    curator.getShareBalance(CURATOR_DEPOSITOR, vaultAddress)
+    curator.getShareBalance({ userAddress: CURATOR_DEPOSITOR, vaultAddress })
   );
   await checkView(chain, "curator.previewDeposit", () =>
     curator.previewDeposit({ vaultAddress, depositor: CURATOR_DEPOSITOR, amount: 5_000_000n })
@@ -350,10 +350,10 @@ async function checkCurator(chain, aptos, sdk) {
   );
   await checkView(chain, "curator.getQueueAddress", () => curator.getQueueAddress(vaultAddress));
   await checkView(chain, "curator.getOpenRequestCount", () =>
-    curator.getOpenRequestCount(vaultAddress, CURATOR_DEPOSITOR)
+    curator.getOpenRequestCount({ ownerAddress: CURATOR_DEPOSITOR, vaultAddress })
   );
   await checkView(chain, "curator.getUserRedemptionRequests", () =>
-    curator.getUserRedemptionRequests(vaultAddress, CURATOR_DEPOSITOR)
+    curator.getUserRedemptionRequests({ ownerAddress: CURATOR_DEPOSITOR, vaultAddress })
   );
   await checkView(chain, "curator.isPartnerRegistered", () => curator.isPartnerRegistered(1n));
   await checkView(chain, "curator.getPartnerPayoutAddress", () =>

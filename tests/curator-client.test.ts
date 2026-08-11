@@ -531,7 +531,10 @@ describe("curator reads", () => {
       ],
     });
 
-    const position = await sdk.curator!.getUserVaultPosition(DEPOSITOR, FLOATING_VAULT);
+    const position = await sdk.curator!.getUserVaultPosition({
+      userAddress: DEPOSITOR,
+      vaultAddress: FLOATING_VAULT,
+    });
 
     expect(position.depositWalletUsage).toBeNull();
     expect(position.redemptionWalletUsage).toEqual({
@@ -566,7 +569,10 @@ describe("curator reads", () => {
     });
 
     await expect(
-      sdk.curator!.getOpenRequestCount(FLOATING_VAULT, DEPOSITOR)
+      sdk.curator!.getOpenRequestCount({
+        ownerAddress: DEPOSITOR,
+        vaultAddress: FLOATING_VAULT,
+      })
     ).resolves.toBe(3n);
   });
 
@@ -596,15 +602,16 @@ describe("curator reads", () => {
             pending_recovery_address: { vec: [] },
             pending_recovery_not_before: { vec: [] },
             status: { __variant__: isCancelled ? "Cancelled" : "Pending" },
+            submitted_at: "1784700000",
           },
         ];
       },
     });
 
-    const requests = await sdk.curator!.getUserRedemptionRequests(
-      FLOATING_VAULT,
-      DEPOSITOR
-    );
+    const requests = await sdk.curator!.getUserRedemptionRequests({
+      ownerAddress: DEPOSITOR,
+      vaultAddress: FLOATING_VAULT,
+    });
 
     expect(requests.map((request) => request.status)).toEqual(["Pending", "Cancelled"]);
     expect(requests[0]?.requestAddress).toBe(normalizeMoveAddress(REQUEST));
@@ -612,6 +619,7 @@ describe("curator reads", () => {
     // LockedIn payout estimate instead.
     expect(requests[0]?.fundedAmount).toBe(0n);
     expect(requests[0]?.lockedAssetsOut).toBe(999000n);
+    expect(requests[0]?.submittedAt).toBe(1784700000n);
     expect(requests[1]?.lockedAssetsOut).toBeNull();
   });
 
@@ -750,8 +758,25 @@ describe("findRedemptionRequest", () => {
   });
 
   it("filters by vault and user, and tolerates transactions with no request", () => {
+    const requestedEvent = txResult.events[1];
+    if (!requestedEvent) {
+      throw new Error("fixture should include a redemption event");
+    }
+
+    const wrongPackage = {
+      events: [
+        {
+          ...requestedEvent,
+          type: `${ROUTER_PACKAGE}::vault::RedemptionRequestedEvent`,
+        },
+      ],
+    };
+
     expect(findRedemptionRequest(txResult, { vaultAddress: FLOATING_VAULT })).toBeDefined();
     expect(findRedemptionRequest(txResult, { userAddress: QUEUE })).toBeUndefined();
+    expect(
+      findRedemptionRequest(wrongPackage, { packageAddress: VAULT_PACKAGE })
+    ).toBeUndefined();
     expect(findRedemptionRequest({ events: [] })).toBeUndefined();
     expect(findRedemptionRequest({})).toBeUndefined();
   });

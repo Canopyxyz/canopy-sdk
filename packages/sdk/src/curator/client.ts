@@ -18,7 +18,6 @@ import {
   readMoveU128,
 } from "../internal/move-readers";
 import { callAbiView } from "../internal/abi-views";
-import { mapAddressBatch } from "../internal/address-batches";
 import type {
   CuratorBlockingReason,
   CuratorDepositPayloadInput,
@@ -28,10 +27,12 @@ import type {
   CuratorInstantRedeemPreview,
   CuratorLiquidityBreakdown,
   CuratorQueuedRedemptionPreview,
+  CuratorQueueOwnerInput,
   CuratorRedeemPayloadInput,
   CuratorRedeemPreviewInput,
   CuratorRedemptionRequest,
   CuratorRequestPayloadInput,
+  CuratorUserVaultInput,
   CuratorUserPosition,
   CuratorVault,
   CuratorVaultAccounting,
@@ -46,14 +47,6 @@ type CuratorClientDeps = Pick<
   "abis" | "chain" | "client" | "deployment"
 >;
 
-/**
- * The depositor-facing entry functions on `router::router`.
- *
- * Kept as a literal union so a typo is a compile error. `tests/curator-client.test.ts`
- * asserts every name here exists as an entry function in the checked-in
- * `curatorRouter` ABI, and `abi:check` catches on-chain drift, which together cover
- * what Surf's typed payloads would have.
- */
 /** View functions this client reads, by module. */
 export type CuratorVaultViewFunction =
   | "vaults"
@@ -75,6 +68,14 @@ export type CuratorQueueViewFunction =
 
 export type CuratorPartnerRegistryViewFunction = "is_registered" | "payout_address";
 
+/**
+ * The depositor-facing entry functions on `router::router`.
+ *
+ * Kept as a literal union so a typo is a compile error. `tests/curator-client.test.ts`
+ * asserts every name here exists as an entry function in the checked-in
+ * `curatorRouter` ABI, and `abi:check` catches on-chain drift, which together cover
+ * what Surf's typed payloads would have.
+ */
 export type CuratorRouterFunction =
   | "deposit"
   | "deposit_with_partner"
@@ -105,7 +106,21 @@ export class CuratorClient {
     return new CuratorClient(context);
   }
 
-  constructor(private readonly context: CuratorClientDeps) {}
+  private readonly routerAddress: string;
+
+  constructor(private readonly context: CuratorClientDeps) {
+    const routerAddress = context.deployment.curator?.router;
+
+    if (routerAddress === undefined) {
+      throw new CanopyError(
+        "Curator router is not deployed on this chain",
+        CanopyErrorCode.InvalidDeployment,
+        { chain: context.chain }
+      );
+    }
+
+    this.routerAddress = routerAddress;
+  }
 
   // ── Entry payloads ────────────────────────────────────────────────────────
   //
@@ -227,12 +242,9 @@ export class CuratorClient {
 
   // ── Position reads ────────────────────────────────────────────────────────
 
-  async getUserVaultPosition(
-    userAddress: string,
-    vaultAddress: string
-  ): Promise<CuratorUserPosition> {
-    const normalizedUser = normalizeMoveAddress(userAddress);
-    const normalizedVault = normalizeMoveAddress(vaultAddress);
+  async getUserVaultPosition(input: CuratorUserVaultInput): Promise<CuratorUserPosition> {
+    const normalizedUser = normalizeMoveAddress(input.userAddress);
+    const normalizedVault = normalizeMoveAddress(input.vaultAddress);
     const result = await this.callVaultView("user_position_view", [
       normalizedVault,
       normalizedUser,
@@ -241,11 +253,11 @@ export class CuratorClient {
     return readUserPosition(result, normalizedUser, normalizedVault);
   }
 
-  async getShareBalance(userAddress: string, vaultAddress: string): Promise<bigint> {
+  async getShareBalance(input: CuratorUserVaultInput): Promise<bigint> {
     return readMoveU64(
       await this.callVaultView("share_balance_of", [
-        normalizeMoveAddress(vaultAddress),
-        normalizeMoveAddress(userAddress),
+        normalizeMoveAddress(input.vaultAddress),
+        normalizeMoveAddress(input.userAddress),
       ])
     );
   }
@@ -319,22 +331,17 @@ export class CuratorClient {
    * the cancellation / denial / expiry events.
    */
   async getUserRedemptionRequests(
-    vaultAddress: string,
-    owner: string
+    input: CuratorQueueOwnerInput
   ): Promise<CuratorRedemptionRequest[]> {
-    const queueAddress = await this.getQueueAddress(vaultAddress);
+    const queueAddress = await this.getQueueAddress(input.vaultAddress);
     const addresses = readMoveAddressVector(
       await this.callQueueView("user_request_addresses", [
         queueAddress,
-        normalizeMoveAddress(owner),
+        normalizeMoveAddress(input.ownerAddress),
       ])
     );
 
-    return mapAddressBatch(addresses, {
-      label: "curator redemption request",
-      fetchChunk: async (chunk) =>
-        Promise.all(chunk.map(async (address) => this.getRedemptionRequest(address))),
-    });
+    return Promise.all(addresses.map((address) => this.getRedemptionRequest(address)));
   }
 
   /**
@@ -344,13 +351,13 @@ export class CuratorClient {
    * the contract's per-user submission cap: unreclaimed escrow consumes an owner's
    * own submission budget until they claim it back.
    */
-  async getOpenRequestCount(vaultAddress: string, owner: string): Promise<bigint> {
-    const queueAddress = await this.getQueueAddress(vaultAddress);
+  async getOpenRequestCount(input: CuratorQueueOwnerInput): Promise<bigint> {
+    const queueAddress = await this.getQueueAddress(input.vaultAddress);
 
     return readMoveU64(
       await this.callQueueView("open_request_count", [
         queueAddress,
-        normalizeMoveAddress(owner),
+        normalizeMoveAddress(input.ownerAddress),
       ])
     );
   }
@@ -410,18 +417,8 @@ export class CuratorClient {
     functionName: CuratorRouterFunction,
     functionArguments: (string | undefined)[]
   ): TransactionPayload {
-    const moduleAddress = this.context.deployment.curator?.router;
-
-    if (moduleAddress === undefined) {
-      throw new CanopyError(
-        "Curator router is not deployed on this chain",
-        CanopyErrorCode.InvalidDeployment,
-        { chain: this.context.chain }
-      );
-    }
-
     return entryFunctionPayload({
-      moduleAddress,
+      moduleAddress: this.routerAddress,
       moduleName: "router",
       functionName,
       functionArguments: functionArguments as never,
@@ -695,5 +692,6 @@ function readRedemptionRequest(
     pendingRecoveryNotBefore: readOptionalU64(detail.pending_recovery_not_before),
     requestAddress,
     status: readMoveEnumVariant(detail.status),
+    submittedAt: readMoveU64(detail.submitted_at),
   };
 }

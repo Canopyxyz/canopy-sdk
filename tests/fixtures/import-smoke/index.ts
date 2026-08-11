@@ -10,11 +10,7 @@ import {
 } from "@canopyhub/canopy-sdk";
 import type { MoveModuleAbi } from "@canopyhub/canopy-sdk/bindings";
 import { requireAbi } from "@canopyhub/canopy-sdk/bindings";
-import type {
-  HexString,
-  MoveAbortResolution,
-  MoveAbortResolverInput,
-} from "@canopyhub/canopy-sdk/core";
+import type { HexString } from "@canopyhub/canopy-sdk/core";
 import { moveOptionArgument, normalizeMoveAddress } from "@canopyhub/canopy-sdk/core";
 import { getContractAddress } from "@canopyhub/canopy-sdk/deployments";
 
@@ -30,15 +26,12 @@ const curatorContract = requireContract("movement-testnet", "curator.router");
 const noneOption = moveOptionArgument(undefined);
 const someOption = moveOptionArgument(10n);
 const requestedEvent = findRedemptionRequest({ events: [] });
-const abortResolver = (input: MoveAbortResolverInput): MoveAbortResolution | undefined =>
-  input.abortCode === 1 ? { kind: "unknown" } : undefined;
 
 declare const curatorVault: CuratorVault;
 declare const curatorPreview: CuratorDepositPreview;
 declare const curatorRequest: CuratorRedemptionRequest;
 
 void abi;
-void abortResolver;
 void address;
 void curatorContract;
 void curatorPreview;

@@ -135,7 +135,7 @@ const fullMetadata = await sdk.canopy!.getBatchVaultAllMetadataAndBalances(
 ### Curator vaults
 
 This is the curated-vault system with a redemption queue, partner attribution,
-and preview-based validation. The SDK covers thedepositor surface only —
+and preview-based validation. The SDK covers the depositor surface only —
 curator/owner/guardian governance is not exposed.
 
 ```ts
@@ -143,7 +143,7 @@ const vaults = await sdk.curator!.listVaults({ limit: 20, offset: 0 });
 
 const vault = await sdk.curator!.getVault(vaultAddress);
 
-const position = await sdk.curator!.getUserVaultPosition(userAddress, vaultAddress);
+const position = await sdk.curator!.getUserVaultPosition({ userAddress, vaultAddress });
 
 const depositPayload = sdk.curator!.buildDepositPayload({
   vaultAddress,
@@ -170,8 +170,8 @@ Reads:
 
 - `listVaults({ offset, limit })`, `getVaultCount()`
 - `getVault(vaultAddress)`, `getVaultConfig(...)`, `getVaultAccounting(...)`, `getLiquidityBreakdown(...)`
-- `getUserVaultPosition(userAddress, vaultAddress)`, `getShareBalance(...)`
-- `getRedemptionRequest(requestAddress)`, `getUserRedemptionRequests(vaultAddress, owner)`, `getOpenRequestCount(...)`
+- `getUserVaultPosition({ userAddress, vaultAddress })`, `getShareBalance({ userAddress, vaultAddress })`
+- `getRedemptionRequest(requestAddress)`, `getUserRedemptionRequests({ vaultAddress, ownerAddress })`, `getOpenRequestCount({ vaultAddress, ownerAddress })`
 - `isPartnerRegistered(partnerId)`, `getPartnerPayoutAddress(partnerId)`
 
 #### Previews are the validation API
@@ -211,6 +211,9 @@ const submitted = await sdk.signSubmitAndWaitForTransaction({
 const requested = findRedemptionRequest(submitted, { userAddress, vaultAddress });
 const request = await sdk.curator!.getRedemptionRequest(requested!.requestAddress);
 ```
+
+Pass `packageAddress` too when parsing a transaction that may include events from
+another `::vault::RedemptionRequestedEvent`.
 
 A queued redemption is not self-service: an allocator must fund the request, and
 `request.claimableAt` must pass, before `buildClaimRedemptionPayload` will succeed.
@@ -351,7 +354,7 @@ await sdk.simulateTransaction({
 ```
 
 If you are using a wallet adapter, pass the same payload object into your wallet’s sign-and-submit flow.
-If simulation hits a known Move abort, the SDK throws a `CanopyError` with `code: "MOVE_ABORT"` and structured `details.moveAbort` metadata for UI handling.
+If simulation hits a Move abort in a format the SDK recognizes, it throws a `CanopyError` with `code: "MOVE_ABORT"` and structured `details.moveAbort` metadata for UI handling. Fullnodes currently emit a different abort string shape, so Move aborts generally surface as transaction failures with the raw `vmStatus` instead.
 
 ## Offchain Helpers
 
