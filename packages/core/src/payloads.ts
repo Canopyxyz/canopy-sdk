@@ -58,3 +58,24 @@ export function moveUintArgument(
 ): string {
   return formatMoveUint(value, bits);
 }
+
+/**
+ * Serializes a Move `Option<uN>` argument for `Aptos.view` / entry payloads.
+ *
+ * Returns `undefined` for none and the formatted scalar for some. The `ts-sdk`
+ * converts arguments against the module ABI rather than passing raw JSON, so an
+ * `Option` is expressed by presence, not by a `{ vec: [...] }` envelope — passing
+ * that envelope fails with `Type mismatch for argument N, expected
+ * 'bigint | number | string'`. (A hand-rolled HTTP `POST /v1/view` does want the
+ * envelope; this helper is for the SDK path.)
+ */
+export function moveOptionArgument(
+  value?: MoveUintInput | null,
+  bits: MoveUintBits = 64
+): string | undefined {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  return formatMoveUint(value, bits);
+}

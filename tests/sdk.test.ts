@@ -50,6 +50,30 @@ describe("CanopySdk", () => {
     expect(movementTestnetSdk.rewards).toBeUndefined();
     expect(movementTestnetSdk.alm.meridian).toBeUndefined();
     expect(movementTestnetSdk.data.rewardsDiscovery).toBeUndefined();
+    expect(movementTestnetSdk.curator).toBeDefined();
+
+    // Curator is testnet-only, so every other chain must leave it undefined.
+    expect(movementSdk.curator).toBeUndefined();
+    expect(aptosMainnetSdk.curator).toBeUndefined();
+    expect(aptosTestnetSdk.curator).toBeUndefined();
+  });
+
+  it("resolves curator contracts with both an address and an ABI", () => {
+    // getContract needs both halves, which is why curator.genericAdapter has no
+    // ContractId — it has an address but no checked-in ABI.
+    expect(getContract("movement-testnet", "curator.vault")).toMatchObject({
+      id: "curator.vault",
+      chain: "movement-testnet",
+      address: "0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f",
+      moduleName: "vault",
+    });
+    expect(requireContract("movement-testnet", "curator.router")).toMatchObject({
+      id: "curator.router",
+      chain: "movement-testnet",
+      address: "0x4f65dd9785f2ffb51818432646b0994ab43b8a9b602a52f989362883eae7dc17",
+      moduleName: "router",
+    });
+    expect(getContract("movement-mainnet", "curator.vault")).toBeNull();
   });
 
   it("exposes nullable and required resolved contract helpers", () => {

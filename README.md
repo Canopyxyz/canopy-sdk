@@ -5,6 +5,7 @@ TypeScript SDK for Canopy Protocol on Movement and Aptos.
 It includes:
 
 - Canopy vault reads and transaction builders
+- curator vault deposits, redemptions, and previews
 - rewards staking / claim helpers
 - Meridian ALM vault support
 - deployment + ABI registries
@@ -56,17 +57,18 @@ const sdk = createCanopySdk(client, {
 `CanopySdk` only exposes protocol clients that exist on the selected chain:
 
 - `sdk.canopy`
+- `sdk.curator`
 - `sdk.rewards`
 - `sdk.alm.meridian`
 
 ## Chain Support
 
-| Chain | Canopy | Rewards | Meridian ALM |
-| --- | --- | --- | --- |
-| `movement-mainnet` | yes | yes | yes |
-| `movement-testnet` | no | no | no |
-| `aptos-testnet` | yes | yes | no |
-| `aptos-mainnet` | no | no | yes |
+| Chain | Canopy | Curator | Rewards | Meridian ALM |
+| --- | --- | --- | --- | --- |
+| `movement-mainnet` | yes | no | yes | yes |
+| `movement-testnet` | no | yes | no | no |
+| `aptos-testnet` | yes | no | yes | no |
+| `aptos-mainnet` | no | no | no | yes |
 
 ## What The SDK Exposes
 
@@ -129,6 +131,94 @@ const fullMetadata = await sdk.canopy!.getBatchVaultAllMetadataAndBalances(
   userAddress
 );
 ```
+
+### Curator vaults
+
+This is the curated-vault system with a redemption queue, partner attribution,
+and preview-based validation. The SDK covers thedepositor surface only —
+curator/owner/guardian governance is not exposed.
+
+```ts
+const vaults = await sdk.curator!.listVaults({ limit: 20, offset: 0 });
+
+const vault = await sdk.curator!.getVault(vaultAddress);
+
+const position = await sdk.curator!.getUserVaultPosition(userAddress, vaultAddress);
+
+const depositPayload = sdk.curator!.buildDepositPayload({
+  vaultAddress,
+  amount: 5_000_000n,
+  minSharesOut: 4_900_000n,
+});
+
+const partnerPayload = sdk.curator!.buildDepositWithPartnerPayload({
+  vaultAddress,
+  amount: 5_000_000n,
+  partnerId: 7n,
+});
+```
+
+Payload builders are synchronous and return `InputEntryFunctionData`:
+
+- `buildDepositPayload(...)` / `buildDepositWithPartnerPayload(...)`
+- `buildInstantRedeemPayload(...)`
+- `buildRequestRedemptionPayload(...)`
+- `buildClaimRedemptionPayload(...)` / `buildCancelRedemptionPayload(...)`
+- `buildClaimbackEscrowedSharesPayload(...)`
+
+Reads:
+
+- `listVaults({ offset, limit })`, `getVaultCount()`
+- `getVault(vaultAddress)`, `getVaultConfig(...)`, `getVaultAccounting(...)`, `getLiquidityBreakdown(...)`
+- `getUserVaultPosition(userAddress, vaultAddress)`, `getShareBalance(...)`
+- `getRedemptionRequest(requestAddress)`, `getUserRedemptionRequests(vaultAddress, owner)`, `getOpenRequestCount(...)`
+- `isPartnerRegistered(partnerId)`, `getPartnerPayoutAddress(partnerId)`
+
+#### Previews are the validation API
+
+Rather than simulating and reading an abort, ask the vault directly. Each preview
+returns its own gate field plus stable machine-readable reasons:
+
+```ts
+const preview = await sdk.curator!.previewDeposit({
+  vaultAddress,
+  depositor: userAddress,
+  amount: 5_000_000n,
+});
+
+if (!preview.canDeposit) {
+  // e.g. ["DepositBelowMinimum", "IdleBreachActive"]
+  console.log(preview.blockingReasons.map((reason) => reason.reasonId));
+}
+```
+
+`previewInstantRedeem(...)` gates on `canRedeem` and `previewQueuedRedemption(...)`
+on `canSubmit` — the three names differ because they answer different questions.
+`reasonId` is a `string`, not a union, because the on-chain reason enum is
+append-only.
+
+#### Queued redemptions
+
+`buildRequestRedemptionPayload` does not return the request address, so read it from
+the transaction:
+
+```ts
+const submitted = await sdk.signSubmitAndWaitForTransaction({
+  signer: account,
+  payload: sdk.curator!.buildRequestRedemptionPayload({ vaultAddress, shares: 1_000_000n }),
+});
+
+const requested = findRedemptionRequest(submitted, { userAddress, vaultAddress });
+const request = await sdk.curator!.getRedemptionRequest(requested!.requestAddress);
+```
+
+A queued redemption is not self-service: an allocator must fund the request, and
+`request.claimableAt` must pass, before `buildClaimRedemptionPayload` will succeed.
+
+`getUserRedemptionRequests` returns live requests **and** ones awaiting claim-back
+(`Cancelled` / `Denied` / `Expired` with escrow outstanding). The latter are
+inspect-and-claimback only — filter on `status` before passing an address to claim or
+cancel. Ordering is not stable, so never treat position as identity.
 
 ### Rewards
 

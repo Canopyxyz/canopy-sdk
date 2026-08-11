@@ -142,6 +142,32 @@ export function readMoveString(value: unknown): string {
   });
 }
 
+/**
+ * Reads a Move enum value, which the fullnode serializes as
+ * `{ "__variant__": "Floating" }`.
+ *
+ * Returned as a plain string, not a closed union: the curator vault's `ReasonId`
+ * is append-only, so a new contract-side variant must not break the SDK build.
+ */
+export function readMoveEnumVariant(value: unknown): string {
+  if (!value || typeof value !== "object" || !("__variant__" in value)) {
+    throw new CanopyError("Expected Move enum", CanopyErrorCode.ViewCallFailed, {
+      valueType: typeof value,
+    });
+  }
+
+  const variant = (value as { __variant__?: unknown }).__variant__;
+  if (typeof variant !== "string" || variant.length === 0) {
+    throw new CanopyError(
+      "Expected Move enum variant name",
+      CanopyErrorCode.ViewCallFailed,
+      { valueType: typeof variant }
+    );
+  }
+
+  return variant;
+}
+
 export function readMoveBool(value: unknown): boolean {
   if (typeof value === "boolean") {
     return value;

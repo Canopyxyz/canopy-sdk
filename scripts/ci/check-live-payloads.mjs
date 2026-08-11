@@ -113,9 +113,23 @@ const CANOPY_VAULTS = {
 
 const CHAINS = {
   "movement-mainnet": { network: Network.CUSTOM, fullnode: "https://mainnet.movementnetwork.xyz/v1" },
+  "movement-testnet": { network: Network.CUSTOM, fullnode: "https://testnet.movementnetwork.xyz/v1" },
   "aptos-testnet": { network: Network.TESTNET },
   "aptos-mainnet": { network: Network.MAINNET },
 };
+
+/**
+ * Curator vault instances created by the testnet setup script, one per pricing policy.
+ * Both branches matter: LockedIn fixes the payout at submission, Floating prices at claim.
+ */
+const CURATOR_VAULTS = {
+  "movement-testnet": {
+    floating: "0x33f75e96e66653727e43e4140f9acd4d68ee1f688e2bb15da04ead264916ef91",
+    lockedIn: "0x6d42f19c428660cba5c99a7ceab9b74b9c8194531a3b81aece96eb768dd6ca61",
+  },
+};
+
+const CURATOR_DEPOSITOR = "0x5bacc47db1706e1318b33d78c576397aa77124b282a505964c44f1fec6b93023";
 
 const results = { passed: [], failed: [], infra: [], skipped: [], xfail: [] };
 
@@ -143,6 +157,7 @@ for (const chain of requestedChain ? [requestedChain] : Object.keys(CHAINS)) {
   }));
 
   await checkCanopy(chain, aptos, sdk);
+  await checkCurator(chain, aptos, sdk);
   await checkRewards(chain, aptos, sdk);
   await checkMeridian(chain, aptos, sdk);
 }
@@ -257,6 +272,90 @@ async function checkCanopy(chain, aptos, sdk) {
   } else {
     results.skipped.push(`${chain} canopy batch helpers: canopyHelpers ABI not bound`);
   }
+}
+
+async function checkCurator(chain, aptos, sdk) {
+  const curator = sdk.curator;
+  if (!curator) {
+    results.skipped.push(`${chain} curator: not deployed on this chain`);
+    return;
+  }
+
+  const vaults = CURATOR_VAULTS[chain];
+  if (!vaults) {
+    results.skipped.push(`${chain} curator: no pinned vault fixture`);
+    return;
+  }
+
+  // Request-lifecycle payloads take a request object address. Object existence is a
+  // VM-runtime check, so an arbitrary address builds fine here; the live redemption
+  // lifecycle is exercised separately, not in CI.
+  const requestAddress = "0x1";
+
+  for (const [policy, vaultAddress] of Object.entries(vaults)) {
+    await checkEntry(chain, `curator.buildDepositPayload[${policy}]`, aptos, () =>
+      curator.buildDepositPayload({ vaultAddress, amount: 5_000_000n, minSharesOut: 1n })
+    );
+    await checkEntry(chain, `curator.buildDepositWithPartnerPayload[${policy}]`, aptos, () =>
+      curator.buildDepositWithPartnerPayload({
+        vaultAddress,
+        amount: 5_000_000n,
+        partnerId: 1n,
+      })
+    );
+    await checkEntry(chain, `curator.buildInstantRedeemPayload[${policy}]`, aptos, () =>
+      curator.buildInstantRedeemPayload({ vaultAddress, shares: 1_000n })
+    );
+    await checkEntry(chain, `curator.buildRequestRedemptionPayload[${policy}]`, aptos, () =>
+      curator.buildRequestRedemptionPayload({ vaultAddress, shares: 1_000n })
+    );
+  }
+
+  const vaultAddress = vaults.floating;
+
+  for (const [label, build] of [
+    ["buildClaimRedemptionPayload", () => curator.buildClaimRedemptionPayload({ vaultAddress, requestAddress })],
+    ["buildCancelRedemptionPayload", () => curator.buildCancelRedemptionPayload({ vaultAddress, requestAddress })],
+    ["buildClaimbackEscrowedSharesPayload", () => curator.buildClaimbackEscrowedSharesPayload({ vaultAddress, requestAddress })],
+  ]) {
+    await checkEntry(chain, `curator.${label}`, aptos, build);
+  }
+
+  await checkView(chain, "curator.listVaults", () => curator.listVaults({ offset: 0, limit: 5 }));
+  await checkView(chain, "curator.getVaultCount", () => curator.getVaultCount());
+  await checkView(chain, "curator.getVault", () => curator.getVault(vaultAddress));
+  await checkView(chain, "curator.getVaultAccounting", () =>
+    curator.getVaultAccounting(vaultAddress)
+  );
+  await checkView(chain, "curator.getLiquidityBreakdown", () =>
+    curator.getLiquidityBreakdown(vaultAddress)
+  );
+  await checkView(chain, "curator.getUserVaultPosition", () =>
+    curator.getUserVaultPosition(CURATOR_DEPOSITOR, vaultAddress)
+  );
+  await checkView(chain, "curator.getShareBalance", () =>
+    curator.getShareBalance(CURATOR_DEPOSITOR, vaultAddress)
+  );
+  await checkView(chain, "curator.previewDeposit", () =>
+    curator.previewDeposit({ vaultAddress, depositor: CURATOR_DEPOSITOR, amount: 5_000_000n })
+  );
+  await checkView(chain, "curator.previewInstantRedeem", () =>
+    curator.previewInstantRedeem({ vaultAddress, user: CURATOR_DEPOSITOR, shares: 1_000n })
+  );
+  await checkView(chain, "curator.previewQueuedRedemption", () =>
+    curator.previewQueuedRedemption({ vaultAddress, user: CURATOR_DEPOSITOR, shares: 1_000n })
+  );
+  await checkView(chain, "curator.getQueueAddress", () => curator.getQueueAddress(vaultAddress));
+  await checkView(chain, "curator.getOpenRequestCount", () =>
+    curator.getOpenRequestCount(vaultAddress, CURATOR_DEPOSITOR)
+  );
+  await checkView(chain, "curator.getUserRedemptionRequests", () =>
+    curator.getUserRedemptionRequests(vaultAddress, CURATOR_DEPOSITOR)
+  );
+  await checkView(chain, "curator.isPartnerRegistered", () => curator.isPartnerRegistered(1n));
+  await checkView(chain, "curator.getPartnerPayoutAddress", () =>
+    curator.getPartnerPayoutAddress(1n)
+  );
 }
 
 async function checkRewards(chain, aptos, sdk) {

@@ -1,11 +1,19 @@
 import type { Aptos } from "@aptos-labs/ts-sdk";
-import { CanopyError, CanopyErrorCode, extractMoveAbortDetails } from "@canopyhub/canopy-sdk-core";
+import {
+  CanopyError,
+  CanopyErrorCode,
+  extractMoveAbortDetails,
+  type ExtractMoveAbortOptions,
+} from "@canopyhub/canopy-sdk-core";
 import { RewardsDiscoveryClient } from "./data";
 import type { CanopyProtocolClient } from "./canopy";
 import { CanopyProtocolClient as CanopyProtocolClientImpl } from "./canopy";
+import { CuratorClient } from "./curator";
+import { createCuratorAbortResolver } from "./internal/aborts";
 import {
   createSdkContext,
   requireCanopyFeatureContext,
+  requireCuratorFeatureContext,
   requireMeridianFeatureContext,
   requireRewardsFeatureContext,
 } from "./context";
@@ -28,11 +36,20 @@ export class CanopySdk<Chain extends SdkChainName = SdkChainName> {
   };
   readonly canopy?: CanopyProtocolClient;
   readonly chain: Chain;
+  readonly curator?: CuratorClient;
   readonly data: {
     rewardsDiscovery?: RewardsDiscoveryClient;
   };
   readonly rewards?: RewardsClient;
   private readonly client: Aptos;
+  /**
+   * Abort-name resolution scoped to the curator packages by module address.
+   *
+   * `KNOWN_MOVE_ABORTS` in `packages/core` is keyed by module and function name
+   * only, and curator ships `vault` and `router` modules just like Canopy does, so
+   * the two protocols' codes would otherwise be indistinguishable.
+   */
+  private readonly abortOptions: ExtractMoveAbortOptions | undefined;
 
   constructor(client: Aptos, options: CanopySdkOptions<Chain>) {
     this.client = client;
@@ -69,6 +86,17 @@ export class CanopySdk<Chain extends SdkChainName = SdkChainName> {
         requireCanopyFeatureContext(baseContext)
       );
     }
+
+    if (baseContext.deployment.features.curator) {
+      this.curator = CuratorClient.fromContext(
+        requireCuratorFeatureContext(baseContext)
+      );
+    }
+
+    const resolveKnownAbort = baseContext.deployment.features.curator
+      ? createCuratorAbortResolver(baseContext.chain)
+      : undefined;
+    this.abortOptions = resolveKnownAbort ? { resolveKnownAbort } : undefined;
 
     if (baseContext.deployment.features.rewards) {
       this.rewards = RewardsClient.fromContext(
@@ -109,7 +137,11 @@ export class CanopySdk<Chain extends SdkChainName = SdkChainName> {
       }
 
       if (!response.success) {
-        throwTransactionFailure(response.vm_status, input.payload.function);
+        throwTransactionFailure(
+          response.vm_status,
+          input.payload.function,
+          this.abortOptions
+        );
       }
 
       return response;
@@ -118,7 +150,11 @@ export class CanopySdk<Chain extends SdkChainName = SdkChainName> {
         throw error;
       }
 
-      const moveAbort = extractMoveAbortDetails(error, input.payload.function);
+      const moveAbort = extractMoveAbortDetails(
+        error,
+        input.payload.function,
+        this.abortOptions
+      );
       if (moveAbort) {
         throw new CanopyError(
           "Move abort",
@@ -156,7 +192,8 @@ export class CanopySdk<Chain extends SdkChainName = SdkChainName> {
       throw wrapTransactionError(
         error,
         input.payload.function,
-        "Transaction submission failed"
+        "Transaction submission failed",
+        this.abortOptions
       );
     }
   }
@@ -176,7 +213,8 @@ export class CanopySdk<Chain extends SdkChainName = SdkChainName> {
       throw wrapTransactionError(
         error,
         input.payload.function,
-        "Transaction execution failed"
+        "Transaction execution failed",
+        this.abortOptions
       );
     }
   }
@@ -201,8 +239,16 @@ export function createCanopySdk<Chain extends SdkChainName>(
   return new CanopySdk(client, options);
 }
 
-function throwTransactionFailure(vmStatus: string, fallbackFunction: string): never {
-  const moveAbort = extractMoveAbortDetails({ message: vmStatus }, fallbackFunction);
+function throwTransactionFailure(
+  vmStatus: string,
+  fallbackFunction: string,
+  abortOptions?: ExtractMoveAbortOptions
+): never {
+  const moveAbort = extractMoveAbortDetails(
+    { message: vmStatus },
+    fallbackFunction,
+    abortOptions
+  );
 
   if (moveAbort) {
     throw new CanopyError("Move abort", CanopyErrorCode.MoveAbort, {
@@ -221,9 +267,10 @@ function throwTransactionFailure(vmStatus: string, fallbackFunction: string): ne
 function wrapTransactionError(
   error: unknown,
   fallbackFunction: string,
-  message: string
+  message: string,
+  abortOptions?: ExtractMoveAbortOptions
 ): CanopyError {
-  const moveAbort = extractMoveAbortDetails(error, fallbackFunction);
+  const moveAbort = extractMoveAbortDetails(error, fallbackFunction, abortOptions);
 
   if (moveAbort) {
     return new CanopyError(

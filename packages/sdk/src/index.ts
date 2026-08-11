@@ -2,6 +2,7 @@ export * from "./alm";
 export * from "./canopy";
 export * from "./client";
 export * from "./contracts";
+export * from "./curator";
 export * from "./data";
 export * from "./rewards";
 export * from "./strategy";

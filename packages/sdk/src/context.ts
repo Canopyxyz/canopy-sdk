@@ -11,9 +11,12 @@ import type { SdkContext } from "./types";
 import type { MovePositionConfig } from "./canopy/moveposition";
 
 type CanopyFeatureChain = "movement-mainnet" | "aptos-testnet";
+type CuratorFeatureChain = "movement-testnet";
 type MeridianFeatureChain = "movement-mainnet" | "aptos-mainnet";
 
 export type CanopyFeatureContext = SdkContext<CanopyFeatureChain>;
+
+export type CuratorFeatureContext = SdkContext<CuratorFeatureChain>;
 
 export type MeridianFeatureContext = SdkContext<MeridianFeatureChain>;
 
@@ -46,6 +49,29 @@ export function requireCanopyFeatureContext<Chain extends ChainName>(
   }
 
   return context as SdkContext<Extract<Chain, CanopyFeatureChain>>;
+}
+
+/**
+ * All four curator ABIs are required, not just router and vault: the client reads
+ * `queue::request_detail` / `user_request_addresses` and
+ * `partner_registry::is_registered`. Checking a subset would let the client
+ * construct and then fail on the first queue or partner read.
+ */
+export function requireCuratorFeatureContext<Chain extends ChainName>(
+  context: SdkContext<Chain>
+): SdkContext<Extract<Chain, CuratorFeatureChain>> {
+  if (
+    !context.deployment.features.curator ||
+    context.chain !== "movement-testnet" ||
+    !("curatorRouter" in context.abis) ||
+    !("curatorVault" in context.abis) ||
+    !("curatorQueue" in context.abis) ||
+    !("curatorPartnerRegistry" in context.abis)
+  ) {
+    throw invalidFeatureContextError(context, "curator");
+  }
+
+  return context as SdkContext<Extract<Chain, CuratorFeatureChain>>;
 }
 
 export function requireRewardsFeatureContext<Chain extends ChainName>(
@@ -116,7 +142,7 @@ function resolveMovePositionConfig(
 
 function invalidFeatureContextError(
   context: SdkContext<ChainName>,
-  feature: "canopy" | "rewards" | "almMeridian"
+  feature: "canopy" | "curator" | "rewards" | "almMeridian"
 ): CanopyError {
   return new CanopyError(
     "SDK context does not satisfy the requested feature requirements",

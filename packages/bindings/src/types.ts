@@ -73,6 +73,19 @@ export interface CanopyAbiSet {
   canopyStrategyMeridianRewards?: MoveModuleAbi;
 }
 
+/**
+ * Curator vault ABIs. All four are registered as widened `MoveModuleAbi` in
+ * `chains/movement-testnet.ts`: the client builds plain entry payloads and reads
+ * through `internal/abi-views.ts`, so nothing needs their literal types, and the
+ * `vault` module alone has 340 exposed functions.
+ */
+export interface CuratorAbiSet {
+  curatorVault: MoveModuleAbi;
+  curatorQueue: MoveModuleAbi;
+  curatorPartnerRegistry: MoveModuleAbi;
+  curatorRouter: MoveModuleAbi;
+}
+
 export interface MeridianAbiSet {
   meridianRouter: MoveModuleAbi;
   meridianVault: MoveModuleAbi;
@@ -88,7 +101,7 @@ export type AbiChainName = ChainName;
 
 export type ChainAbiSet = {
   "movement-mainnet": FrameworkAbiSet & CanopyAbiSet & MeridianAbiSet;
-  "movement-testnet": FrameworkAbiSet;
+  "movement-testnet": FrameworkAbiSet & CuratorAbiSet;
   "aptos-mainnet": FrameworkAbiSet & MeridianAbiSet; // Canopy is not deployed on Aptos mainnet
   "aptos-testnet": FrameworkAbiSet & CanopyAbiSet; // Meridian is not deployed on Aptos testnet
 };

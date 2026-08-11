@@ -43,6 +43,44 @@ export interface MoveAbortDetails {
   vmErrorCode?: number;
 }
 
+export interface MoveAbortResolverInput {
+  /**
+   * Normalized `0x` + 64 hex, when the abort message carried a module address.
+   *
+   * These are `| undefined` rather than plain optional because the repo runs with
+   * `exactOptionalPropertyTypes` and the call site always passes all four keys,
+   * some of which may be undefined.
+   */
+  moduleAddress: string | undefined;
+  moduleName: string | undefined;
+  functionName: string | undefined;
+  abortCode: number;
+}
+
+/**
+ * Outcome of a caller-supplied abort resolver.
+ *
+ * The three states are load-bearing. `KNOWN_MOVE_ABORTS` is keyed only by module
+ * name and function name, and module names are not unique across protocols — both
+ * the Canopy and curator packages ship modules called `vault` and `router`. So a
+ * resolver that owns a package must be able to say "mine, but I don't recognise
+ * this code" (`{ kind: "unknown" }`) and stop the lookup, rather than falling
+ * through to a same-named entry that means something else entirely.
+ *
+ * - `{ kind: "known" }` — use this name/message.
+ * - `{ kind: "unknown" }` — the abort belongs to a package the resolver owns and
+ *   the code is unmapped: suppress `KNOWN_MOVE_ABORTS` and the name heuristics,
+ *   and report the raw code with no name. An honest gap beats a wrong label.
+ * - `undefined` — not the resolver's package; fall through to the default lookup.
+ */
+export type MoveAbortResolution =
+  | { kind: "known"; name: string; message: string }
+  | { kind: "unknown" };
+
+export interface ExtractMoveAbortOptions {
+  resolveKnownAbort?: (input: MoveAbortResolverInput) => MoveAbortResolution | undefined;
+}
+
 const KNOWN_MOVE_ABORTS: Record<string, { name: string; message: string }> = {
   "router::deposit_coin:1": {
     name: "ENOT_ENOUGH_OUT_SHARES",
@@ -149,7 +187,8 @@ export class CanopyError extends Error {
 
 export function extractMoveAbortDetails(
   error: unknown,
-  fallbackFunction?: string
+  fallbackFunction?: string,
+  options?: ExtractMoveAbortOptions
 ): MoveAbortDetails | undefined {
   const envelope = readErrorEnvelope(error);
   const rawMessage = envelope.message;
@@ -165,7 +204,10 @@ export function extractMoveAbortDetails(
 
   const fn = parseAbortFunction(rawMessage) ?? fallbackFunction;
   const [moduleAddress, moduleName, functionName] = fn ? fn.split("::") : [];
-  const knownAbort = lookupKnownMoveAbort(moduleName, functionName, abortCode);
+  const knownAbort = resolveMoveAbortName(
+    { abortCode, moduleAddress, moduleName, functionName },
+    options?.resolveKnownAbort
+  );
 
   return {
     abortCode,
@@ -276,6 +318,24 @@ function readString(value: unknown): string | undefined {
 function normalizeHexAddress(address: string): string {
   const input = address.startsWith("0x") ? address.slice(2) : address;
   return `0x${input.padStart(64, "0").toLowerCase()}`;
+}
+
+function resolveMoveAbortName(
+  input: MoveAbortResolverInput,
+  resolveKnownAbort: ExtractMoveAbortOptions["resolveKnownAbort"]
+): { name: string; message: string } | undefined {
+  const resolved = resolveKnownAbort?.(input);
+
+  if (resolved !== undefined) {
+    // The resolver claimed the package. Either it named the code, or it did not
+    // and we must stop here rather than let a same-named entry from another
+    // protocol answer for it.
+    return resolved.kind === "known"
+      ? { name: resolved.name, message: resolved.message }
+      : undefined;
+  }
+
+  return lookupKnownMoveAbort(input.moduleName, input.functionName, input.abortCode);
 }
 
 function lookupKnownMoveAbort(

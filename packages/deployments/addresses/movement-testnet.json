@@ -1,5 +1,10 @@
 {
   "chain": "movement-testnet",
   "chainId": 250,
-  "fullnode": "https://testnet.movementnetwork.xyz/v1"
+  "fullnode": "https://testnet.movementnetwork.xyz/v1",
+  "curator": {
+    "vault": "0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f",
+    "router": "0x4f65dd9785f2ffb51818432646b0994ab43b8a9b602a52f989362883eae7dc17",
+    "genericAdapter": "0xeb3df5dd072000606ca10ffd6d30a6dae576ef5518c7220bdd2937d2ced4adbf"
+  }
 }
