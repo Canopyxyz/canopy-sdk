@@ -275,15 +275,18 @@ async function checkCanopy(chain, aptos, sdk) {
 }
 
 async function checkCurator(chain, aptos, sdk) {
+  const vaults = CURATOR_VAULTS[chain];
   const curator = sdk.curator;
-  if (!curator) {
-    results.skipped.push(`${chain} curator: not deployed on this chain`);
+
+  if (!vaults) {
+    if (curator) {
+      results.skipped.push(`${chain} curator: deployed but no pinned vault fixture`);
+    }
     return;
   }
 
-  const vaults = CURATOR_VAULTS[chain];
-  if (!vaults) {
-    results.skipped.push(`${chain} curator: no pinned vault fixture`);
+  if (!curator) {
+    results.skipped.push(`${chain} curator: pinned fixtures exist but client is not deployed`);
     return;
   }
 

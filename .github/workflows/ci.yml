@@ -68,6 +68,11 @@ jobs:
       - name: Check Live Payloads And Views (movement-mainnet, leading chain)
         run: pnpm run check:payloads -- --chain=movement-mainnet --strict
 
+      # Curator is movement-testnet-only. It must not count as missing mainnet coverage,
+      # but it still needs a live payload/view gate on the chain where it exists.
+      - name: Check Live Payloads And Views (movement-testnet, curator)
+        run: pnpm run check:payloads -- --chain=movement-testnet
+
       - name: Check Live Payloads And Views (aptos-testnet)
         run: pnpm run check:payloads -- --chain=aptos-testnet
 
