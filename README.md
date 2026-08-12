@@ -203,6 +203,8 @@ append-only.
 the transaction:
 
 ```ts
+import { findRedemptionRequest } from "@canopyhub/canopy-sdk";
+
 const submitted = await sdk.signSubmitAndWaitForTransaction({
   signer: account,
   payload: sdk.curator!.buildRequestRedemptionPayload({ vaultAddress, shares: 1_000_000n }),
@@ -354,7 +356,15 @@ await sdk.simulateTransaction({
 ```
 
 If you are using a wallet adapter, pass the same payload object into your wallet’s sign-and-submit flow.
-If simulation hits a Move abort in a format the SDK recognizes, it throws a `CanopyError` with `code: "MOVE_ABORT"` and structured `details.moveAbort` metadata for UI handling. Fullnodes currently emit a different abort string shape, so Move aborts generally surface as transaction failures with the raw `vmStatus` instead.
+If a Move abort is hit, whether simulating a transaction or reading a view, it throws a `CanopyError` with `code: "MOVE_ABORT"` and structured `details.moveAbort` metadata for UI handling. All three abort string shapes fullnodes emit are recognized, because simulation and `/v1/view` do not report aborts the same way even on the same chain:
+
+- **View** — `VMError { major_status: ABORTED, sub_status: Some(N), ... }`. Carries the code and a full function id, but no name or description.
+- **Simulation on Movement** — `ENAME(0xHEX): description`, where `abortName` and `abortMessage` come from the chain itself, and the location stops at the module.
+- **Aptos** — a bare `abort code N`, where the name is looked up from those the SDK knows.
+
+`details.moveAbort.rawMessage` always carries the original text, and `abortName` is absent rather than guessed when the chain does not send one.
+
+A Movement simulation abort names only the module it happened in, which is often an inner module the caller never invoked — a router entry function aborting inside a vault. In that case `details.moveAbort` reports `module` without a `functionName`; the function you actually called is on the enclosing `details.function`.
 
 ## Offchain Helpers
 
