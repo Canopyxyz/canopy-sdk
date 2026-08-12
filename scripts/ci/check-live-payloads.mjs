@@ -42,9 +42,17 @@
  * `return` on an empty Meridian registry alone drops eight checks — so with `--strict` any
  * skip is a failure. movement-mainnet is the leading chain: it is the only one binding every
  * optional ABI (`canopyHelpers`, `canopyRewardsView`, `meridianBatchViews`) and it reaches
- * zero skips, so it runs `--strict` and needs no allowlist of tolerated skips. The Aptos legs
- * cannot: aptos-testnet has no Meridian deployment and aptos-mainnet's Meridian registry is
- * empty, so they run non-strict and report their skips instead.
+ * zero skips, so it runs `--strict` and needs no allowlist of tolerated skips. The other legs
+ * cannot: aptos-testnet has no Meridian deployment, aptos-mainnet's Meridian registry is
+ * empty, and movement-testnet deploys curator alone — so canopy, rewards and Meridian all
+ * legitimately skip there. They run non-strict and report their skips instead.
+ *
+ * That leaves movement-testnet's curator sweep as the one body of coverage no `--strict` leg
+ * protects: it is the only chain curator is deployed on, so if it vanished the job would
+ * still exit 0 on three expected skips. Where a sweep is the entire point of a non-strict
+ * leg, a missing fixture or client is a `failed`, not a `skipped` — see `checkCurator`.
+ * Prefer that shape over marking the leg strict, which would need an allowlist for the
+ * three skips that are genuinely correct.
  *
  * XFAIL, NOT SKIP
  * ---------------
@@ -285,8 +293,18 @@ async function checkCurator(chain, aptos, sdk) {
     return;
   }
 
+  // Not a skip. Pinned fixtures assert curator is deployed here, so a missing client is a
+  // contradiction between the fixtures and `addresses/<chain>.json`, and the curator sweep
+  // is the only real content of this (non-strict) leg. Reported as a failure so the job
+  // cannot go green having checked nothing.
   if (!curator) {
-    results.skipped.push(`${chain} curator: pinned fixtures exist but client is not deployed`);
+    results.failed.push({
+      name: `${chain} curator`,
+      stage: "coverage",
+      message:
+        `pinned fixtures exist but sdk.curator is absent — ` +
+        `addresses/${chain}.json lost its curator block, or the fixtures belong to another chain`,
+    });
     return;
   }
 
@@ -314,7 +332,20 @@ async function checkCurator(chain, aptos, sdk) {
     );
   }
 
+  // The loop above is generic over the fixture map, but everything below names the floating
+  // vault directly. Without this guard a fixture map missing that key passes `undefined`
+  // into three payload builders and every view below — which fails 17 checks with an
+  // unrelated message and buries the actual cause. Fail once, here, and stop.
   const vaultAddress = vaults.floating;
+
+  if (!vaultAddress) {
+    results.failed.push({
+      name: `${chain} curator`,
+      stage: "coverage",
+      message: `CURATOR_VAULTS.${chain} has no floating vault; the request-lifecycle and view checks need one`,
+    });
+    return;
+  }
 
   for (const [label, build] of [
     ["buildClaimRedemptionPayload", () => curator.buildClaimRedemptionPayload({ vaultAddress, requestAddress })],
