@@ -639,6 +639,51 @@ describe("curator reads", () => {
     await expect(sdk.curator!.getPartnerPayoutAddress(99n)).resolves.toBeNull();
   });
 
+  // The case above never reaches the abort: `is_registered` answers false and the second
+  // view is skipped. This one covers the race the method actually documents — the partner
+  // is removed between the two calls.
+  //
+  // The payload below is captured verbatim from movement-testnet, by calling
+  // `partner_registry::payout_address` with an unregistered id. `/v1/view` does not use the
+  // `Move abort in …: ENAME(0xHEX)` wording that simulation does: there is no name, no
+  // description, and the code is in `sub_status`. Parsing that is what makes this branch
+  // reachable — an invented `ENAME` string passes while production still fails.
+  it("returns null when a partner is removed between the registration check and the payout read", async () => {
+    const { sdk } = createCuratorSdk({
+      [`${VAULT_PACKAGE}::partner_registry::is_registered`]: [true],
+      [`${VAULT_PACKAGE}::partner_registry::payout_address`]: () => {
+        // Thrown the way the Aptos SDK does, with the body under `data`.
+        throw Object.assign(new Error("Move abort"), {
+          data: {
+            message:
+              "Failed to execute function: VMError { major_status: ABORTED, sub_status: Some(2), " +
+              `message: Some("${VAULT_PACKAGE}::partner_registry::payout_address at offset 17"), ` +
+              "exec_state: Some(ExecutionState { stack_trace: [] }), location: Module(ModuleId { " +
+              "address: defc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f, " +
+              'name: Identifier("partner_registry") }), indices: [], offsets: [(FunctionDefinitionIndex(2), 17)] }',
+            error_code: "invalid_input",
+            vm_error_code: null,
+          },
+        });
+      },
+    });
+
+    await expect(sdk.curator!.getPartnerPayoutAddress(7n)).resolves.toBeNull();
+  });
+
+  it("rethrows a payout_address failure that is not a move abort", async () => {
+    const { sdk } = createCuratorSdk({
+      [`${VAULT_PACKAGE}::partner_registry::is_registered`]: [true],
+      [`${VAULT_PACKAGE}::partner_registry::payout_address`]: () => {
+        throw new Error("connection reset");
+      },
+    });
+
+    await expect(sdk.curator!.getPartnerPayoutAddress(7n)).rejects.toMatchObject({
+      code: "VIEW_CALL_FAILED",
+    });
+  });
+
   it("fails loudly on malformed view data", async () => {
     const { sdk } = createCuratorSdk({
       [`${VAULT_PACKAGE}::vault::vault_accounting`]: ["not-a-struct"],
