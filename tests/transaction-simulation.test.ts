@@ -145,6 +145,45 @@ describe("Transaction simulation", () => {
     });
   });
 
+  // The shape movement-testnet actually returns: the code inside `ENAME(0xHEX)`, the
+  // location stopping at the aborting module, and a description the chain wrote itself.
+  // Simulation is where users meet this first, so it is pinned on this path too.
+  it("turns movement-shaped simulation aborts into structured move abort errors", async () => {
+    const client = createClient();
+    client.transaction.simulate.simple.mockResolvedValue([
+      {
+        success: false,
+        vm_status:
+          "Move abort in 0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::vault: EDEPOSIT_BELOW_MIN(0x65): Deposit amount is below the minimum required.",
+      },
+    ]);
+
+    const sdk = new CanopySdk(client as never, { chain: "movement-testnet" });
+
+    await expect(
+      sdk.simulateTransaction({
+        sender: "0x1",
+        payload: {
+          function:
+            "0x4f65dd9785f2ffb51818432646b0994ab43b8a9b602a52f989362883eae7dc17::router::deposit_fa",
+          typeArguments: [],
+          functionArguments: ["0x1", "10"],
+        },
+      })
+    ).rejects.toMatchObject({
+      code: CanopyErrorCode.MoveAbort,
+      details: {
+        moveAbort: {
+          abortCode: 101,
+          abortMessage: "Deposit amount is below the minimum required.",
+          abortName: "EDEPOSIT_BELOW_MIN",
+          module:
+            "0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::vault",
+        },
+      },
+    });
+  });
+
   it("turns thrown simulation errors into structured move abort errors when possible", async () => {
     const client = createClient();
     client.transaction.simulate.simple.mockRejectedValue({

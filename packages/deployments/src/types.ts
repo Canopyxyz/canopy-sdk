@@ -18,6 +18,8 @@ export type ContractId =
   | "canopy.strategy.movepositionSimple"
   | "canopy.strategy.placeholderSimple"
   | "canopy.strategy.meridianRewards"
+  | "curator.vault"
+  | "curator.router"
   | "rewards.module"
   | "rewards.router"
   | "rewards.batcher"
@@ -40,6 +42,18 @@ export interface CanopyDeployment {
   strategies: StrategyDeploymentMap;
   helpers?: HexString;
   views?: HexString;
+}
+
+/**
+ * Curator vault packages. `genericAdapter` intentionally has no `ContractId`:
+ * it is not user-facing and has no checked-in ABI, and a `ContractId` without an
+ * ABI would make `getContract` always return null. The address is still useful
+ * for checking a vault's `strategy_module_address` against the known adapter.
+ */
+export interface CuratorDeployment {
+  vault: HexString;
+  router: HexString;
+  genericAdapter: HexString;
 }
 
 export interface RewardsDeployment {
@@ -67,6 +81,7 @@ export interface SharedPackagesDeployment {
 
 export interface DeploymentFeatures {
   canopy: boolean;
+  curator: boolean;
   rewards: boolean;
   almMeridian: boolean;
 }
@@ -76,6 +91,7 @@ export interface ChainDeployment {
   chainId: number;
   fullnode: string;
   canopy?: CanopyDeployment;
+  curator?: CuratorDeployment;
   rewards?: RewardsDeployment;
   alm?: AlmDeployment;
   sharedPackages?: SharedPackagesDeployment;

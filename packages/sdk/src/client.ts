@@ -1,11 +1,17 @@
 import type { Aptos } from "@aptos-labs/ts-sdk";
-import { CanopyError, CanopyErrorCode, extractMoveAbortDetails } from "@canopyhub/canopy-sdk-core";
+import {
+  CanopyError,
+  CanopyErrorCode,
+  extractMoveAbortDetails,
+} from "@canopyhub/canopy-sdk-core";
 import { RewardsDiscoveryClient } from "./data";
 import type { CanopyProtocolClient } from "./canopy";
 import { CanopyProtocolClient as CanopyProtocolClientImpl } from "./canopy";
+import { CuratorClient } from "./curator";
 import {
   createSdkContext,
   requireCanopyFeatureContext,
+  requireCuratorFeatureContext,
   requireMeridianFeatureContext,
   requireRewardsFeatureContext,
 } from "./context";
@@ -28,6 +34,7 @@ export class CanopySdk<Chain extends SdkChainName = SdkChainName> {
   };
   readonly canopy?: CanopyProtocolClient;
   readonly chain: Chain;
+  readonly curator?: CuratorClient;
   readonly data: {
     rewardsDiscovery?: RewardsDiscoveryClient;
   };
@@ -67,6 +74,12 @@ export class CanopySdk<Chain extends SdkChainName = SdkChainName> {
     if (baseContext.deployment.features.canopy) {
       this.canopy = CanopyProtocolClientImpl.fromContext(
         requireCanopyFeatureContext(baseContext)
+      );
+    }
+
+    if (baseContext.deployment.features.curator) {
+      this.curator = CuratorClient.fromContext(
+        requireCuratorFeatureContext(baseContext)
       );
     }
 
@@ -201,7 +214,10 @@ export function createCanopySdk<Chain extends SdkChainName>(
   return new CanopySdk(client, options);
 }
 
-function throwTransactionFailure(vmStatus: string, fallbackFunction: string): never {
+function throwTransactionFailure(
+  vmStatus: string,
+  fallbackFunction: string
+): never {
   const moveAbort = extractMoveAbortDetails({ message: vmStatus }, fallbackFunction);
 
   if (moveAbort) {

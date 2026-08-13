@@ -221,6 +221,182 @@ describe("core helpers", () => {
       vmErrorCode: 42,
     });
   });
+
+  // Movement fullnodes carry the code as `ENAME(0xHEX)` and stop the location at the
+  // module, where Aptos writes `abort code N` and names the function. Both shapes reach
+  // the same call sites, so both are parsed. Observed live while simulating a
+  // below-minimum curator deposit.
+  it("extracts move abort details from the movement ENAME(0xHEX) shape", async () => {
+    const originalError = Object.assign(
+      new Error(
+        "Transaction Executor encountered VM error: Move abort in 0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::vault: EDEPOSIT_BELOW_MIN(0x65): Deposit amount is below the minimum required."
+      ),
+      { error_code: "vm_error", vm_error_code: 10 }
+    );
+    const client = {
+      view: jest.fn(async () => {
+        throw originalError;
+      }),
+    };
+
+    const rejection = await callViewFunction(client, {
+      moduleAddress: "0x4f65dd9785f2ffb51818432646b0994ab43b8a9b602a52f989362883eae7dc17",
+      moduleName: "router",
+      functionName: "deposit_fa",
+    }).then(
+      () => {
+        throw new Error("expected the view call to reject");
+      },
+      (error: unknown) => error as CanopyError
+    );
+
+    expect(rejection).toMatchObject({
+      code: CanopyErrorCode.MoveAbort,
+      cause: originalError,
+      details: {
+        // The payload's own function id still reaches callers here, which is why
+        // `moveAbort` can omit a function it cannot honestly name.
+        function:
+          "0x4f65dd9785f2ffb51818432646b0994ab43b8a9b602a52f989362883eae7dc17::router::deposit_fa",
+        moveAbort: {
+          abortCode: 101,
+          abortMessage: "Deposit amount is below the minimum required.",
+          abortName: "EDEPOSIT_BELOW_MIN",
+          errorCode: "vm_error",
+          module:
+            "0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::vault",
+          moduleName: "vault",
+          vmErrorCode: 10,
+        },
+      },
+    });
+
+    // The abort happened in `vault`; the caller invoked `router::deposit_fa`. Stitching
+    // the two would name a function that does not exist, so neither field is reported.
+    const moveAbort = (rejection.details as { moveAbort: Record<string, unknown> }).moveAbort;
+    expect(moveAbort).not.toHaveProperty("function");
+    expect(moveAbort).not.toHaveProperty("functionName");
+  });
+
+  // Captured verbatim from movement-testnet `/v1/view`, calling
+  // `partner_registry::payout_address` with an unregistered id. This endpoint shares no
+  // wording with the simulation shape above: `ABORTED` instead of `Move abort in`, the code
+  // in `sub_status`, and no name or description at all. `\babort\b` does not even match
+  // `ABORTED` — there is no word boundary before `ED` — so this was discarded outright.
+  it("extracts move abort details from the /v1/view VMError shape", () => {
+    const details = extractMoveAbortDetails({
+      data: {
+        message:
+          "Failed to execute function: VMError { major_status: ABORTED, sub_status: Some(2), " +
+          'message: Some("0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::partner_registry::payout_address at offset 17"), ' +
+          "exec_state: Some(ExecutionState { stack_trace: [] }), location: Module(ModuleId { " +
+          "address: defc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f, " +
+          'name: Identifier("partner_registry") }), indices: [], offsets: [(FunctionDefinitionIndex(2), 17)] }',
+        error_code: "invalid_input",
+        vm_error_code: null,
+      },
+    });
+
+    expect(details).toMatchObject({
+      abortCode: 2,
+      errorCode: "invalid_input",
+      // Unlike simulation, the view endpoint reports a complete function id.
+      function:
+        "0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::partner_registry::payout_address",
+      functionName: "payout_address",
+      moduleName: "partner_registry",
+    });
+    // The chain sends no name or description on this path, and the table has no entry for
+    // partner_registry — reporting a guess would be worse than reporting the bare code.
+    expect(details).not.toHaveProperty("abortName");
+    expect(details).not.toHaveProperty("abortMessage");
+  });
+
+  // Sharing a prefix with a router entry function is not evidence of sharing its error.
+  // This view is not the router's `deposit_fa`, and code 1 here means whatever
+  // `vault::deposit_preview` says it means.
+  it("does not name an unknown abort from a function-name prefix", () => {
+    const details = extractMoveAbortDetails({
+      data: {
+        message:
+          "Failed to execute function: VMError { major_status: ABORTED, sub_status: Some(1), " +
+          'message: Some("0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::vault::deposit_preview at offset 3") }',
+      },
+    });
+
+    expect(details).toMatchObject({ abortCode: 1, functionName: "deposit_preview" });
+    expect(details).not.toHaveProperty("abortName");
+    expect(details).not.toHaveProperty("abortMessage");
+  });
+
+  // A missing object reports `ABORTED` with no major_status and no sub_status. It clears the
+  // `abort(ed)?` guard, so only the `major_status: ABORTED` gate keeps it from being read as
+  // a Move abort with whatever number the loose bare-code pattern finds first.
+  it("does not treat a PartialVMError without a sub_status as a move abort", () => {
+    expect(
+      extractMoveAbortDetails({
+        data: { message: "PartialVMError with status ABORTED", error_code: "invalid_input" },
+      })
+    ).toBeUndefined();
+  });
+
+  it("does not borrow a function name from a same-named module at another address", () => {
+    const details = extractMoveAbortDetails(
+      new Error("Move abort in 0xa::vault: EPAUSED(0x1): The vault is paused."),
+      "0xb::vault::deposit"
+    );
+
+    expect(details).toMatchObject({
+      abortCode: 1,
+      abortName: "EPAUSED",
+      module: "0x000000000000000000000000000000000000000000000000000000000000000a::vault",
+      moduleName: "vault",
+    });
+    // `vault` at 0xa and `vault` at 0xb are different modules that share a name.
+    expect(details).not.toHaveProperty("function");
+    expect(details).not.toHaveProperty("functionName");
+  });
+
+  it("borrows the function name when the fallback resolves to the same module", () => {
+    expect(
+      extractMoveAbortDetails(
+        new Error("Move abort in 0xa::vault: EPAUSED(0x1): The vault is paused."),
+        "0x000000000000000000000000000000000000000000000000000000000000000a::vault::deposit"
+      )
+    ).toMatchObject({
+      abortCode: 1,
+      abortName: "EPAUSED",
+      function:
+        "0x000000000000000000000000000000000000000000000000000000000000000a::vault::deposit",
+      functionName: "deposit",
+      module: "0x000000000000000000000000000000000000000000000000000000000000000a::vault",
+    });
+  });
+
+  // The chain knows its own error constants; KNOWN_MOVE_ABORTS is a stand-in for chains
+  // that send none. Growing that table is not the fix when the chain already answered.
+  it("prefers the chain-reported abort name over the known-abort table", () => {
+    expect(
+      extractMoveAbortDetails(
+        new Error("Move abort in 0x1::vault::deposit: EDEPOSIT_BELOW_MIN(117): Too small.")
+      )
+    ).toMatchObject({
+      abortCode: 117,
+      abortMessage: "Too small.",
+      abortName: "EDEPOSIT_BELOW_MIN",
+      functionName: "deposit",
+    });
+  });
+
+  it("reads a named abort that carries no description", () => {
+    const details = extractMoveAbortDetails(
+      new Error("Move abort in 0xa::queue: EREQUEST_NOT_FOUND(0x7)")
+    );
+
+    expect(details).toMatchObject({ abortCode: 7, abortName: "EREQUEST_NOT_FOUND" });
+    expect(details).not.toHaveProperty("abortMessage");
+  });
+
 });
 
 describe("move readers against real fullnode shapes", () => {

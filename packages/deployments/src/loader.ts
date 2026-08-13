@@ -55,6 +55,9 @@ export function validateDeployment(input: ChainDeploymentInput): ChainDeployment
   validateAddressMap(deployment.canopy?.strategies, "canopy.strategies");
   validateOptionalAddress(deployment.canopy?.helpers, "canopy.helpers");
   validateOptionalAddress(deployment.canopy?.views, "canopy.views");
+  validateOptionalAddress(deployment.curator?.vault, "curator.vault");
+  validateOptionalAddress(deployment.curator?.router, "curator.router");
+  validateOptionalAddress(deployment.curator?.genericAdapter, "curator.genericAdapter");
   validateOptionalAddress(deployment.rewards?.module, "rewards.module");
   validateOptionalAddress(deployment.rewards?.router, "rewards.router");
   validateOptionalAddress(deployment.rewards?.batcher, "rewards.batcher");
@@ -99,6 +102,12 @@ function validateFeatureRequirements(deployment: ChainDeployment): void {
       CANOPY_REQUIRED[deployment.chain].strategies,
       "canopy.strategies"
     );
+  }
+
+  if (deployment.features.curator) {
+    requireAddress(deployment.curator?.vault, "curator.vault");
+    requireAddress(deployment.curator?.router, "curator.router");
+    requireAddress(deployment.curator?.genericAdapter, "curator.genericAdapter");
   }
 
   if (deployment.features.rewards) {
@@ -192,10 +201,11 @@ function resolveDeploymentInput(chain: ChainName): ChainDeploymentInput {
 }
 
 function inferDeploymentFeatures(
-  input: Pick<ChainDeploymentInput, "canopy" | "rewards" | "alm">
+  input: Pick<ChainDeploymentInput, "canopy" | "curator" | "rewards" | "alm">
 ): DeploymentFeatures {
   return {
     canopy: input.canopy !== undefined,
+    curator: input.curator !== undefined,
     rewards: input.rewards !== undefined,
     almMeridian: input.alm?.meridian !== undefined,
   };

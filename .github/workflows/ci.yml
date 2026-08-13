@@ -62,11 +62,23 @@ jobs:
       # --strict, where a skip is a failure. That is what stops coverage vanishing silently:
       # an emptied registry drops eight checks behind a single early return.
       #
-      # The Aptos legs cannot be strict. aptos-testnet has no Meridian deployment, and
-      # aptos-mainnet's Meridian registry is empty (3 passes, 3 skips), so both legitimately
-      # skip. Payload failures and unreachable-chain errors still gate on aptos-testnet.
+      # The other legs cannot be strict, because each has skips that are genuinely correct.
+      # aptos-testnet has no Meridian deployment, and aptos-mainnet's Meridian registry is
+      # empty (3 passes, 3 skips). Payload failures and unreachable-chain errors still gate
+      # on aptos-testnet.
       - name: Check Live Payloads And Views (movement-mainnet, leading chain)
         run: pnpm run check:payloads -- --chain=movement-mainnet --strict
+
+      # Curator is movement-testnet-only. It must not count as missing mainnet coverage,
+      # but it still needs a live payload/view gate on the chain where it exists.
+      #
+      # Non-strict for the same reason: this chain deploys curator alone, so canopy,
+      # rewards and Meridian all skip correctly here. --strict would need an allowlist for
+      # those three. Instead the curator sweep itself refuses to be skipped — a missing
+      # client or fixture is a failure in checkCurator, so this leg cannot pass having
+      # checked nothing, which is the one thing --strict was protecting elsewhere.
+      - name: Check Live Payloads And Views (movement-testnet, curator)
+        run: pnpm run check:payloads -- --chain=movement-testnet
 
       - name: Check Live Payloads And Views (aptos-testnet)
         run: pnpm run check:payloads -- --chain=aptos-testnet

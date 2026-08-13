@@ -143,9 +143,41 @@ describe("deployment registry", () => {
 
     expect(validateDeployment(withoutFeatures).features).toEqual({
       canopy: true,
+      curator: false,
       rewards: true,
       almMeridian: false,
     });
+  });
+
+  it("enables the curator feature from the movement-testnet curator section", () => {
+    const deployment = getDeployment("movement-testnet");
+
+    expect(deployment.features).toEqual({
+      canopy: false,
+      curator: true,
+      rewards: false,
+      almMeridian: false,
+    });
+    expect(deployment.curator?.vault).toBe(
+      "0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f"
+    );
+    expect(getContractAddress("movement-testnet", "curator.router")).toBe(
+      "0x4f65dd9785f2ffb51818432646b0994ab43b8a9b602a52f989362883eae7dc17"
+    );
+  });
+
+  it("requires every curator address once the curator feature is inferred", () => {
+    // A partial `curator` section must not pass validation and leave the client
+    // constructing against undefined addresses. Feature inference only checks that
+    // the section exists, so validateFeatureRequirements has to do the rest.
+    for (const missingKey of ["vault", "router", "genericAdapter"] as const) {
+      const partial = structuredClone(getDeployment("movement-testnet"));
+      delete partial.curator?.[missingKey];
+
+      expect(() => validateDeployment(partial)).toThrow(
+        `Missing required deployment address: curator.${missingKey}`
+      );
+    }
   });
 
   it("distinguishes nullable and required contract address lookup", () => {

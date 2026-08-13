@@ -43,6 +43,19 @@ export interface MoveAbortDetails {
   vmErrorCode?: number;
 }
 
+/** An abort's name and description, from either the chain or `KNOWN_MOVE_ABORTS`. */
+interface AbortDescription {
+  abortMessage?: string;
+  abortName: string;
+}
+
+/** Where an abort happened. `functionName` is absent when only a module is known. */
+interface AbortLocation {
+  functionName?: string;
+  moduleAddress: string;
+  moduleName: string;
+}
+
 const KNOWN_MOVE_ABORTS: Record<string, { name: string; message: string }> = {
   "router::deposit_coin:1": {
     name: "ENOT_ENOUGH_OUT_SHARES",
@@ -154,24 +167,43 @@ export function extractMoveAbortDetails(
   const envelope = readErrorEnvelope(error);
   const rawMessage = envelope.message;
 
-  if (!rawMessage || !/\babort\b/i.test(rawMessage)) {
+  // `ABORTED` has no word boundary before `ED`, so `\babort\b` alone rejects every
+  // `/v1/view` failure before it is ever parsed.
+  if (!rawMessage || !/\babort(ed)?\b/i.test(rawMessage)) {
     return undefined;
   }
 
-  const abortCode = parseAbortCode(rawMessage);
+  // Three shapes reach this function, and none of the endpoints agree:
+  //   - `/v1/view`  → `VMError { major_status: ABORTED, sub_status: Some(2), ... }`
+  //   - simulation  → `Move abort in 0xaddr::module: ENAME(0x65): description`
+  //   - Aptos       → `Move abort in 0xaddr::module::function: abort code 117`
+  // Most specific first. The bare-code patterns are loose enough to match an unrelated
+  // `code` elsewhere in the same string, so they run last.
+  const namedAbort = parseNamedAbort(rawMessage);
+  const abortCode =
+    namedAbort?.abortCode ?? parseVmErrorAbort(rawMessage) ?? parseAbortCode(rawMessage);
   if (abortCode === undefined) {
     return undefined;
   }
 
-  const fn = parseAbortFunction(rawMessage) ?? fallbackFunction;
-  const [moduleAddress, moduleName, functionName] = fn ? fn.split("::") : [];
-  const knownAbort = lookupKnownMoveAbort(moduleName, functionName, abortCode);
+  const location = resolveAbortLocation(rawMessage, fallbackFunction);
+  const { functionName, moduleAddress, moduleName } = location ?? {};
+  // The chain's own name and message beat the hand-maintained table whenever it sends
+  // them. The table only covers the Aptos form, which carries neither.
+  const knownAbort =
+    namedAbort ?? lookupKnownMoveAbort(moduleName, functionName, abortCode);
 
   return {
     abortCode,
-    ...(knownAbort ? { abortMessage: knownAbort.message, abortName: knownAbort.name } : {}),
+    ...(knownAbort?.abortMessage ? { abortMessage: knownAbort.abortMessage } : {}),
+    ...(knownAbort?.abortName ? { abortName: knownAbort.abortName } : {}),
     ...(envelope.errorCode ? { errorCode: envelope.errorCode } : {}),
-    ...(fn ? { function: fn } : {}),
+    // Only a complete `address::module::function` id is reported. A module-only abort
+    // has no function to name, and callers already receive the payload's own function
+    // id alongside `moveAbort`.
+    ...(moduleAddress && moduleName && functionName
+      ? { function: `${moduleAddress}::${moduleName}::${functionName}` }
+      : {}),
     ...(functionName ? { functionName } : {}),
     ...(moduleAddress && moduleName ? { module: `${moduleAddress}::${moduleName}` } : {}),
     ...(moduleAddress ? { moduleAddress } : {}),
@@ -204,30 +236,133 @@ function parseAbortCode(message: string): number | undefined {
   return rawCode ? parseInteger(rawCode) : undefined;
 }
 
-function parseAbortFunction(message: string): string | undefined {
-  const match =
-    message.match(
-      /Move abort in\s+((?:0x)?[0-9a-fA-F]{1,64}::[A-Za-z0-9_]+::[A-Za-z0-9_]+)/i
-    ) ??
-    message.match(
-      /at function\s+((?:0x)?[0-9a-fA-F]{1,64}::[A-Za-z0-9_]+::[A-Za-z0-9_]+)/i
-    );
+/**
+ * Reads the `ENAME(0xHEX): message` tail that Movement fullnodes append to an abort, e.g.
+ * `EDEPOSIT_BELOW_MIN(0x65): Deposit amount is below the minimum required.`
+ *
+ * The trailing message is optional — some modules abort with a named constant and no
+ * description.
+ */
+function parseNamedAbort(
+  message: string
+): (AbortDescription & { abortCode: number }) | undefined {
+  const match = message.match(
+    /\b(E[A-Za-z0-9_]*)\((0x[0-9a-fA-F]+|\d+)\)(?:\s*:\s*(.+))?/
+  );
 
   if (!match) {
     return undefined;
   }
 
-  const functionId = match[1];
-  if (!functionId) {
+  const [, abortName, rawCode, abortMessage] = match;
+  if (!abortName || !rawCode) {
     return undefined;
   }
 
+  const abortCode = parseInteger(rawCode);
+  if (abortCode === undefined) {
+    return undefined;
+  }
+
+  const trimmedMessage = abortMessage?.trim();
+
+  return {
+    abortCode,
+    abortName,
+    ...(trimmedMessage ? { abortMessage: trimmedMessage } : {}),
+  };
+}
+
+/**
+ * Reads the `VMError { major_status: ABORTED, sub_status: Some(N) }` shape `/v1/view`
+ * returns. A view abort carries neither a name nor a description — only the code, and only
+ * in `sub_status`.
+ *
+ * Gated on `major_status: ABORTED` so a non-abort VM failure is not misread as a Move
+ * abort. That gate is load-bearing: a missing object reports the bare string
+ * `PartialVMError with status ABORTED`, which passes the `abort(ed)?` guard above but
+ * carries no code and must stay a plain view failure.
+ */
+function parseVmErrorAbort(message: string): number | undefined {
+  if (!/major_status:\s*ABORTED\b/.test(message)) {
+    return undefined;
+  }
+
+  const match = message.match(/sub_status:\s*Some\((0x[0-9a-fA-F]+|\d+)\)/);
+  return match?.[1] ? parseInteger(match[1]) : undefined;
+}
+
+/**
+ * Locates an abort, preferring what the chain reported over the caller's payload.
+ *
+ * Movement names only the aborting module (`0xaddr::vault`), which is frequently an inner
+ * module the caller never invoked directly — a router entry function aborting inside a
+ * vault. `fallbackFunction` supplies a function name only when it refers to that very same
+ * module: matching on the bare module name would let `0xa::vault` adopt a function from an
+ * unrelated `0xb::vault`, inventing a function id that does not exist.
+ */
+function resolveAbortLocation(
+  message: string,
+  fallbackFunction?: string
+): AbortLocation | undefined {
+  const reported = parseAbortLocation(message);
+
+  if (!reported) {
+    return fallbackFunction ? parseFunctionId(fallbackFunction) : undefined;
+  }
+
+  if (reported.functionName || !fallbackFunction) {
+    return reported;
+  }
+
+  const fallback = parseFunctionId(fallbackFunction);
+  const sameModule =
+    fallback?.moduleAddress === reported.moduleAddress &&
+    fallback?.moduleName === reported.moduleName;
+
+  return sameModule && fallback?.functionName
+    ? { ...reported, functionName: fallback.functionName }
+    : reported;
+}
+
+function parseAbortLocation(message: string): AbortLocation | undefined {
+  const functionMatch =
+    message.match(
+      /Move abort in\s+((?:0x)?[0-9a-fA-F]{1,64}::[A-Za-z0-9_]+::[A-Za-z0-9_]+)/i
+    ) ??
+    message.match(
+      /at function\s+((?:0x)?[0-9a-fA-F]{1,64}::[A-Za-z0-9_]+::[A-Za-z0-9_]+)/i
+    ) ??
+    // `/v1/view` is the one endpoint that names the function: it reports a complete id
+    // inside VMError's inner message, as `message: Some("0xaddr::module::fn at offset 17")`.
+    message.match(
+      /message:\s*Some\("((?:0x)?[0-9a-fA-F]{1,64}::[A-Za-z0-9_]+::[A-Za-z0-9_]+)/i
+    );
+
+  if (functionMatch?.[1]) {
+    return parseFunctionId(functionMatch[1]);
+  }
+
+  // Movement stops at the module: `Move abort in 0xaddr::vault: ENAME(0x65): ...`
+  const moduleMatch = message.match(
+    /Move abort in\s+((?:0x)?[0-9a-fA-F]{1,64})::([A-Za-z0-9_]+)/i
+  );
+  const [, rawAddress, moduleName] = moduleMatch ?? [];
+
+  if (!rawAddress || !moduleName) {
+    return undefined;
+  }
+
+  return { moduleAddress: normalizeHexAddress(rawAddress), moduleName };
+}
+
+function parseFunctionId(functionId: string): AbortLocation | undefined {
   const [rawAddress, moduleName, functionName] = functionId.split("::");
   if (!rawAddress || !moduleName || !functionName) {
     return undefined;
   }
 
-  return `${normalizeHexAddress(rawAddress)}::${moduleName}::${functionName}`;
+  return { functionName, moduleAddress: normalizeHexAddress(rawAddress), moduleName };
 }
 
 function parseInteger(value: string): number | undefined {
@@ -282,7 +417,7 @@ function lookupKnownMoveAbort(
   moduleName: string | undefined,
   functionName: string | undefined,
   abortCode: number
-): { name: string; message: string } | undefined {
+): AbortDescription | undefined {
   if (!functionName) {
     return undefined;
   }
@@ -290,30 +425,23 @@ function lookupKnownMoveAbort(
   if (moduleName) {
     const exact = KNOWN_MOVE_ABORTS[`${moduleName}::${functionName}:${abortCode}`];
     if (exact) {
-      return exact;
+      return describeKnownAbort(exact);
     }
   }
 
   const exactByFunction = Object.entries(KNOWN_MOVE_ABORTS).find(([key]) =>
     key.endsWith(`::${functionName}:${abortCode}`)
   )?.[1];
-  if (exactByFunction) {
-    return exactByFunction;
-  }
 
-  if (functionName.startsWith("deposit_") && abortCode === 1) {
-    return {
-      name: "ENOT_ENOUGH_OUT_SHARES",
-      message: "The deposit produced fewer shares than the caller required.",
-    };
-  }
+  // No prefix heuristics. `deposit_*` + code 1 and `withdraw_*` + code 2 used to fall back
+  // to the router's slippage errors, which is redundant for every router function above —
+  // they all have exact keys — and wrong for anything else that happens to share the
+  // prefix. A curator `vault::deposit_preview` aborting with code 1 was reported as
+  // "The deposit produced fewer shares than the caller required." An unnamed code beats a
+  // confident wrong name.
+  return exactByFunction ? describeKnownAbort(exactByFunction) : undefined;
+}
 
-  if (functionName.startsWith("withdraw_") && abortCode === 2) {
-    return {
-      name: "ENOT_ENOUGH_OUT_AMOUNT",
-      message: "The withdrawal would return fewer assets than the caller required.",
-    };
-  }
-
-  return undefined;
+function describeKnownAbort(entry: { name: string; message: string }): AbortDescription {
+  return { abortMessage: entry.message, abortName: entry.name };
 }

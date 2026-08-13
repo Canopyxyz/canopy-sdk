@@ -47,6 +47,20 @@ describe("ABI bindings", () => {
     expect(movementTestnet).toBe(movementTestnetAbis);
     expect(movementTestnet.aptosFrameworkCoin.address).toBe("0x1");
     expect(movementTestnet.aptosFrameworkObject.name).toBe("object");
+    // Three curator modules share the vault package address; the router is separate.
+    expect(movementTestnet.curatorVault.name).toBe("vault");
+    expect(movementTestnet.curatorQueue.name).toBe("queue");
+    expect(movementTestnet.curatorPartnerRegistry.name).toBe("partner_registry");
+    expect(movementTestnet.curatorVault.address).toBe(
+      "0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f"
+    );
+    expect(movementTestnet.curatorQueue.address).toBe(
+      movementTestnet.curatorVault.address
+    );
+    expect(movementTestnet.curatorRouter.name).toBe("router");
+    expect(movementTestnet.curatorRouter.address).toBe(
+      "0x4f65dd9785f2ffb51818432646b0994ab43b8a9b602a52f989362883eae7dc17"
+    );
     expect(aptosMainnet.meridianVault.address).toBe(
       "0xeb57695cd494c59ea7b1356580f1e7d5666fd84827322369e21d712e22397b54"
     );
@@ -101,6 +115,13 @@ describe("ABI bindings", () => {
   it("exposes nullable ABI lookup with normalized structs", () => {
     expect(getAbi("movement-mainnet", "canopy.router")?.structs).toEqual([]);
     expect(getAbi("movement-testnet", "canopy.router")).toBeUndefined();
+  });
+
+  it("resolves curator contract ids to curator ABIs on the deployed chain only", () => {
+    expect(getAbi("movement-testnet", "curator.vault")?.name).toBe("vault");
+    expect(getAbi("movement-testnet", "curator.router")?.name).toBe("router");
+    expect(getAbi("movement-mainnet", "curator.vault")).toBeUndefined();
+    expect(getAbi("aptos-testnet", "curator.router")).toBeUndefined();
   });
 
   it("exposes named framework ABI helpers", () => {

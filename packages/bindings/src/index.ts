@@ -8,6 +8,7 @@ export type {
   AbiChainName,
   CanopyAbiSet,
   ChainAbiSet,
+  CuratorAbiSet,
   FrameworkAbiId,
   FrameworkAbiSet,
   MeridianAbiSet,

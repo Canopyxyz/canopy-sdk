@@ -31,6 +31,38 @@ describe("deployment and ABI registry consistency", () => {
     }
   });
 
+  it("has matching ABIs for deployed curator packages", () => {
+    for (const deployment of listDeployments()) {
+      const abis = getAbiMap(deployment);
+
+      // The vault package holds four modules, three of which the SDK binds.
+      expectOptionalAbiAddress(
+        abis,
+        "curatorVault",
+        deployment.curator?.vault,
+        `${deployment.chain}: curator.vault`
+      );
+      expectOptionalAbiAddress(
+        abis,
+        "curatorQueue",
+        deployment.curator?.vault,
+        `${deployment.chain}: curator.vault queue module`
+      );
+      expectOptionalAbiAddress(
+        abis,
+        "curatorPartnerRegistry",
+        deployment.curator?.vault,
+        `${deployment.chain}: curator.vault partner_registry module`
+      );
+      expectOptionalAbiAddress(
+        abis,
+        "curatorRouter",
+        deployment.curator?.router,
+        `${deployment.chain}: curator.router`
+      );
+    }
+  });
+
   it("has matching ABIs for deployed Canopy and rewards packages", () => {
     for (const deployment of listDeployments()) {
       const abis = getAbiMap(deployment);

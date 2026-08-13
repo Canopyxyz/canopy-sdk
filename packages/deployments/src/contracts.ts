@@ -25,6 +25,10 @@ function resolveAddress(
       return deployment.canopy?.strategies["placeholderSimple"];
     case "canopy.strategy.meridianRewards":
       return deployment.canopy?.strategies["meridianRewards"];
+    case "curator.vault":
+      return deployment.curator?.vault;
+    case "curator.router":
+      return deployment.curator?.router;
     case "rewards.module":
       return deployment.rewards?.module;
     case "rewards.router":

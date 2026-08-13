@@ -163,7 +163,32 @@ export const ABI_MANIFEST = {
       moduleName: "median_stable_v2_entry",
     },
   ],
-  "movement-testnet": [],
+  "movement-testnet": [
+    {
+      key: "curatorVault",
+      file: "curator_vault.ts",
+      addressPath: ["curator", "vault"],
+      moduleName: "vault",
+    },
+    {
+      key: "curatorQueue",
+      file: "curator_queue.ts",
+      addressPath: ["curator", "vault"],
+      moduleName: "queue",
+    },
+    {
+      key: "curatorPartnerRegistry",
+      file: "curator_partner_registry.ts",
+      addressPath: ["curator", "vault"],
+      moduleName: "partner_registry",
+    },
+    {
+      key: "curatorRouter",
+      file: "curator_router.ts",
+      addressPath: ["curator", "router"],
+      moduleName: "router",
+    },
+  ],
   "aptos-testnet": [
     {
       key: "canopyVault",

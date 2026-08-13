@@ -42,9 +42,17 @@
  * `return` on an empty Meridian registry alone drops eight checks — so with `--strict` any
  * skip is a failure. movement-mainnet is the leading chain: it is the only one binding every
  * optional ABI (`canopyHelpers`, `canopyRewardsView`, `meridianBatchViews`) and it reaches
- * zero skips, so it runs `--strict` and needs no allowlist of tolerated skips. The Aptos legs
- * cannot: aptos-testnet has no Meridian deployment and aptos-mainnet's Meridian registry is
- * empty, so they run non-strict and report their skips instead.
+ * zero skips, so it runs `--strict` and needs no allowlist of tolerated skips. The other legs
+ * cannot: aptos-testnet has no Meridian deployment, aptos-mainnet's Meridian registry is
+ * empty, and movement-testnet deploys curator alone — so canopy, rewards and Meridian all
+ * legitimately skip there. They run non-strict and report their skips instead.
+ *
+ * That leaves movement-testnet's curator sweep as the one body of coverage no `--strict` leg
+ * protects: it is the only chain curator is deployed on, so if it vanished the job would
+ * still exit 0 on three expected skips. Where a sweep is the entire point of a non-strict
+ * leg, a missing fixture or client is a `failed`, not a `skipped` — see `checkCurator`.
+ * Prefer that shape over marking the leg strict, which would need an allowlist for the
+ * three skips that are genuinely correct.
  *
  * XFAIL, NOT SKIP
  * ---------------
@@ -113,9 +121,23 @@ const CANOPY_VAULTS = {
 
 const CHAINS = {
   "movement-mainnet": { network: Network.CUSTOM, fullnode: "https://mainnet.movementnetwork.xyz/v1" },
+  "movement-testnet": { network: Network.CUSTOM, fullnode: "https://testnet.movementnetwork.xyz/v1" },
   "aptos-testnet": { network: Network.TESTNET },
   "aptos-mainnet": { network: Network.MAINNET },
 };
+
+/**
+ * Curator vault instances created by the testnet setup script, one per pricing policy.
+ * Both branches matter: LockedIn fixes the payout at submission, Floating prices at claim.
+ */
+const CURATOR_VAULTS = {
+  "movement-testnet": {
+    floating: "0x33f75e96e66653727e43e4140f9acd4d68ee1f688e2bb15da04ead264916ef91",
+    lockedIn: "0x6d42f19c428660cba5c99a7ceab9b74b9c8194531a3b81aece96eb768dd6ca61",
+  },
+};
+
+const CURATOR_DEPOSITOR = "0x5bacc47db1706e1318b33d78c576397aa77124b282a505964c44f1fec6b93023";
 
 const results = { passed: [], failed: [], infra: [], skipped: [], xfail: [] };
 
@@ -143,6 +165,7 @@ for (const chain of requestedChain ? [requestedChain] : Object.keys(CHAINS)) {
   }));
 
   await checkCanopy(chain, aptos, sdk);
+  await checkCurator(chain, aptos, sdk);
   await checkRewards(chain, aptos, sdk);
   await checkMeridian(chain, aptos, sdk);
 }
@@ -257,6 +280,116 @@ async function checkCanopy(chain, aptos, sdk) {
   } else {
     results.skipped.push(`${chain} canopy batch helpers: canopyHelpers ABI not bound`);
   }
+}
+
+async function checkCurator(chain, aptos, sdk) {
+  const vaults = CURATOR_VAULTS[chain];
+  const curator = sdk.curator;
+
+  if (!vaults) {
+    if (curator) {
+      results.skipped.push(`${chain} curator: deployed but no pinned vault fixture`);
+    }
+    return;
+  }
+
+  // Not a skip. Pinned fixtures assert curator is deployed here, so a missing client is a
+  // contradiction between the fixtures and `addresses/<chain>.json`, and the curator sweep
+  // is the only real content of this (non-strict) leg. Reported as a failure so the job
+  // cannot go green having checked nothing.
+  if (!curator) {
+    results.failed.push({
+      name: `${chain} curator`,
+      stage: "coverage",
+      message:
+        `pinned fixtures exist but sdk.curator is absent — ` +
+        `addresses/${chain}.json lost its curator block, or the fixtures belong to another chain`,
+    });
+    return;
+  }
+
+  // Request-lifecycle payloads take a request object address. Object existence is a
+  // VM-runtime check, so an arbitrary address builds fine here; the live redemption
+  // lifecycle is exercised separately, not in CI.
+  const requestAddress = "0x1";
+
+  for (const [policy, vaultAddress] of Object.entries(vaults)) {
+    await checkEntry(chain, `curator.buildDepositPayload[${policy}]`, aptos, () =>
+      curator.buildDepositPayload({ vaultAddress, amount: 5_000_000n, minSharesOut: 1n })
+    );
+    await checkEntry(chain, `curator.buildDepositWithPartnerPayload[${policy}]`, aptos, () =>
+      curator.buildDepositWithPartnerPayload({
+        vaultAddress,
+        amount: 5_000_000n,
+        partnerId: 1n,
+      })
+    );
+    await checkEntry(chain, `curator.buildInstantRedeemPayload[${policy}]`, aptos, () =>
+      curator.buildInstantRedeemPayload({ vaultAddress, shares: 1_000n })
+    );
+    await checkEntry(chain, `curator.buildRequestRedemptionPayload[${policy}]`, aptos, () =>
+      curator.buildRequestRedemptionPayload({ vaultAddress, shares: 1_000n })
+    );
+  }
+
+  // The loop above is generic over the fixture map, but everything below names the floating
+  // vault directly. Without this guard a fixture map missing that key passes `undefined`
+  // into three payload builders and every view below — which fails 17 checks with an
+  // unrelated message and buries the actual cause. Fail once, here, and stop.
+  const vaultAddress = vaults.floating;
+
+  if (!vaultAddress) {
+    results.failed.push({
+      name: `${chain} curator`,
+      stage: "coverage",
+      message: `CURATOR_VAULTS.${chain} has no floating vault; the request-lifecycle and view checks need one`,
+    });
+    return;
+  }
+
+  for (const [label, build] of [
+    ["buildClaimRedemptionPayload", () => curator.buildClaimRedemptionPayload({ vaultAddress, requestAddress })],
+    ["buildCancelRedemptionPayload", () => curator.buildCancelRedemptionPayload({ vaultAddress, requestAddress })],
+    ["buildClaimbackEscrowedSharesPayload", () => curator.buildClaimbackEscrowedSharesPayload({ vaultAddress, requestAddress })],
+  ]) {
+    await checkEntry(chain, `curator.${label}`, aptos, build);
+  }
+
+  await checkView(chain, "curator.listVaults", () => curator.listVaults({ offset: 0, limit: 5 }));
+  await checkView(chain, "curator.getVaultCount", () => curator.getVaultCount());
+  await checkView(chain, "curator.getVault", () => curator.getVault(vaultAddress));
+  await checkView(chain, "curator.getVaultAccounting", () =>
+    curator.getVaultAccounting(vaultAddress)
+  );
+  await checkView(chain, "curator.getLiquidityBreakdown", () =>
+    curator.getLiquidityBreakdown(vaultAddress)
+  );
+  await checkView(chain, "curator.getUserVaultPosition", () =>
+    curator.getUserVaultPosition({ userAddress: CURATOR_DEPOSITOR, vaultAddress })
+  );
+  await checkView(chain, "curator.getShareBalance", () =>
+    curator.getShareBalance({ userAddress: CURATOR_DEPOSITOR, vaultAddress })
+  );
+  await checkView(chain, "curator.previewDeposit", () =>
+    curator.previewDeposit({ vaultAddress, depositor: CURATOR_DEPOSITOR, amount: 5_000_000n })
+  );
+  await checkView(chain, "curator.previewInstantRedeem", () =>
+    curator.previewInstantRedeem({ vaultAddress, user: CURATOR_DEPOSITOR, shares: 1_000n })
+  );
+  await checkView(chain, "curator.previewQueuedRedemption", () =>
+    curator.previewQueuedRedemption({ vaultAddress, user: CURATOR_DEPOSITOR, shares: 1_000n })
+  );
+  await checkView(chain, "curator.getQueueAddress", () => curator.getQueueAddress(vaultAddress));
+  await checkView(chain, "curator.getOpenRequestCount", () =>
+    curator.getOpenRequestCount({ ownerAddress: CURATOR_DEPOSITOR, vaultAddress })
+  );
+  await checkView(chain, "curator.getUserRedemptionRequests", () =>
+    curator.getUserRedemptionRequests({ ownerAddress: CURATOR_DEPOSITOR, vaultAddress })
+  );
+  await checkView(chain, "curator.isPartnerRegistered", () => curator.isPartnerRegistered(1n));
+  await checkView(chain, "curator.getPartnerPayoutAddress", () =>
+    curator.getPartnerPayoutAddress(1n)
+  );
 }
 
 async function checkRewards(chain, aptos, sdk) {

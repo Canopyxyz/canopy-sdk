@@ -19,6 +19,12 @@ import type {
   MeridianVaultViewFunction,
 } from "../packages/sdk/src/alm/meridian/client";
 import type {
+  CuratorPartnerRegistryViewFunction,
+  CuratorQueueViewFunction,
+  CuratorRouterFunction,
+  CuratorVaultViewFunction,
+} from "../packages/sdk/src/curator/client";
+import type {
   RewardsModuleFunction,
   RewardsModuleViewFunction,
   RewardsRouterFunction,
@@ -41,13 +47,13 @@ import type {
  *   3. every built payload passes exactly `params.length - 1` arguments — the `-1`
  *      being the signer. This is the arity relationship the bug violated.
  *
- * (2) and (3) are asserted for **every** builder in the SDK: the 17 rewards and Meridian
- * ones, plus canopy's async deposit/withdraw/unstake builders, which read vault state and
- * so are driven here through a mocked `client.view` (and, for the MovePosition packet
- * path, a mocked `fetch`). Excluding canopy previously left a hole on exactly the path
- * where an `abi` key could return unnoticed: the 21 removed `abi: expect.any(Object)`
- * assertions all sat inside `toMatchObject`, a subset match, so their removal neither
- * requires nor forbids `abi`.
+ * (2) and (3) are asserted for every builder in the SDK: rewards, Meridian, curator,
+ * plus canopy's async deposit/withdraw/unstake builders, which read vault state and so
+ * are driven here through a mocked `client.view` (and, for the MovePosition packet path,
+ * a mocked `fetch`). Excluding canopy previously left a hole on exactly the path where an
+ * `abi` key could return unnoticed: the 21 removed `abi: expect.any(Object)` assertions
+ * all sat inside `toMatchObject`, a subset match, so their removal neither requires nor
+ * forbids `abi`.
  *
  * NOT covered here, deliberately:
  *
@@ -166,6 +172,41 @@ const CANOPY_VAULT_NON_VIEW_READS = [
   "get_strategy_shares_balance",
 ] as const satisfies readonly CanopyVaultNonViewRead[];
 
+const CURATOR_ROUTER_FUNCTIONS = [
+  "deposit",
+  "deposit_with_partner",
+  "instant_redeem",
+  "request_redemption",
+  "claim_redemption",
+  "cancel_redemption",
+  "claimback_escrowed_shares",
+] as const satisfies readonly CuratorRouterFunction[];
+
+const CURATOR_VAULT_VIEWS = [
+  "vaults",
+  "vault_count",
+  "vault_config_view",
+  "vault_accounting",
+  "liquidity_breakdown",
+  "user_position_view",
+  "share_balance_of",
+  "queue_object",
+  "deposit_preview",
+  "instant_redeem_preview",
+  "queued_redemption_preview",
+] as const satisfies readonly CuratorVaultViewFunction[];
+
+const CURATOR_QUEUE_VIEWS = [
+  "request_detail",
+  "user_request_addresses",
+  "open_request_count",
+] as const satisfies readonly CuratorQueueViewFunction[];
+
+const CURATOR_PARTNER_REGISTRY_VIEWS = [
+  "is_registered",
+  "payout_address",
+] as const satisfies readonly CuratorPartnerRegistryViewFunction[];
+
 const MERIDIAN_ROUTER_FUNCTIONS = [
   "deposit",
   "withdraw",
@@ -236,11 +277,35 @@ const _TABLES_COVER_THEIR_UNIONS: [
   MustCover<RewardsModuleFunction, typeof REWARDS_MODULE_FUNCTIONS>,
   MustCover<RewardsViewFunction, typeof REWARDS_VIEW_FUNCTIONS>,
   MustCover<RewardsModuleViewFunction, typeof REWARDS_MODULE_VIEW_FUNCTIONS>,
+  MustCover<CuratorRouterFunction, typeof CURATOR_ROUTER_FUNCTIONS>,
+  MustCover<CuratorVaultViewFunction, typeof CURATOR_VAULT_VIEWS>,
+  MustCover<CuratorQueueViewFunction, typeof CURATOR_QUEUE_VIEWS>,
+  MustCover<CuratorPartnerRegistryViewFunction, typeof CURATOR_PARTNER_REGISTRY_VIEWS>,
   MustCover<MeridianRouterFunction, typeof MERIDIAN_ROUTER_FUNCTIONS>,
   MustCover<MeridianRegistryViewFunction, typeof MERIDIAN_REGISTRY_VIEWS>,
   MustCover<MeridianVaultViewFunction, typeof MERIDIAN_VAULT_VIEWS>,
   MustCover<MeridianBatchViewFunction, typeof MERIDIAN_BATCH_VIEWS>,
-] = [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true];
+] = [
+  true,
+  true,
+  true,
+  true,
+  true,
+  true,
+  true,
+  true,
+  true,
+  true,
+  true,
+  true,
+  true,
+  true,
+  true,
+  true,
+  true,
+  true,
+  true,
+];
 void _TABLES_COVER_THEIR_UNIONS;
 
 function findFunction(abi: MoveModuleAbi, name: string) {
@@ -341,6 +406,20 @@ describe("client function names conform to the bound ABIs", () => {
     ).toEqual([]);
   });
 
+  it("curator entry and view functions exist on movement-testnet", () => {
+    const movementTestnet = getAbisForChain("movement-testnet");
+
+    expect(entryFunctionProblems(movementTestnet.curatorRouter, CURATOR_ROUTER_FUNCTIONS)).toEqual([]);
+    expect(viewFunctionProblems(movementTestnet.curatorVault, CURATOR_VAULT_VIEWS)).toEqual([]);
+    expect(viewFunctionProblems(movementTestnet.curatorQueue, CURATOR_QUEUE_VIEWS)).toEqual([]);
+    expect(
+      viewFunctionProblems(
+        movementTestnet.curatorPartnerRegistry,
+        CURATOR_PARTNER_REGISTRY_VIEWS
+      )
+    ).toEqual([]);
+  });
+
   /**
    * The inverse assertion, and deliberately so.
    *
@@ -378,6 +457,7 @@ describe("built payloads are plain and correctly sized", () => {
   // catch a reintroduction offline and instantly.
   const PAYLOAD_KEYS = ["function", "functionArguments", "typeArguments"];
   const abis = getAbisForChain("movement-mainnet");
+  const testnetAbis = getAbisForChain("movement-testnet");
 
   /** Resolves a payload's `function` id back to the ABI that declares it. */
   function abiFor(functionId: string): MoveModuleAbi {
@@ -387,6 +467,7 @@ describe("built payloads are plain and correctly sized", () => {
       abis.multiRewards,
       abis.meridianRouter,
       abis.canopyRouter,
+      testnetAbis.curatorRouter,
     ];
     const match = candidates.find(
       (abi) => abi.name === moduleName && sameAddress(abi.address, address as string)
@@ -744,5 +825,29 @@ describe("built payloads are plain and correctly sized", () => {
         ].sort()
       );
     });
+  });
+
+  it("holds for every curator builder", () => {
+    // All seven are synchronous, so unlike canopy's they need no chain state and belong
+    // in the offline sweep.
+    const sdk = new CanopySdk({ view: jest.fn(async () => []) } as never, {
+      chain: "movement-testnet",
+    });
+    const curator = sdk.curator!;
+    const vaultAddress = "0x1";
+    const requestAddress = "0x2";
+
+    for (const payload of [
+      curator.buildDepositPayload({ vaultAddress, amount: 1n, minSharesOut: 0n }),
+      curator.buildDepositPayload({ vaultAddress, amount: 1n }),
+      curator.buildDepositWithPartnerPayload({ vaultAddress, amount: 1n, partnerId: 1n }),
+      curator.buildInstantRedeemPayload({ vaultAddress, shares: 1n }),
+      curator.buildRequestRedemptionPayload({ vaultAddress, shares: 1n }),
+      curator.buildClaimRedemptionPayload({ vaultAddress, requestAddress }),
+      curator.buildCancelRedemptionPayload({ vaultAddress, requestAddress }),
+      curator.buildClaimbackEscrowedSharesPayload({ vaultAddress, requestAddress }),
+    ]) {
+      expectPlainPayload(payload);
+    }
   });
 });

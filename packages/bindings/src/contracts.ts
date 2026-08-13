@@ -1,8 +1,15 @@
 import type { ChainName, ContractId } from "@canopyhub/canopy-sdk-deployments";
 import { getAbisForChain } from "./index";
-import type { CanopyAbiSet, FrameworkAbiId, FrameworkAbiSet, MeridianAbiSet, MoveModuleAbi } from "./types";
+import type {
+  CanopyAbiSet,
+  CuratorAbiSet,
+  FrameworkAbiId,
+  FrameworkAbiSet,
+  MeridianAbiSet,
+  MoveModuleAbi,
+} from "./types";
 
-type AbiLookupKey = keyof (FrameworkAbiSet & CanopyAbiSet & MeridianAbiSet);
+type AbiLookupKey = keyof (FrameworkAbiSet & CanopyAbiSet & CuratorAbiSet & MeridianAbiSet);
 
 function resolveAbiKey(contractId: ContractId): AbiLookupKey {
   switch (contractId) {
@@ -27,6 +34,10 @@ function resolveAbiKey(contractId: ContractId): AbiLookupKey {
       return "canopyStrategyPlaceholderSimple";
     case "canopy.strategy.meridianRewards":
       return "canopyStrategyMeridianRewards";
+    case "curator.vault":
+      return "curatorVault";
+    case "curator.router":
+      return "curatorRouter";
     case "rewards.module":
       return "multiRewards";
     case "rewards.router":
