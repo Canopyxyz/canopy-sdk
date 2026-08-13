@@ -132,8 +132,8 @@ const CHAINS = {
  */
 const CURATOR_VAULTS = {
   "movement-testnet": {
-    floating: "0x33f75e96e66653727e43e4140f9acd4d68ee1f688e2bb15da04ead264916ef91",
-    lockedIn: "0x6d42f19c428660cba5c99a7ceab9b74b9c8194531a3b81aece96eb768dd6ca61",
+    floating: "0x66e60c7e5c731b95952f3467274e667c831b78a0feee5cbc69331cbc89d650b4",
+    lockedIn: "0x10949a0558a95c22d8033e42b8b36047eb0c862e2c4cf06214d8882496e0501b",
   },
 };
 

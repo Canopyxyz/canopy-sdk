@@ -26,11 +26,11 @@ refuses to publish from an unclean working tree, so commit or stash first.
 
 ## Which dist-tag
 
-**2.0.0 goes to `next`, not `latest`.**
+**The whole 2.x line goes to `next`, not `latest`.** `latest` is still 1.1.0.
 
-2.0.0 moves `@aptos-labs/ts-sdk` to `peerDependencies` with a `^7.0.0` range. Until canopy-cli
-ships its own ts-sdk 7 major, a consumer still on ts-sdk 6 gets one of two bad outcomes from
-npm:
+2.0.0 moved `@aptos-labs/ts-sdk` to `peerDependencies` with a `^7.0.0` range, and every 2.x
+release inherits that. Until canopy-cli ships its own ts-sdk 7 major, a consumer still on
+ts-sdk 6 gets one of two bad outcomes from npm:
 
 - as a direct dependency — `ERESOLVE unable to resolve dependency tree`
 - transitively — ts-sdk 7 installed *alongside* 6, which is the duplicate-copy bug 2.0.0 exists
@@ -46,13 +46,13 @@ That is a deliberate cost of the narrow peer range, not an oversight.
 ### Promoting to `latest`
 
 Once canopy-cli's ts-sdk 7 major has landed, move the tag **per package** — four commands, no
-republish:
+republish. Substitute whichever 2.x version is current; at the time of writing that is 2.1.0:
 
 ```bash
-npm dist-tag add @canopyhub/canopy-sdk@2.0.0 latest
-npm dist-tag add @canopyhub/canopy-sdk-core@2.0.0 latest
-npm dist-tag add @canopyhub/canopy-sdk-bindings@2.0.0 latest
-npm dist-tag add @canopyhub/canopy-sdk-deployments@2.0.0 latest
+npm dist-tag add @canopyhub/canopy-sdk@2.1.0 latest
+npm dist-tag add @canopyhub/canopy-sdk-core@2.1.0 latest
+npm dist-tag add @canopyhub/canopy-sdk-bindings@2.1.0 latest
+npm dist-tag add @canopyhub/canopy-sdk-deployments@2.1.0 latest
 ```
 
 Releases after that point use `pnpm release:latest`. Nothing in the repo needs editing to

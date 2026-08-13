@@ -24,6 +24,7 @@ import type {
   CuratorDepositPreview,
   CuratorDepositPreviewInput,
   CuratorDepositWithPartnerPayloadInput,
+  CuratorIdleLimits,
   CuratorInstantRedeemPreview,
   CuratorLiquidityBreakdown,
   CuratorQueuedRedemptionPreview,
@@ -557,6 +558,15 @@ function readLiquidityBreakdown(value: unknown): CuratorLiquidityBreakdown {
   };
 }
 
+function readIdleLimits(value: unknown): CuratorIdleLimits {
+  const limits = asRecord(value, "IdleLimits");
+
+  return {
+    maxIdleInStrategyAmount: readMoveU64(limits.max_idle_in_strategy_amount),
+    maxIdleInStrategyDuration: readMoveU64(limits.max_idle_in_strategy_duration),
+  };
+}
+
 function readVaultConfig(value: unknown): CuratorVaultConfig {
   const config = asRecord(value, "VaultConfigView");
 
@@ -567,14 +577,15 @@ function readVaultConfig(value: unknown): CuratorVaultConfig {
     depositCap: readOptionalU64(config.deposit_cap),
     depositsPausedUntil: readOptionalU64(config.deposits_paused_until),
     frictionlessThreshold: readMoveU64(config.frictionless_threshold),
+    idleLimits: readMoveOption(config.idle_limits, readIdleLimits),
     instantRedeemFeeBps: readMoveU64(config.instant_redeem_fee_bps),
     lockDuration: readMoveU64(config.lock_duration),
     managementFeeBps: readMoveU64(config.management_fee_bps),
-    maxIdleInStrategyAmount: readMoveU64(config.max_idle_in_strategy_amount),
-    maxIdleInStrategyDuration: readMoveU64(config.max_idle_in_strategy_duration),
     maxPendingLockedAssets: readOptionalU64(config.max_pending_locked_assets),
     minDepositAmount: readMoveU64(config.min_deposit_amount),
+    nav24hSharePriceDeviationBps: readMoveU64(config.nav_24h_share_price_deviation_bps),
     navDeviationThresholdBps: readMoveU64(config.nav_deviation_threshold_bps),
+    normalNavReportIntervalSeconds: readMoveU64(config.normal_nav_report_interval_seconds),
     partnerAttributionEnabled: readMoveBool(config.partner_attribution_enabled),
     performanceFeeBps: readMoveU64(config.performance_fee_bps),
     pricingPolicy: readMoveEnumVariant(config.pricing_policy),
@@ -598,6 +609,7 @@ function readUserPosition(
     isSanctioned: readMoveBool(position.is_sanctioned),
     isVaultBlocklisted: readMoveBool(position.is_vault_blocklisted),
     openRequestCount: readMoveU64(position.open_request_count),
+    ownershipChainTooDeep: readMoveBool(position.ownership_chain_too_deep),
     redemptionWalletUsage: readMoveOption(
       position.redemption_wallet_usage,
       readVelocityUsage

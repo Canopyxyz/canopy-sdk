@@ -64,13 +64,13 @@ describe("CanopySdk", () => {
     expect(getContract("movement-testnet", "curator.vault")).toMatchObject({
       id: "curator.vault",
       chain: "movement-testnet",
-      address: "0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f",
+      address: "0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2",
       moduleName: "vault",
     });
     expect(requireContract("movement-testnet", "curator.router")).toMatchObject({
       id: "curator.router",
       chain: "movement-testnet",
-      address: "0x4f65dd9785f2ffb51818432646b0994ab43b8a9b602a52f989362883eae7dc17",
+      address: "0x97b28d98b0e76f529a12d4d37671be3954aaf619afe600c0bee58349a8ce02d0",
       moduleName: "router",
     });
     expect(getContract("movement-mainnet", "curator.vault")).toBeNull();

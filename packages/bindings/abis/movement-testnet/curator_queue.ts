@@ -1,8 +1,8 @@
 export const ABI = {
-  "address": "0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f",
+  "address": "0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2",
   "name": "queue",
   "friends": [
-    "0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::vault"
+    "0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::vault"
   ],
   "exposed_functions": [
     {
@@ -15,7 +15,7 @@ export const ABI = {
         "address"
       ],
       "return": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionQueue>"
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionQueue>"
       ]
     },
     {
@@ -25,7 +25,7 @@ export const ABI = {
       "is_view": true,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>"
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>"
       ],
       "return": [
         "bool"
@@ -38,8 +38,8 @@ export const ABI = {
       "is_view": false,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionQueue>",
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>",
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionQueue>",
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>",
         "u64"
       ],
       "return": [
@@ -54,8 +54,8 @@ export const ABI = {
       "is_view": false,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionQueue>",
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>"
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionQueue>",
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>"
       ],
       "return": []
     },
@@ -66,8 +66,8 @@ export const ABI = {
       "is_view": false,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionQueue>",
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>",
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionQueue>",
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>",
         "address"
       ],
       "return": []
@@ -94,8 +94,8 @@ export const ABI = {
       "is_view": false,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionQueue>",
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>"
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionQueue>",
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>"
       ],
       "return": []
     },
@@ -106,7 +106,7 @@ export const ABI = {
       "is_view": false,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>"
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>"
       ],
       "return": [
         "0x1::object::Object<0x1::fungible_asset::FungibleStore>"
@@ -119,8 +119,8 @@ export const ABI = {
       "is_view": false,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionQueue>",
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>",
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionQueue>",
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>",
         "u64"
       ],
       "return": []
@@ -132,8 +132,8 @@ export const ABI = {
       "is_view": false,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionQueue>",
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>",
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionQueue>",
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>",
         "address"
       ],
       "return": []
@@ -145,8 +145,8 @@ export const ABI = {
       "is_view": false,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionQueue>",
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>",
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionQueue>",
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>",
         "u64"
       ],
       "return": []
@@ -158,7 +158,7 @@ export const ABI = {
       "is_view": false,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionQueue>",
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionQueue>",
         "vector<address>",
         "u64",
         "u64",
@@ -167,9 +167,9 @@ export const ABI = {
         "u64"
       ],
       "return": [
-        "vector<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::ForceProcessedFundedRequest>",
+        "vector<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::ForceProcessedFundedRequest>",
         "u64",
-        "vector<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::ForceProcessedExpiredRequest>"
+        "vector<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::ForceProcessedExpiredRequest>"
       ]
     },
     {
@@ -179,7 +179,7 @@ export const ABI = {
       "is_view": false,
       "generic_type_params": [],
       "params": [
-        "&0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::ForceProcessedExpiredRequest"
+        "&0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::ForceProcessedExpiredRequest"
       ],
       "return": [
         "address"
@@ -192,7 +192,7 @@ export const ABI = {
       "is_view": false,
       "generic_type_params": [],
       "params": [
-        "&0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::ForceProcessedExpiredRequest"
+        "&0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::ForceProcessedExpiredRequest"
       ],
       "return": [
         "0x1::option::Option<u64>"
@@ -205,7 +205,7 @@ export const ABI = {
       "is_view": false,
       "generic_type_params": [],
       "params": [
-        "&0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::ForceProcessedFundedRequest"
+        "&0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::ForceProcessedFundedRequest"
       ],
       "return": [
         "address"
@@ -218,7 +218,7 @@ export const ABI = {
       "is_view": false,
       "generic_type_params": [],
       "params": [
-        "&0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::ForceProcessedFundedRequest"
+        "&0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::ForceProcessedFundedRequest"
       ],
       "return": [
         "u64"
@@ -231,7 +231,7 @@ export const ABI = {
       "is_view": false,
       "generic_type_params": [],
       "params": [
-        "&0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::ForceProcessedFundedRequest"
+        "&0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::ForceProcessedFundedRequest"
       ],
       "return": [
         "u64"
@@ -244,7 +244,7 @@ export const ABI = {
       "is_view": false,
       "generic_type_params": [],
       "params": [
-        "&0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::ForceProcessedFundedRequest"
+        "&0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::ForceProcessedFundedRequest"
       ],
       "return": [
         "0x1::option::Option<u64>"
@@ -257,8 +257,8 @@ export const ABI = {
       "is_view": false,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionQueue>",
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>"
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionQueue>",
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>"
       ],
       "return": []
     },
@@ -269,23 +269,7 @@ export const ABI = {
       "is_view": false,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionQueue>",
-        "address",
-        "u64",
-        "u64"
-      ],
-      "return": [
-        "u64"
-      ]
-    },
-    {
-      "name": "fund_request_with_current_pricing",
-      "visibility": "friend",
-      "is_entry": false,
-      "is_view": false,
-      "generic_type_params": [],
-      "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionQueue>",
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionQueue>",
         "address",
         "u64",
         "u64",
@@ -317,7 +301,7 @@ export const ABI = {
       "is_view": true,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionQueue>",
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionQueue>",
         "address"
       ],
       "return": [
@@ -331,8 +315,8 @@ export const ABI = {
       "is_view": false,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionQueue>",
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>",
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionQueue>",
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>",
         "address",
         "u64"
       ],
@@ -345,7 +329,7 @@ export const ABI = {
       "is_view": false,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>"
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>"
       ],
       "return": [
         "u64",
@@ -361,7 +345,7 @@ export const ABI = {
       "is_view": true,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>"
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>"
       ],
       "return": [
         "u64"
@@ -374,7 +358,7 @@ export const ABI = {
       "is_view": true,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>"
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>"
       ],
       "return": [
         "u64"
@@ -387,10 +371,10 @@ export const ABI = {
       "is_view": true,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>"
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>"
       ],
       "return": [
-        "0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RequestDetail"
+        "0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RequestDetail"
       ]
     },
     {
@@ -400,7 +384,7 @@ export const ABI = {
       "is_view": false,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>"
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>"
       ],
       "return": [
         "u64"
@@ -413,7 +397,7 @@ export const ABI = {
       "is_view": true,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>"
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>"
       ],
       "return": [
         "u64"
@@ -426,7 +410,7 @@ export const ABI = {
       "is_view": true,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>"
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>"
       ],
       "return": [
         "0x1::option::Option<u64>"
@@ -439,7 +423,7 @@ export const ABI = {
       "is_view": true,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>"
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>"
       ],
       "return": [
         "u64"
@@ -452,7 +436,7 @@ export const ABI = {
       "is_view": true,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>"
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>"
       ],
       "return": [
         "0x1::option::Option<u64>"
@@ -465,7 +449,7 @@ export const ABI = {
       "is_view": true,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>"
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>"
       ],
       "return": [
         "bool"
@@ -478,7 +462,7 @@ export const ABI = {
       "is_view": false,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>"
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>"
       ],
       "return": [
         "0x1::option::Option<u64>"
@@ -491,7 +475,7 @@ export const ABI = {
       "is_view": true,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>"
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>"
       ],
       "return": [
         "u64"
@@ -504,7 +488,7 @@ export const ABI = {
       "is_view": true,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>"
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>"
       ],
       "return": [
         "address"
@@ -517,7 +501,7 @@ export const ABI = {
       "is_view": true,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>"
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>"
       ],
       "return": [
         "0x1::option::Option<address>"
@@ -530,7 +514,7 @@ export const ABI = {
       "is_view": true,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>"
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>"
       ],
       "return": [
         "0x1::option::Option<u64>"
@@ -543,7 +527,7 @@ export const ABI = {
       "is_view": true,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>"
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>"
       ],
       "return": [
         "u64"
@@ -556,10 +540,10 @@ export const ABI = {
       "is_view": true,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>"
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>"
       ],
       "return": [
-        "0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RequestStatus"
+        "0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RequestStatus"
       ]
     },
     {
@@ -569,7 +553,7 @@ export const ABI = {
       "is_view": true,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>"
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>"
       ],
       "return": [
         "u64"
@@ -582,7 +566,7 @@ export const ABI = {
       "is_view": true,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionQueue>"
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionQueue>"
       ],
       "return": [
         "u64"
@@ -595,7 +579,7 @@ export const ABI = {
       "is_view": true,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionQueue>"
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionQueue>"
       ],
       "return": [
         "0x1::option::Option<u64>"
@@ -608,7 +592,7 @@ export const ABI = {
       "is_view": true,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionQueue>"
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionQueue>"
       ],
       "return": [
         "0x1::option::Option<u64>"
@@ -621,8 +605,8 @@ export const ABI = {
       "is_view": false,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionQueue>",
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>",
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionQueue>",
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>",
         "address",
         "u64"
       ],
@@ -637,7 +621,7 @@ export const ABI = {
       "is_view": false,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionQueue>",
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionQueue>",
         "address",
         "0x1::object::Object<0x1::fungible_asset::Metadata>",
         "u64",
@@ -647,7 +631,7 @@ export const ABI = {
         "0x1::option::Option<u64>"
       ],
       "return": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>"
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>"
       ]
     },
     {
@@ -668,8 +652,8 @@ export const ABI = {
       "is_view": false,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionQueue>",
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>"
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionQueue>",
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>"
       ],
       "return": []
     },
@@ -680,7 +664,7 @@ export const ABI = {
       "is_view": true,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionQueue>",
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionQueue>",
         "address"
       ],
       "return": [
@@ -694,8 +678,8 @@ export const ABI = {
       "is_view": false,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionQueue>",
-        "0x1::object::Object<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RedemptionRequest>",
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionQueue>",
+        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RedemptionRequest>",
         "address"
       ],
       "return": []
@@ -788,7 +772,7 @@ export const ABI = {
         },
         {
           "name": "last_recorded_shortfall",
-          "type": "0x1::option::Option<0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::QueueShortfall>"
+          "type": "0x1::option::Option<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::QueueShortfall>"
         },
         {
           "name": "request_registry",
@@ -812,10 +796,6 @@ export const ABI = {
         {
           "name": "owner",
           "type": "address"
-        },
-        {
-          "name": "escrowed_shares_store",
-          "type": "0x1::object::Object<0x1::fungible_asset::FungibleStore>"
         },
         {
           "name": "locked_assets_out",
@@ -851,7 +831,7 @@ export const ABI = {
         },
         {
           "name": "status",
-          "type": "0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RequestStatus"
+          "type": "0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RequestStatus"
         },
         {
           "name": "frozen_at",
@@ -864,10 +844,6 @@ export const ABI = {
         {
           "name": "pending_recovery_not_before",
           "type": "0x1::option::Option<u64>"
-        },
-        {
-          "name": "extend_ref",
-          "type": "0x1::object::ExtendRef"
         }
       ]
     },
@@ -886,7 +862,7 @@ export const ABI = {
         },
         {
           "name": "status",
-          "type": "0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f::queue::RequestStatus"
+          "type": "0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::queue::RequestStatus"
         },
         {
           "name": "escrowed_shares",
