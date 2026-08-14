@@ -2,9 +2,11 @@ import { ABI as frameworkCoinAbi } from "../../abis/movement-mainnet/aptos_frame
 import { ABI as frameworkMultisigAccountAbi } from "../../abis/movement-mainnet/aptos_framework_multisig_account";
 import { ABI as frameworkObjectAbi } from "../../abis/movement-mainnet/aptos_framework_object";
 import { ABI as frameworkPrimaryFungibleStoreAbi } from "../../abis/movement-mainnet/aptos_framework_primary_fungible_store";
+import { ABI as movementTestnetCuratorGenericAdapterAbi } from "../../abis/movement-testnet/curator_generic_adapter";
 import { ABI as movementTestnetCuratorPartnerRegistryAbi } from "../../abis/movement-testnet/curator_partner_registry";
 import { ABI as movementTestnetCuratorQueueAbi } from "../../abis/movement-testnet/curator_queue";
 import { ABI as movementTestnetCuratorRouterAbi } from "../../abis/movement-testnet/curator_router";
+import { ABI as movementTestnetCuratorSanctionsOracleAbi } from "../../abis/movement-testnet/curator_sanctions_oracle";
 import { ABI as movementTestnetCuratorVaultAbi } from "../../abis/movement-testnet/curator_vault";
 import type { MoveModuleAbi } from "../types";
 import { defineChainAbis } from "./define-chain-abis";
@@ -12,7 +14,7 @@ import { defineChainAbis } from "./define-chain-abis";
 // Bardock framework support reuses the checked-in movement-mainnet 0x1 ABI
 // snapshots until we intentionally add testnet-specific framework snapshots.
 //
-// All four curator ABIs are widened to `MoveModuleAbi` *here*, at the registration
+// All six curator ABIs are widened to `MoveModuleAbi` *here*, at the registration
 // site, and not at SDK call sites. `defineChainAbis` returns its inferred `Abis`
 // generic and `abisByChain` uses `as const satisfies ChainAbiSet`, which checks
 // assignability without widening — so whatever literal type survives this object
@@ -33,4 +35,6 @@ export const movementTestnetAbis = defineChainAbis("movement-testnet", {
   curatorQueue: movementTestnetCuratorQueueAbi as MoveModuleAbi,
   curatorPartnerRegistry: movementTestnetCuratorPartnerRegistryAbi as MoveModuleAbi,
   curatorRouter: movementTestnetCuratorRouterAbi as MoveModuleAbi,
+  curatorGenericAdapter: movementTestnetCuratorGenericAdapterAbi as MoveModuleAbi,
+  curatorSanctionsOracle: movementTestnetCuratorSanctionsOracleAbi as MoveModuleAbi,
 });

@@ -20,6 +20,8 @@ export type ContractId =
   | "canopy.strategy.meridianRewards"
   | "curator.vault"
   | "curator.router"
+  | "curator.genericAdapter"
+  | "curator.sanctionsOracle"
   | "rewards.module"
   | "rewards.router"
   | "rewards.batcher"
@@ -44,12 +46,7 @@ export interface CanopyDeployment {
   views?: HexString;
 }
 
-/**
- * Curator vault packages. `genericAdapter` intentionally has no `ContractId`:
- * it is not user-facing and has no checked-in ABI, and a `ContractId` without an
- * ABI would make `getContract` always return null. The address is still useful
- * for checking a vault's `strategy_module_address` against the known adapter.
- */
+/** Curator vault packages. Some modules share the vault package address. */
 export interface CuratorDeployment {
   vault: HexString;
   router: HexString;

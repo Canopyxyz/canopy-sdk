@@ -164,6 +164,12 @@ describe("deployment registry", () => {
     expect(getContractAddress("movement-testnet", "curator.router")).toBe(
       "0x97b28d98b0e76f529a12d4d37671be3954aaf619afe600c0bee58349a8ce02d0"
     );
+    expect(getContractAddress("movement-testnet", "curator.genericAdapter")).toBe(
+      "0x362f2f52db6906f1c38ee6c2058633987a400eba1cac6c29de48979faabc5078"
+    );
+    expect(getContractAddress("movement-testnet", "curator.sanctionsOracle")).toBe(
+      "0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2"
+    );
   });
 
   it("requires every curator address once the curator feature is inferred", () => {
@@ -190,6 +196,9 @@ describe("deployment registry", () => {
     );
     expect(requireContractAddress("aptos-mainnet", "meridian.vault")).toBe(
       "0xeb57695cd494c59ea7b1356580f1e7d5666fd84827322369e21d712e22397b54"
+    );
+    expect(requireContractAddress("movement-testnet", "curator.sanctionsOracle")).toBe(
+      "0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2"
     );
     expect(() =>
       requireContractAddress("movement-testnet", "canopy.router")

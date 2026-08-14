@@ -188,6 +188,18 @@ export const ABI_MANIFEST = {
       addressPath: ["curator", "router"],
       moduleName: "router",
     },
+    {
+      key: "curatorGenericAdapter",
+      file: "curator_generic_adapter.ts",
+      addressPath: ["curator", "genericAdapter"],
+      moduleName: "generic_adapter",
+    },
+    {
+      key: "curatorSanctionsOracle",
+      file: "curator_sanctions_oracle.ts",
+      addressPath: ["curator", "vault"],
+      moduleName: "sanctions_oracle",
+    },
   ],
   "aptos-testnet": [
     {

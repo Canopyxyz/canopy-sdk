@@ -29,6 +29,10 @@ function resolveAddress(
       return deployment.curator?.vault;
     case "curator.router":
       return deployment.curator?.router;
+    case "curator.genericAdapter":
+      return deployment.curator?.genericAdapter;
+    case "curator.sanctionsOracle":
+      return deployment.curator?.vault;
     case "rewards.module":
       return deployment.rewards?.module;
     case "rewards.router":

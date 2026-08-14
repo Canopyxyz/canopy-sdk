@@ -37,6 +37,17 @@ export const ABI = {
       ]
     },
     {
+      "name": "hard_min_allocator_sla_seconds",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [],
+      "return": [
+        "u64"
+      ]
+    },
+    {
       "name": "hard_min_max_pause_duration",
       "visibility": "public",
       "is_entry": false,
@@ -541,6 +552,17 @@ export const ABI = {
     },
     {
       "name": "apply_max_performance_fee_bps_change",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer"
+      ],
+      "return": []
+    },
+    {
+      "name": "apply_min_allocator_sla_change",
       "visibility": "public",
       "is_entry": true,
       "is_view": false,
@@ -1289,6 +1311,17 @@ export const ABI = {
     },
     {
       "name": "cancel_max_performance_fee_bps_change",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer"
+      ],
+      "return": []
+    },
+    {
+      "name": "cancel_min_allocator_sla_change",
       "visibility": "public",
       "is_entry": true,
       "is_view": false,
@@ -2889,6 +2922,17 @@ export const ABI = {
       ]
     },
     {
+      "name": "pending_min_allocator_sla_seconds",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [],
+      "return": [
+        "0x1::option::Option<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::timelock::PendingUpdate<u64>>"
+      ]
+    },
+    {
       "name": "pending_min_nav_24h_share_price_deviation_bps",
       "visibility": "public",
       "is_entry": false,
@@ -3769,6 +3813,18 @@ export const ABI = {
     },
     {
       "name": "set_max_performance_fee_bps",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "u64"
+      ],
+      "return": []
+    },
+    {
+      "name": "set_min_allocator_sla",
       "visibility": "public",
       "is_entry": true,
       "is_view": false,

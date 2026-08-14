@@ -88,7 +88,10 @@ async function fetchModuleAbi(fullnode, address, moduleName) {
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch ${address}::${moduleName}: ${response.status} ${response.statusText}`);
+    throw new Error(
+      `Failed to fetch ${address}::${moduleName}: ${response.status} ${response.statusText}. ` +
+        `Check packages/deployments/addresses/<chain>.json for a stale package address.`
+    );
   }
 
   const module = await response.json();

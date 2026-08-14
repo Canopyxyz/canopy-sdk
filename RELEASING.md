@@ -31,7 +31,8 @@ refuses to publish from an unclean working tree, so commit or stash first.
 ### Why 2.0.0 was held back, and why the hold is over
 
 2.0.0 moved `@aptos-labs/ts-sdk` to `peerDependencies` with a `^7.0.0` range, and every 2.x
-release inherits that. A consumer still on ts-sdk 6 gets one of two bad outcomes from npm:
+release inherits that. The original concern was that a consumer still on ts-sdk 6 gets one of
+two bad outcomes from npm:
 
 - as a direct dependency — `ERESOLVE unable to resolve dependency tree`
 - transitively — ts-sdk 7 installed *alongside* 6, which is the duplicate-copy bug 2.0.0 exists
@@ -39,19 +40,18 @@ release inherits that. A consumer still on ts-sdk 6 gets one of two bad outcomes
 
 pnpm only warns, which is why neither shows up from inside this repo.
 
-That is a real constraint, but a dist-tag was the wrong place to enforce it. canopy-cli is the
-only consumer and it pins its version, so moving `latest` forward cannot re-resolve anything
-underneath it. Meanwhile the hold had a standing cost: `latest` pointing at 1.1.0 meant a fresh
-`npm install` got an SDK with no curator support *and* the duplicate-copy bug.
+That shield is obsolete for the known registry consumers. canopy-cli is the only active
+consumer, pins its SDK version exactly, and verified 2.x against ts-sdk 6.3.1 under pnpm:
+2.x has no `dependencies` block, only the peer range, and every ts-sdk type name in its
+public declarations exists in 6.3.1. The other known consumer is a local scratch dir on
+`^0.0.2`.
 
-The constraint has not disappeared — anything installing 2.x must be on ts-sdk 7. It is now
-carried by the peer range alone, which is where a dependency requirement belongs and where npm
-will actually enforce it, rather than by a tag nobody reads.
+Residual risk: a bare npm install into a ts-sdk 6 project can still hit `ERESOLVE`. No known npm
+consumer is in that shape, and leaving `latest` on 1.1.0 is worse: fresh installs get no curator
+support, stale testnet addresses, and the duplicate-copy bug.
 
-**Still worth knowing before you plan CLI work:** the CLI cannot adopt 2.x's other fixes —
-`readMoveU8` accepting JSON numbers, the `fungible_asset::decimals` type argument, submittable
-entry payloads — ahead of its own ts-sdk 7 migration. It is one change or nothing. That is a
-deliberate cost of the narrow peer range, not an oversight.
+2.1.0 is therefore safe to publish to `latest`. Do not promote 2.0.0 first; it
+predates the curator redeploy address update.
 
 ### Moving a tag without republishing
 

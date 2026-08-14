@@ -177,6 +177,8 @@ describe("requireCuratorFeatureContext", () => {
     "curatorVault",
     "curatorQueue",
     "curatorPartnerRegistry",
+    "curatorGenericAdapter",
+    "curatorSanctionsOracle",
   ] as const;
 
   function baseContext() {
@@ -188,13 +190,13 @@ describe("requireCuratorFeatureContext", () => {
     };
   }
 
-  it("accepts a context carrying all four curator ABIs", () => {
+  it("accepts a context carrying all curator ABIs", () => {
     expect(() => requireCuratorFeatureContext(baseContext() as never)).not.toThrow();
   });
 
   it.each(CURATOR_ABI_KEYS)("rejects a context missing %s", (missingKey) => {
-    // The client reads queue::request_detail and partner_registry::is_registered,
-    // so gating on router+vault alone would let it construct and fail later.
+    // The depositor client reads queue::request_detail and partner_registry::is_registered;
+    // CLI management tooling uses the adapter and sanctions-oracle ABIs directly.
     const context = baseContext();
     delete (context.abis as Record<string, unknown>)[missingKey];
 
