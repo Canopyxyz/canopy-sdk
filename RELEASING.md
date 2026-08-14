@@ -14,8 +14,8 @@ Four packages publish, in lockstep, all on the same version:
 ## Publishing
 
 ```bash
-pnpm release:next --dry-run   # rehearse; publishes nothing
-pnpm release:next             # for real
+pnpm release:latest --dry-run   # rehearse; publishes nothing
+pnpm release:latest             # for real
 ```
 
 `pnpm publish` on its own is **refused** — see [Why a wrapper](#why-a-wrapper).
@@ -26,11 +26,12 @@ refuses to publish from an unclean working tree, so commit or stash first.
 
 ## Which dist-tag
 
-**The whole 2.x line goes to `next`, not `latest`.** `latest` is still 1.1.0.
+**Releases go to `latest`.** `pnpm release:next` still exists, for genuine pre-releases only.
+
+### Why 2.0.0 was held back, and why the hold is over
 
 2.0.0 moved `@aptos-labs/ts-sdk` to `peerDependencies` with a `^7.0.0` range, and every 2.x
-release inherits that. Until canopy-cli ships its own ts-sdk 7 major, a consumer still on
-ts-sdk 6 gets one of two bad outcomes from npm:
+release inherits that. A consumer still on ts-sdk 6 gets one of two bad outcomes from npm:
 
 - as a direct dependency — `ERESOLVE unable to resolve dependency tree`
 - transitively — ts-sdk 7 installed *alongside* 6, which is the duplicate-copy bug 2.0.0 exists
@@ -38,25 +39,33 @@ ts-sdk 6 gets one of two bad outcomes from npm:
 
 pnpm only warns, which is why neither shows up from inside this repo.
 
-**A consequence worth knowing before you plan CLI work:** the CLI cannot adopt 2.0.0's other
-fixes — `readMoveU8` accepting JSON numbers, the `fungible_asset::decimals` type argument,
-submittable entry payloads — ahead of its own ts-sdk 7 migration. It is one change or nothing.
-That is a deliberate cost of the narrow peer range, not an oversight.
+That is a real constraint, but a dist-tag was the wrong place to enforce it. canopy-cli is the
+only consumer and it pins its version, so moving `latest` forward cannot re-resolve anything
+underneath it. Meanwhile the hold had a standing cost: `latest` pointing at 1.1.0 meant a fresh
+`npm install` got an SDK with no curator support *and* the duplicate-copy bug.
 
-### Promoting to `latest`
+The constraint has not disappeared — anything installing 2.x must be on ts-sdk 7. It is now
+carried by the peer range alone, which is where a dependency requirement belongs and where npm
+will actually enforce it, rather than by a tag nobody reads.
 
-Once canopy-cli's ts-sdk 7 major has landed, move the tag **per package** — four commands, no
-republish. Substitute whichever 2.x version is current; at the time of writing that is 2.1.0:
+**Still worth knowing before you plan CLI work:** the CLI cannot adopt 2.x's other fixes —
+`readMoveU8` accepting JSON numbers, the `fungible_asset::decimals` type argument, submittable
+entry payloads — ahead of its own ts-sdk 7 migration. It is one change or nothing. That is a
+deliberate cost of the narrow peer range, not an oversight.
+
+### Moving a tag without republishing
+
+Tags are metadata; correcting one takes four commands and no version burn. To roll `latest`
+back to a known-good release, or to retire `next` once it points at something older than
+`latest`:
 
 ```bash
-npm dist-tag add @canopyhub/canopy-sdk@2.1.0 latest
-npm dist-tag add @canopyhub/canopy-sdk-core@2.1.0 latest
-npm dist-tag add @canopyhub/canopy-sdk-bindings@2.1.0 latest
-npm dist-tag add @canopyhub/canopy-sdk-deployments@2.1.0 latest
+npm dist-tag add @canopyhub/canopy-sdk@2.1.0 latest              # per package, all four
+npm dist-tag rm  @canopyhub/canopy-sdk next
 ```
 
-Releases after that point use `pnpm release:latest`. Nothing in the repo needs editing to
-switch — that is the whole reason the tag is not stored in a manifest.
+Nothing in the repo needs editing to move a tag — that is the whole reason the tag is not
+stored in a manifest.
 
 ## Why a wrapper
 
@@ -94,7 +103,7 @@ All four packages, **including the repo root**. Confirm it rather than trusting 
 the output unfiltered:
 
 ```bash
-pnpm publish -r --tag next --dry-run --publish-branch "$(git branch --show-current)"
+pnpm publish -r --tag latest --dry-run --publish-branch "$(git branch --show-current)"
 ```
 
 Do not pipe this through `grep`. The file rows are the point: a filter that keeps only the

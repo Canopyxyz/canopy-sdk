@@ -4,13 +4,19 @@
  *
  * WHY A GUARD AND NOT `publishConfig.tag`
  * ---------------------------------------
- * 2.0.0 must land on the `next` dist-tag, not `latest`, until canopy-cli's ts-sdk 7 major
- * ships. A `publishConfig.tag: "next"` would do that — and then keep doing it for 2.0.1, 3.0.0
- * and everything after, until somebody remembered to delete it. Sticky state that silently
- * misroutes future releases is a worse problem than the one it solves.
+ * A pinned `publishConfig.tag` routes one release correctly and then keeps routing every
+ * release after it the same way, until somebody remembers to delete it. Sticky state that
+ * silently misroutes future releases is a worse problem than the one it solves — this repo
+ * has already been through one such hold, when the whole 2.x line sat on `next`.
  *
  * This instead forces the tag to be chosen explicitly at every release, and leaves nothing
  * behind to unwind.
+ *
+ * Note what remains load-bearing now that normal releases go to `latest`, which is also npm's
+ * default: the tag check itself is close to vacuous, and the real value is in the wrapper this
+ * guard forces you through — the release branch check, the printed four-package plan, and the
+ * refusal to publish a single package on its own. Do not read a passing guard as more assurance
+ * than that.
  *
  * WHY AN ENV VAR AND NOT THE PUBLISHED TAG
  * ----------------------------------------
@@ -44,13 +50,13 @@ if (!tag) {
       "",
       "  Refusing to publish: no release tag was chosen.",
       "",
-      "  Publishing directly would default to the `latest` dist-tag. 2.0.0 must go to `next`",
-      "  until canopy-cli's ts-sdk 7 major lands, or consumers on ts-sdk 6 hit ERESOLVE.",
+      "  Publishing directly skips the branch check and the four-package plan, and would take",
+      "  the `latest` dist-tag by default rather than by decision.",
       "",
       "  Use the release wrapper, which sets the tag and publishes every package:",
       "",
-      "    pnpm release:next      # 2.0.0 and anything before the CLI migration",
-      "    pnpm release:latest    # only once the CLI is on ts-sdk 7",
+      "    pnpm release:latest    # normal releases",
+      "    pnpm release:next      # pre-releases only",
       "",
       "  See RELEASING.md.",
       "",

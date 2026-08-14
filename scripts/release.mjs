@@ -211,5 +211,5 @@ for (const [index, step] of steps.entries()) {
 console.log(
   dryRun
     ? `\n  dry run complete — nothing was published. Re-run without --dry-run to release on \`${tag}\`.\n`
-    : `\n  published on the \`${tag}\` dist-tag. See RELEASING.md for promoting to \`latest\`.\n`
+    : `\n  published on the \`${tag}\` dist-tag. See RELEASING.md for moving a tag afterwards.\n`
 );
