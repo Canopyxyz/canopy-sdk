@@ -63,6 +63,18 @@ export interface CuratorLiquidityBreakdown {
 }
 
 /**
+ * `vault::IdleLimits` — the allocator's idle-capital ceiling, as a pair.
+ *
+ * Nested rather than flattened because the Move type is `Option<IdleLimits>`: either
+ * both limits are configured or neither is. Two independent optionals could express
+ * "amount but no duration", which the contract cannot represent.
+ */
+export interface CuratorIdleLimits {
+  maxIdleInStrategyAmount: bigint;
+  maxIdleInStrategyDuration: bigint;
+}
+
+/**
  * `vault::vault_config_view` — applied timelocked values only. Queued changes are
  * on the contract's `pending_*` views and are not part of the depositor surface.
  */
@@ -73,14 +85,16 @@ export interface CuratorVaultConfig {
   depositCap: OptionalAmount;
   depositsPausedUntil: OptionalAmount;
   frictionlessThreshold: bigint;
+  /** `null` when the vault sets no idle-capital ceiling. */
+  idleLimits: CuratorIdleLimits | null;
   instantRedeemFeeBps: bigint;
   lockDuration: bigint;
   managementFeeBps: bigint;
-  maxIdleInStrategyAmount: bigint;
-  maxIdleInStrategyDuration: bigint;
   maxPendingLockedAssets: OptionalAmount;
   minDepositAmount: bigint;
+  nav24hSharePriceDeviationBps: bigint;
   navDeviationThresholdBps: bigint;
+  normalNavReportIntervalSeconds: bigint;
   partnerAttributionEnabled: boolean;
   performanceFeeBps: bigint;
   /** `"LockedIn"` or `"Floating"`. */
@@ -114,6 +128,14 @@ export interface CuratorUserPosition {
   isSanctioned: boolean;
   isVaultBlocklisted: boolean;
   openRequestCount: bigint;
+  /**
+   * The vault could not walk this account's object-ownership chain to its end.
+   *
+   * A third gate alongside `isSanctioned` / `isVaultBlocklisted`: when true the
+   * vault cannot establish who ultimately owns the position, so deposits and
+   * redemptions are refused. Check the previews for the authoritative answer.
+   */
+  ownershipChainTooDeep: boolean;
   redemptionWalletUsage: CuratorVelocityUsage | null;
   shareBalance: bigint;
   sharePriceE18: bigint;

@@ -31,6 +31,29 @@ import type {
   RewardsViewFunction,
 } from "../packages/sdk/src/rewards/client";
 
+type CuratorGenericAdapterFunction =
+  | "allocate"
+  | "create_adapter_entry"
+  | "deallocate"
+  | "report_offchain_nav";
+
+type CuratorGenericAdapterViewFunction =
+  | "underlying_metadata"
+  | "idle_assets"
+  | "vault_address";
+
+type CuratorSanctionsOracleFunction =
+  | "add_address"
+  | "add_manager"
+  | "remove_address"
+  | "remove_manager";
+
+type CuratorSanctionsOracleViewFunction =
+  | "owner"
+  | "is_blocked"
+  | "is_manager"
+  | "managers";
+
 /**
  * Replaces the compile-time checking Surf used to provide.
  *
@@ -207,6 +230,33 @@ const CURATOR_PARTNER_REGISTRY_VIEWS = [
   "payout_address",
 ] as const satisfies readonly CuratorPartnerRegistryViewFunction[];
 
+const CURATOR_GENERIC_ADAPTER_FUNCTIONS = [
+  "allocate",
+  "create_adapter_entry",
+  "deallocate",
+  "report_offchain_nav",
+] as const satisfies readonly CuratorGenericAdapterFunction[];
+
+const CURATOR_GENERIC_ADAPTER_VIEWS = [
+  "underlying_metadata",
+  "idle_assets",
+  "vault_address",
+] as const satisfies readonly CuratorGenericAdapterViewFunction[];
+
+const CURATOR_SANCTIONS_ORACLE_FUNCTIONS = [
+  "add_address",
+  "add_manager",
+  "remove_address",
+  "remove_manager",
+] as const satisfies readonly CuratorSanctionsOracleFunction[];
+
+const CURATOR_SANCTIONS_ORACLE_VIEWS = [
+  "owner",
+  "is_blocked",
+  "is_manager",
+  "managers",
+] as const satisfies readonly CuratorSanctionsOracleViewFunction[];
+
 const MERIDIAN_ROUTER_FUNCTIONS = [
   "deposit",
   "withdraw",
@@ -281,11 +331,19 @@ const _TABLES_COVER_THEIR_UNIONS: [
   MustCover<CuratorVaultViewFunction, typeof CURATOR_VAULT_VIEWS>,
   MustCover<CuratorQueueViewFunction, typeof CURATOR_QUEUE_VIEWS>,
   MustCover<CuratorPartnerRegistryViewFunction, typeof CURATOR_PARTNER_REGISTRY_VIEWS>,
+  MustCover<CuratorGenericAdapterFunction, typeof CURATOR_GENERIC_ADAPTER_FUNCTIONS>,
+  MustCover<CuratorGenericAdapterViewFunction, typeof CURATOR_GENERIC_ADAPTER_VIEWS>,
+  MustCover<CuratorSanctionsOracleFunction, typeof CURATOR_SANCTIONS_ORACLE_FUNCTIONS>,
+  MustCover<CuratorSanctionsOracleViewFunction, typeof CURATOR_SANCTIONS_ORACLE_VIEWS>,
   MustCover<MeridianRouterFunction, typeof MERIDIAN_ROUTER_FUNCTIONS>,
   MustCover<MeridianRegistryViewFunction, typeof MERIDIAN_REGISTRY_VIEWS>,
   MustCover<MeridianVaultViewFunction, typeof MERIDIAN_VAULT_VIEWS>,
   MustCover<MeridianBatchViewFunction, typeof MERIDIAN_BATCH_VIEWS>,
 ] = [
+  true,
+  true,
+  true,
+  true,
   true,
   true,
   true,
@@ -416,6 +474,30 @@ describe("client function names conform to the bound ABIs", () => {
       viewFunctionProblems(
         movementTestnet.curatorPartnerRegistry,
         CURATOR_PARTNER_REGISTRY_VIEWS
+      )
+    ).toEqual([]);
+    expect(
+      entryFunctionProblems(
+        movementTestnet.curatorGenericAdapter,
+        CURATOR_GENERIC_ADAPTER_FUNCTIONS
+      )
+    ).toEqual([]);
+    expect(
+      viewFunctionProblems(
+        movementTestnet.curatorGenericAdapter,
+        CURATOR_GENERIC_ADAPTER_VIEWS
+      )
+    ).toEqual([]);
+    expect(
+      entryFunctionProblems(
+        movementTestnet.curatorSanctionsOracle,
+        CURATOR_SANCTIONS_ORACLE_FUNCTIONS
+      )
+    ).toEqual([]);
+    expect(
+      viewFunctionProblems(
+        movementTestnet.curatorSanctionsOracle,
+        CURATOR_SANCTIONS_ORACLE_VIEWS
       )
     ).toEqual([]);
   });

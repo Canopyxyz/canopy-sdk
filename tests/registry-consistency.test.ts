@@ -35,7 +35,7 @@ describe("deployment and ABI registry consistency", () => {
     for (const deployment of listDeployments()) {
       const abis = getAbiMap(deployment);
 
-      // The vault package holds four modules, three of which the SDK binds.
+      // The vault package holds four bound modules; the router and adapter are separate.
       expectOptionalAbiAddress(
         abis,
         "curatorVault",
@@ -59,6 +59,18 @@ describe("deployment and ABI registry consistency", () => {
         "curatorRouter",
         deployment.curator?.router,
         `${deployment.chain}: curator.router`
+      );
+      expectOptionalAbiAddress(
+        abis,
+        "curatorGenericAdapter",
+        deployment.curator?.genericAdapter,
+        `${deployment.chain}: curator.genericAdapter`
+      );
+      expectOptionalAbiAddress(
+        abis,
+        "curatorSanctionsOracle",
+        deployment.curator?.vault,
+        `${deployment.chain}: curator.vault sanctions_oracle module`
       );
     }
   });

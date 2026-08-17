@@ -52,9 +52,10 @@ export function requireCanopyFeatureContext<Chain extends ChainName>(
 }
 
 /**
- * All four curator ABIs are required, not just router and vault: the client reads
+ * All curator ABIs are required, not just router and vault: the client reads
  * `queue::request_detail` / `user_request_addresses` and
- * `partner_registry::is_registered`. Checking a subset would let the client
+ * `partner_registry::is_registered`, while CLI management tooling uses the
+ * adapter and sanctions-oracle bindings directly. Checking a subset would let the client
  * construct and then fail on the first queue or partner read.
  */
 export function requireCuratorFeatureContext<Chain extends ChainName>(
@@ -66,7 +67,9 @@ export function requireCuratorFeatureContext<Chain extends ChainName>(
     !("curatorRouter" in context.abis) ||
     !("curatorVault" in context.abis) ||
     !("curatorQueue" in context.abis) ||
-    !("curatorPartnerRegistry" in context.abis)
+    !("curatorPartnerRegistry" in context.abis) ||
+    !("curatorGenericAdapter" in context.abis) ||
+    !("curatorSanctionsOracle" in context.abis)
   ) {
     throw invalidFeatureContextError(context, "curator");
   }

@@ -59,19 +59,29 @@ describe("CanopySdk", () => {
   });
 
   it("resolves curator contracts with both an address and an ABI", () => {
-    // getContract needs both halves, which is why curator.genericAdapter has no
-    // ContractId — it has an address but no checked-in ABI.
     expect(getContract("movement-testnet", "curator.vault")).toMatchObject({
       id: "curator.vault",
       chain: "movement-testnet",
-      address: "0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f",
+      address: "0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2",
       moduleName: "vault",
     });
     expect(requireContract("movement-testnet", "curator.router")).toMatchObject({
       id: "curator.router",
       chain: "movement-testnet",
-      address: "0x4f65dd9785f2ffb51818432646b0994ab43b8a9b602a52f989362883eae7dc17",
+      address: "0x97b28d98b0e76f529a12d4d37671be3954aaf619afe600c0bee58349a8ce02d0",
       moduleName: "router",
+    });
+    expect(requireContract("movement-testnet", "curator.genericAdapter")).toMatchObject({
+      id: "curator.genericAdapter",
+      chain: "movement-testnet",
+      address: "0x362f2f52db6906f1c38ee6c2058633987a400eba1cac6c29de48979faabc5078",
+      moduleName: "generic_adapter",
+    });
+    expect(requireContract("movement-testnet", "curator.sanctionsOracle")).toMatchObject({
+      id: "curator.sanctionsOracle",
+      chain: "movement-testnet",
+      address: "0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2",
+      moduleName: "sanctions_oracle",
     });
     expect(getContract("movement-mainnet", "curator.vault")).toBeNull();
   });

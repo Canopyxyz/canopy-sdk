@@ -87,6 +87,20 @@ const literalAbis = defineChainAbis("movement-testnet", {
     ],
     structs: [],
   },
+  curatorGenericAdapter: {
+    address: "0x4",
+    name: "generic_adapter",
+    friends: [],
+    exposed_functions: [],
+    structs: [],
+  },
+  curatorSanctionsOracle: {
+    address: "0x2",
+    name: "sanctions_oracle",
+    friends: [],
+    exposed_functions: [],
+    structs: [],
+  },
 } as const);
 
 type _PreservesModuleNameLiteral = Expect<
@@ -100,7 +114,7 @@ type _PreservesFunctionParamsTuple = Expect<
 >;
 
 // Nothing requires curator's literal types any more — the client builds plain entry
-// payloads and reads through internal/abi-views.ts, and all four curator ABIs are
+// payloads and reads through internal/abi-views.ts, and all six curator ABIs are
 // widened at the registration site (asserted below). This case stays as a general
 // check that `defineChainAbis` still preserves literals when a caller wants them,
 // using curator's fixture entry purely as the subject.
@@ -108,11 +122,11 @@ type _DefineChainAbisPreservesEntryFunctionLiteral = Expect<
   Equal<typeof literalAbis.curatorRouter.exposed_functions[0]["name"], "deposit">
 >;
 
-// The real registered movement-testnet set, not the fixture above. `curator_vault.ts`
-// is ~9.7k lines with 340 exposed functions; the casts in chains/movement-testnet.ts
-// keep that literal union out of type inference, and `satisfies` on `abisByChain`
-// does not widen, so these assertions are the only thing standing between a stray
-// cast removal and a large compile-time regression.
+// The real registered movement-testnet set, not the fixture above. The casts in
+// chains/movement-testnet.ts keep the large curator ABIs out of literal type
+// inference, and `satisfies` on `abisByChain` does not widen, so these assertions
+// are the only thing standing between a stray cast removal and a large compile-time
+// regression.
 const movementTestnet = getAbisForChain("movement-testnet");
 
 type _CuratorVaultIsWidened = Expect<
@@ -126,4 +140,10 @@ type _CuratorPartnerRegistryIsWidened = Expect<
 >;
 type _CuratorRouterIsWidened = Expect<
   Equal<typeof movementTestnet.curatorRouter, MoveModuleAbi>
+>;
+type _CuratorGenericAdapterIsWidened = Expect<
+  Equal<typeof movementTestnet.curatorGenericAdapter, MoveModuleAbi>
+>;
+type _CuratorSanctionsOracleIsWidened = Expect<
+  Equal<typeof movementTestnet.curatorSanctionsOracle, MoveModuleAbi>
 >;

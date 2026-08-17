@@ -14,8 +14,8 @@ Four packages publish, in lockstep, all on the same version:
 ## Publishing
 
 ```bash
-pnpm release:next --dry-run   # rehearse; publishes nothing
-pnpm release:next             # for real
+pnpm release:latest --dry-run   # rehearse; publishes nothing
+pnpm release:latest             # for real
 ```
 
 `pnpm publish` on its own is **refused** — see [Why a wrapper](#why-a-wrapper).
@@ -26,11 +26,13 @@ refuses to publish from an unclean working tree, so commit or stash first.
 
 ## Which dist-tag
 
-**2.0.0 goes to `next`, not `latest`.**
+**Releases go to `latest`.** `pnpm release:next` still exists, for genuine pre-releases only.
 
-2.0.0 moves `@aptos-labs/ts-sdk` to `peerDependencies` with a `^7.0.0` range. Until canopy-cli
-ships its own ts-sdk 7 major, a consumer still on ts-sdk 6 gets one of two bad outcomes from
-npm:
+### Why 2.0.0 was held back, and why the hold is over
+
+2.0.0 moved `@aptos-labs/ts-sdk` to `peerDependencies` with a `^7.0.0` range, and every 2.x
+release inherits that. The original concern was that a consumer still on ts-sdk 6 gets one of
+two bad outcomes from npm:
 
 - as a direct dependency — `ERESOLVE unable to resolve dependency tree`
 - transitively — ts-sdk 7 installed *alongside* 6, which is the duplicate-copy bug 2.0.0 exists
@@ -38,25 +40,32 @@ npm:
 
 pnpm only warns, which is why neither shows up from inside this repo.
 
-**A consequence worth knowing before you plan CLI work:** the CLI cannot adopt 2.0.0's other
-fixes — `readMoveU8` accepting JSON numbers, the `fungible_asset::decimals` type argument,
-submittable entry payloads — ahead of its own ts-sdk 7 migration. It is one change or nothing.
-That is a deliberate cost of the narrow peer range, not an oversight.
+That shield is obsolete for the known registry consumers. canopy-cli is the only active
+consumer, pins its SDK version exactly, and verified 2.x against ts-sdk 6.3.1 under pnpm:
+2.x has no `dependencies` block, only the peer range, and every ts-sdk type name in its
+public declarations exists in 6.3.1. The other known consumer is a local scratch dir on
+`^0.0.2`.
 
-### Promoting to `latest`
+Residual risk: a bare npm install into a ts-sdk 6 project can still hit `ERESOLVE`. No known npm
+consumer is in that shape, and leaving `latest` on 1.1.0 is worse: fresh installs get no curator
+support, stale testnet addresses, and the duplicate-copy bug.
 
-Once canopy-cli's ts-sdk 7 major has landed, move the tag **per package** — four commands, no
-republish:
+2.1.0 is therefore safe to publish to `latest`. Do not promote 2.0.0 first; it
+predates the curator redeploy address update.
+
+### Moving a tag without republishing
+
+Tags are metadata; correcting one takes four commands and no version burn. To roll `latest`
+back to a known-good release, or to retire `next` once it points at something older than
+`latest`:
 
 ```bash
-npm dist-tag add @canopyhub/canopy-sdk@2.0.0 latest
-npm dist-tag add @canopyhub/canopy-sdk-core@2.0.0 latest
-npm dist-tag add @canopyhub/canopy-sdk-bindings@2.0.0 latest
-npm dist-tag add @canopyhub/canopy-sdk-deployments@2.0.0 latest
+npm dist-tag add @canopyhub/canopy-sdk@2.1.0 latest              # per package, all four
+npm dist-tag rm  @canopyhub/canopy-sdk next
 ```
 
-Releases after that point use `pnpm release:latest`. Nothing in the repo needs editing to
-switch — that is the whole reason the tag is not stored in a manifest.
+Nothing in the repo needs editing to move a tag — that is the whole reason the tag is not
+stored in a manifest.
 
 ## Why a wrapper
 
@@ -94,7 +103,7 @@ All four packages, **including the repo root**. Confirm it rather than trusting 
 the output unfiltered:
 
 ```bash
-pnpm publish -r --tag next --dry-run --publish-branch "$(git branch --show-current)"
+pnpm publish -r --tag latest --dry-run --publish-branch "$(git branch --show-current)"
 ```
 
 Do not pipe this through `grep`. The file rows are the point: a filter that keeps only the

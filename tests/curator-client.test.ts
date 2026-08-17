@@ -4,11 +4,11 @@ import { movementTestnetAbis } from "../packages/bindings/src";
 import { CanopySdk, findRedemptionRequest } from "../packages/sdk/src";
 import { requireCuratorFeatureContext } from "../packages/sdk/src/context";
 
-const VAULT_PACKAGE = "0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f";
-const ROUTER_PACKAGE = "0x4f65dd9785f2ffb51818432646b0994ab43b8a9b602a52f989362883eae7dc17";
-const FLOATING_VAULT = "0x33f75e96e66653727e43e4140f9acd4d68ee1f688e2bb15da04ead264916ef91";
+const VAULT_PACKAGE = "0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2";
+const ROUTER_PACKAGE = "0x97b28d98b0e76f529a12d4d37671be3954aaf619afe600c0bee58349a8ce02d0";
+const FLOATING_VAULT = "0x66e60c7e5c731b95952f3467274e667c831b78a0feee5cbc69331cbc89d650b4";
 const DEPOSITOR = "0x5bacc47db1706e1318b33d78c576397aa77124b282a505964c44f1fec6b93023";
-const QUEUE = "0x7aa5d8e31e6136b5a2b9c77a1cbccc0dcf3bda88559c8ac32a33160b8770443f";
+const QUEUE = "0xdd608a13af1f22a60c805addf34fea9324d505452012628fdb9b2b9452bd5d90";
 const REQUEST = "0xa38a31e2ea362d976f53141c247f3aa297d61ee1ca8520e4fd38d606832ae17b";
 
 interface MockViewClient {
@@ -112,14 +112,18 @@ const VALID_VAULT_CONFIG = {
   deposit_cap: { vec: ["1000000000000"] },
   deposits_paused_until: { vec: [] },
   frictionless_threshold: "100000000",
+  // The two idle limits are one `Option<IdleLimits>` now, not two flat u64 fields.
+  idle_limits: {
+    vec: [{ max_idle_in_strategy_amount: "500000000", max_idle_in_strategy_duration: "7200" }],
+  },
   instant_redeem_fee_bps: "10",
   lock_duration: "86400",
   management_fee_bps: "50",
-  max_idle_in_strategy_amount: "500000000",
-  max_idle_in_strategy_duration: "7200",
   max_pending_locked_assets: { vec: ["900000000"] },
   min_deposit_amount: "1000000",
+  nav_24h_share_price_deviation_bps: "250",
   nav_deviation_threshold_bps: "100",
+  normal_nav_report_interval_seconds: "86400",
   partner_attribution_enabled: true,
   performance_fee_bps: "1000",
   pricing_policy: { __variant__: "Floating" },
@@ -173,6 +177,8 @@ describe("requireCuratorFeatureContext", () => {
     "curatorVault",
     "curatorQueue",
     "curatorPartnerRegistry",
+    "curatorGenericAdapter",
+    "curatorSanctionsOracle",
   ] as const;
 
   function baseContext() {
@@ -184,13 +190,13 @@ describe("requireCuratorFeatureContext", () => {
     };
   }
 
-  it("accepts a context carrying all four curator ABIs", () => {
+  it("accepts a context carrying all curator ABIs", () => {
     expect(() => requireCuratorFeatureContext(baseContext() as never)).not.toThrow();
   });
 
   it.each(CURATOR_ABI_KEYS)("rejects a context missing %s", (missingKey) => {
-    // The client reads queue::request_detail and partner_registry::is_registered,
-    // so gating on router+vault alone would let it construct and fail later.
+    // The depositor client reads queue::request_detail and partner_registry::is_registered;
+    // CLI management tooling uses the adapter and sanctions-oracle ABIs directly.
     const context = baseContext();
     delete (context.abis as Record<string, unknown>)[missingKey];
 
@@ -511,6 +517,29 @@ describe("curator reads", () => {
     expect(config.redemptionsPausedUntil).toBe(1784800000n);
     expect(config.partnerAttributionEnabled).toBe(true);
     expect(config.underlyingMetadata).toBe(normalizeMoveAddress("0xabc"));
+    expect(config.nav24hSharePriceDeviationBps).toBe(250n);
+    expect(config.normalNavReportIntervalSeconds).toBe(86400n);
+    // Both idle limits arrive as one Option<IdleLimits>, so they are present or
+    // absent together — never one without the other.
+    expect(config.idleLimits).toEqual({
+      maxIdleInStrategyAmount: 500000000n,
+      maxIdleInStrategyDuration: 7200n,
+    });
+  });
+
+  it("decodes an absent idle-limits option as null, not zeroed limits", async () => {
+    // `{ vec: [] }` means the vault sets no idle ceiling at all. Decoding that to
+    // `{ amount: 0n, duration: 0n }` would read as "no idle capital permitted",
+    // the exact opposite of the truth.
+    const { sdk } = createCuratorSdk({
+      [`${VAULT_PACKAGE}::vault::vault_config_view`]: [
+        { ...VALID_VAULT_CONFIG, idle_limits: { vec: [] } },
+      ],
+    });
+
+    await expect(sdk.curator!.getVaultConfig(FLOATING_VAULT)).resolves.toMatchObject({
+      idleLimits: null,
+    });
   });
 
   it("keeps absent wallet velocity usage null rather than zero", async () => {
@@ -523,6 +552,7 @@ describe("curator reads", () => {
           is_sanctioned: false,
           is_vault_blocklisted: false,
           open_request_count: "2",
+          ownership_chain_too_deep: false,
           redemption_wallet_usage: { vec: [VELOCITY_USAGE] },
           share_balance: "17098195488",
           share_price_e18: "999930373646690639",
@@ -543,6 +573,8 @@ describe("curator reads", () => {
       week: 17097005004n,
     });
     expect(position.openRequestCount).toBe(2n);
+    // Third gate alongside sanctions and the vault blocklist.
+    expect(position.ownershipChainTooDeep).toBe(false);
     expect(position.userAddress).toBe(normalizeMoveAddress(DEPOSITOR));
     expect(position.vaultAddress).toBe(normalizeMoveAddress(FLOATING_VAULT));
   });

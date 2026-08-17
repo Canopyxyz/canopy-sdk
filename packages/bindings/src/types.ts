@@ -74,16 +74,17 @@ export interface CanopyAbiSet {
 }
 
 /**
- * Curator vault ABIs. All four are registered as widened `MoveModuleAbi` in
+ * Curator vault ABIs. All six are registered as widened `MoveModuleAbi` in
  * `chains/movement-testnet.ts`: the client builds plain entry payloads and reads
- * through `internal/abi-views.ts`, so nothing needs their literal types, and the
- * `vault` module alone has 340 exposed functions.
+ * through `internal/abi-views.ts`, so nothing needs their literal types.
  */
 export interface CuratorAbiSet {
   curatorVault: MoveModuleAbi;
   curatorQueue: MoveModuleAbi;
   curatorPartnerRegistry: MoveModuleAbi;
   curatorRouter: MoveModuleAbi;
+  curatorGenericAdapter: MoveModuleAbi;
+  curatorSanctionsOracle: MoveModuleAbi;
 }
 
 export interface MeridianAbiSet {

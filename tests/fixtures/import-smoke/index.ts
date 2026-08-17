@@ -23,6 +23,11 @@ const strategyContract = getCanopyStrategyContract(chain, "layerbank");
 const abi: MoveModuleAbi = requireAbi(chain, contractId);
 
 const curatorContract = requireContract("movement-testnet", "curator.router");
+const curatorAdapter = requireContract("movement-testnet", "curator.genericAdapter");
+const curatorOracleAbi: MoveModuleAbi = requireAbi(
+  "movement-testnet",
+  "curator.sanctionsOracle"
+);
 const noneOption = moveOptionArgument(undefined);
 const someOption = moveOptionArgument(10n);
 const requestedEvent = findRedemptionRequest({ events: [] });
@@ -34,6 +39,8 @@ declare const curatorRequest: CuratorRedemptionRequest;
 void abi;
 void address;
 void curatorContract;
+void curatorAdapter;
+void curatorOracleAbi;
 void curatorPreview;
 void curatorRequest;
 void curatorVault;

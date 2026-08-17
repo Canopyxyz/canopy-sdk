@@ -47,19 +47,27 @@ describe("ABI bindings", () => {
     expect(movementTestnet).toBe(movementTestnetAbis);
     expect(movementTestnet.aptosFrameworkCoin.address).toBe("0x1");
     expect(movementTestnet.aptosFrameworkObject.name).toBe("object");
-    // Three curator modules share the vault package address; the router is separate.
+    // Four curator modules share the vault package address; router and adapter are separate.
     expect(movementTestnet.curatorVault.name).toBe("vault");
     expect(movementTestnet.curatorQueue.name).toBe("queue");
     expect(movementTestnet.curatorPartnerRegistry.name).toBe("partner_registry");
+    expect(movementTestnet.curatorSanctionsOracle.name).toBe("sanctions_oracle");
     expect(movementTestnet.curatorVault.address).toBe(
-      "0xdefc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f"
+      "0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2"
     );
     expect(movementTestnet.curatorQueue.address).toBe(
       movementTestnet.curatorVault.address
     );
     expect(movementTestnet.curatorRouter.name).toBe("router");
     expect(movementTestnet.curatorRouter.address).toBe(
-      "0x4f65dd9785f2ffb51818432646b0994ab43b8a9b602a52f989362883eae7dc17"
+      "0x97b28d98b0e76f529a12d4d37671be3954aaf619afe600c0bee58349a8ce02d0"
+    );
+    expect(movementTestnet.curatorGenericAdapter.name).toBe("generic_adapter");
+    expect(movementTestnet.curatorGenericAdapter.address).toBe(
+      "0x362f2f52db6906f1c38ee6c2058633987a400eba1cac6c29de48979faabc5078"
+    );
+    expect(movementTestnet.curatorSanctionsOracle.address).toBe(
+      movementTestnet.curatorVault.address
     );
     expect(aptosMainnet.meridianVault.address).toBe(
       "0xeb57695cd494c59ea7b1356580f1e7d5666fd84827322369e21d712e22397b54"
@@ -120,8 +128,15 @@ describe("ABI bindings", () => {
   it("resolves curator contract ids to curator ABIs on the deployed chain only", () => {
     expect(getAbi("movement-testnet", "curator.vault")?.name).toBe("vault");
     expect(getAbi("movement-testnet", "curator.router")?.name).toBe("router");
+    expect(getAbi("movement-testnet", "curator.genericAdapter")?.name).toBe(
+      "generic_adapter"
+    );
+    expect(getAbi("movement-testnet", "curator.sanctionsOracle")?.name).toBe(
+      "sanctions_oracle"
+    );
     expect(getAbi("movement-mainnet", "curator.vault")).toBeUndefined();
     expect(getAbi("aptos-testnet", "curator.router")).toBeUndefined();
+    expect(getAbi("aptos-testnet", "curator.genericAdapter")).toBeUndefined();
   });
 
   it("exposes named framework ABI helpers", () => {

@@ -72,7 +72,8 @@ import {
   withTimeout,
 } from "./lib/payload-check-helpers.mjs";
 
-const { createCanopySdk } = await import("../../dist/index.mjs");
+const { createCanopySdk, requireContract } = await import("../../dist/index.mjs");
+const { entryFunctionPayload, viewFunctionPayload } = await import("../../dist/core.mjs");
 const { getAbisForChain } = await import("../../dist/bindings.mjs");
 
 const args = new Set(process.argv.slice(2));
@@ -132,8 +133,19 @@ const CHAINS = {
  */
 const CURATOR_VAULTS = {
   "movement-testnet": {
-    floating: "0x33f75e96e66653727e43e4140f9acd4d68ee1f688e2bb15da04ead264916ef91",
-    lockedIn: "0x6d42f19c428660cba5c99a7ceab9b74b9c8194531a3b81aece96eb768dd6ca61",
+    floating: "0x66e60c7e5c731b95952f3467274e667c831b78a0feee5cbc69331cbc89d650b4",
+    lockedIn: "0x10949a0558a95c22d8033e42b8b36047eb0c862e2c4cf06214d8882496e0501b",
+  },
+};
+
+/**
+ * Generic-adapter objects backing the pinned curator vault fixtures. These are object
+ * addresses, not the generic_adapter package address in addresses/<chain>.json.
+ */
+const CURATOR_GENERIC_ADAPTERS = {
+  "movement-testnet": {
+    floating: "0x5e1ed8cbcf8813a3f909996086c4310cbb7405e26b2494a3b04821c64ec901f4",
+    lockedIn: "0x5cea2cd41a57f0a606a10a6236194d637326867ea051736d0d4e4fe1a3cdb270",
   },
 };
 
@@ -347,6 +359,32 @@ async function checkCurator(chain, aptos, sdk) {
     return;
   }
 
+  const adapterFixtures = CURATOR_GENERIC_ADAPTERS[chain];
+  if (!adapterFixtures) {
+    results.failed.push({
+      name: `${chain} curator generic adapter`,
+      stage: "coverage",
+      message: `CURATOR_GENERIC_ADAPTERS.${chain} is missing; adapter payload/view checks need real adapter objects`,
+    });
+  } else {
+    for (const [policy, policyVaultAddress] of Object.entries(vaults)) {
+      const adapterAddress = adapterFixtures[policy];
+
+      if (!adapterAddress) {
+        results.failed.push({
+          name: `${chain} curator generic adapter[${policy}]`,
+          stage: "coverage",
+          message: `CURATOR_GENERIC_ADAPTERS.${chain}.${policy} is missing; adapter payload/view checks need a real adapter object`,
+        });
+        continue;
+      }
+
+      await checkCuratorGenericAdapter(chain, aptos, policy, policyVaultAddress, adapterAddress);
+    }
+  }
+
+  await checkCuratorSanctionsOracle(chain, aptos);
+
   for (const [label, build] of [
     ["buildClaimRedemptionPayload", () => curator.buildClaimRedemptionPayload({ vaultAddress, requestAddress })],
     ["buildCancelRedemptionPayload", () => curator.buildCancelRedemptionPayload({ vaultAddress, requestAddress })],
@@ -358,6 +396,7 @@ async function checkCurator(chain, aptos, sdk) {
   await checkView(chain, "curator.listVaults", () => curator.listVaults({ offset: 0, limit: 5 }));
   await checkView(chain, "curator.getVaultCount", () => curator.getVaultCount());
   await checkView(chain, "curator.getVault", () => curator.getVault(vaultAddress));
+  await checkView(chain, "curator.getVaultConfig", () => curator.getVaultConfig(vaultAddress));
   await checkView(chain, "curator.getVaultAccounting", () =>
     curator.getVaultAccounting(vaultAddress)
   );
@@ -390,6 +429,92 @@ async function checkCurator(chain, aptos, sdk) {
   await checkView(chain, "curator.getPartnerPayoutAddress", () =>
     curator.getPartnerPayoutAddress(1n)
   );
+}
+
+async function checkCuratorGenericAdapter(chain, aptos, policy, vaultAddress, adapterAddress) {
+  const contract = requireContract(chain, "curator.genericAdapter");
+  const readAdapterView = (functionName, args) =>
+    aptos.view({
+      payload: viewFunctionPayload({
+        moduleAddress: contract.address,
+        moduleName: contract.moduleName,
+        functionName,
+        functionArguments: args,
+      }),
+    });
+
+  for (const [functionName, args] of [
+    ["allocate", [adapterAddress, "1"]],
+    ["create_adapter_entry", [vaultAddress]],
+    ["deallocate", [adapterAddress, "1"]],
+    ["report_offchain_nav", [adapterAddress, "1"]],
+  ]) {
+    await checkEntry(chain, `curator.genericAdapter.${functionName}[${policy}]`, aptos, () =>
+      entryFunctionPayload({
+        moduleAddress: contract.address,
+        moduleName: contract.moduleName,
+        functionName,
+        functionArguments: args,
+      })
+    );
+  }
+
+  for (const [functionName, args] of [
+    ["underlying_metadata", [adapterAddress]],
+    ["idle_assets", [adapterAddress]],
+  ]) {
+    await checkView(chain, `curator.genericAdapter.${functionName}[${policy}]`, () =>
+      readAdapterView(functionName, args)
+    );
+  }
+
+  await checkView(chain, `curator.genericAdapter.vault_address[${policy}]`, async () => {
+    const [actualVaultAddress] = await readAdapterView("vault_address", [adapterAddress]);
+
+    if (normalizeAddress(actualVaultAddress) !== normalizeAddress(vaultAddress)) {
+      throw new Error(
+        `adapter fixture points at ${actualVaultAddress}; expected paired vault ${vaultAddress}`
+      );
+    }
+  });
+}
+
+async function checkCuratorSanctionsOracle(chain, aptos) {
+  const contract = requireContract(chain, "curator.sanctionsOracle");
+
+  for (const functionName of [
+    "add_address",
+    "add_manager",
+    "remove_address",
+    "remove_manager",
+  ]) {
+    await checkEntry(chain, `curator.sanctionsOracle.${functionName}`, aptos, () =>
+      entryFunctionPayload({
+        moduleAddress: contract.address,
+        moduleName: contract.moduleName,
+        functionName,
+        functionArguments: [ANY_ADDRESS],
+      })
+    );
+  }
+
+  for (const [functionName, args] of [
+    ["owner", []],
+    ["is_blocked", [ANY_ADDRESS]],
+    ["is_manager", [ANY_ADDRESS]],
+    ["managers", []],
+  ]) {
+    await checkView(chain, `curator.sanctionsOracle.${functionName}`, () =>
+      aptos.view({
+        payload: viewFunctionPayload({
+          moduleAddress: contract.address,
+          moduleName: contract.moduleName,
+          functionName,
+          functionArguments: args,
+        }),
+      })
+    );
+  }
 }
 
 async function checkRewards(chain, aptos, sdk) {
@@ -649,6 +774,12 @@ async function checkEntryPlan(chain, label, aptos, buildAll) {
 
 async function checkView(chain, label, read) {
   return runCheck(`${chain} ${label}`, "view", read);
+}
+
+function normalizeAddress(value) {
+  const address = String(value);
+  const hex = address.startsWith("0x") ? address.slice(2) : address;
+  return `0x${hex.toLowerCase().padStart(64, "0")}`;
 }
 
 /**

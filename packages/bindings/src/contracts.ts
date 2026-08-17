@@ -38,6 +38,10 @@ function resolveAbiKey(contractId: ContractId): AbiLookupKey {
       return "curatorVault";
     case "curator.router":
       return "curatorRouter";
+    case "curator.genericAdapter":
+      return "curatorGenericAdapter";
+    case "curator.sanctionsOracle":
+      return "curatorSanctionsOracle";
     case "rewards.module":
       return "multiRewards";
     case "rewards.router":

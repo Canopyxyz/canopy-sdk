@@ -1,48 +1,45 @@
 export const ABI = {
   "address": "0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2",
-  "name": "partner_registry",
-  "friends": [],
+  "name": "sanctions_oracle",
+  "friends": [
+    "0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::vault"
+  ],
   "exposed_functions": [
     {
-      "name": "add_partner",
-      "visibility": "public",
-      "is_entry": true,
-      "is_view": false,
-      "generic_type_params": [],
-      "params": [
-        "&signer",
-        "u64",
-        "address"
-      ],
-      "return": []
-    },
-    {
-      "name": "payout_address",
+      "name": "owner",
       "visibility": "public",
       "is_entry": false,
       "is_view": true,
       "generic_type_params": [],
-      "params": [
-        "u64"
-      ],
+      "params": [],
       "return": [
         "address"
       ]
     },
     {
-      "name": "add_partner_manager",
+      "name": "assert_not_blocked",
       "visibility": "public",
-      "is_entry": true,
+      "is_entry": false,
       "is_view": false,
       "generic_type_params": [],
       "params": [
-        "&signer",
         "address"
       ],
       "return": []
     },
     {
-      "name": "is_partner_manager",
+      "name": "blocked_error_code",
+      "visibility": "friend",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [],
+      "return": [
+        "u64"
+      ]
+    },
+    {
+      "name": "is_blocked",
       "visibility": "public",
       "is_entry": false,
       "is_view": true,
@@ -55,20 +52,56 @@ export const ABI = {
       ]
     },
     {
-      "name": "is_registered",
+      "name": "add_address",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "address"
+      ],
+      "return": []
+    },
+    {
+      "name": "add_manager",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "address"
+      ],
+      "return": []
+    },
+    {
+      "name": "ensure_initialized",
+      "visibility": "friend",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "address"
+      ],
+      "return": []
+    },
+    {
+      "name": "is_manager",
       "visibility": "public",
       "is_entry": false,
       "is_view": true,
       "generic_type_params": [],
       "params": [
-        "u64"
+        "address"
       ],
       "return": [
         "bool"
       ]
     },
     {
-      "name": "partner_managers",
+      "name": "managers",
       "visibility": "public",
       "is_entry": false,
       "is_view": true,
@@ -79,19 +112,7 @@ export const ABI = {
       ]
     },
     {
-      "name": "remove_partner",
-      "visibility": "public",
-      "is_entry": true,
-      "is_view": false,
-      "generic_type_params": [],
-      "params": [
-        "&signer",
-        "u64"
-      ],
-      "return": []
-    },
-    {
-      "name": "remove_partner_manager",
+      "name": "remove_address",
       "visibility": "public",
       "is_entry": true,
       "is_view": false,
@@ -101,11 +122,34 @@ export const ABI = {
         "address"
       ],
       "return": []
+    },
+    {
+      "name": "remove_manager",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "address"
+      ],
+      "return": []
+    },
+    {
+      "name": "set_owner",
+      "visibility": "friend",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "address"
+      ],
+      "return": []
     }
   ],
   "structs": [
     {
-      "name": "PartnerAddedEvent",
+      "name": "SanctionAddedEvent",
       "is_native": false,
       "is_event": true,
       "abilities": [
@@ -115,11 +159,11 @@ export const ABI = {
       "generic_type_params": [],
       "fields": [
         {
-          "name": "partner_id",
-          "type": "u64"
+          "name": "oracle",
+          "type": "address"
         },
         {
-          "name": "payout_address",
+          "name": "addr",
           "type": "address"
         },
         {
@@ -129,7 +173,7 @@ export const ABI = {
       ]
     },
     {
-      "name": "PartnerManagerAddedEvent",
+      "name": "SanctionRemovedEvent",
       "is_native": false,
       "is_event": true,
       "abilities": [
@@ -139,29 +183,21 @@ export const ABI = {
       "generic_type_params": [],
       "fields": [
         {
-          "name": "manager",
+          "name": "oracle",
           "type": "address"
-        }
-      ]
-    },
-    {
-      "name": "PartnerManagerRemovedEvent",
-      "is_native": false,
-      "is_event": true,
-      "abilities": [
-        "drop",
-        "store"
-      ],
-      "generic_type_params": [],
-      "fields": [
+        },
         {
-          "name": "manager",
+          "name": "addr",
+          "type": "address"
+        },
+        {
+          "name": "actor",
           "type": "address"
         }
       ]
     },
     {
-      "name": "PartnerRegistry",
+      "name": "SanctionsOracle",
       "is_native": false,
       "is_event": false,
       "abilities": [
@@ -170,8 +206,12 @@ export const ABI = {
       "generic_type_params": [],
       "fields": [
         {
-          "name": "entries",
-          "type": "0x1::table::Table<u64, address>"
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "name": "blocked",
+          "type": "0x1::table::Table<address, bool>"
         },
         {
           "name": "managers",
@@ -180,7 +220,7 @@ export const ABI = {
       ]
     },
     {
-      "name": "PartnerRemovedEvent",
+      "name": "SanctionsOracleManagerAddedEvent",
       "is_native": false,
       "is_event": true,
       "abilities": [
@@ -190,8 +230,36 @@ export const ABI = {
       "generic_type_params": [],
       "fields": [
         {
-          "name": "partner_id",
-          "type": "u64"
+          "name": "oracle",
+          "type": "address"
+        },
+        {
+          "name": "manager",
+          "type": "address"
+        },
+        {
+          "name": "actor",
+          "type": "address"
+        }
+      ]
+    },
+    {
+      "name": "SanctionsOracleManagerRemovedEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "oracle",
+          "type": "address"
+        },
+        {
+          "name": "manager",
+          "type": "address"
         },
         {
           "name": "actor",

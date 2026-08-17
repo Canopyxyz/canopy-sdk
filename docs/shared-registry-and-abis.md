@@ -62,19 +62,20 @@ the same chain disagree**, so handling one is not handling the other. This appli
 every client, not just curator.
 
 **`/v1/view` on Movement**, captured by calling `partner_registry::payout_address` with
-an unregistered id:
+an unregistered id. Package addresses are elided because the examples document abort
+parser shapes, not a specific deployment:
 
 ```text
 Failed to execute function: VMError { major_status: ABORTED, sub_status: Some(2),
-message: Some("0xdefc...c879f::partner_registry::payout_address at offset 17"),
-exec_state: ..., location: Module(ModuleId { address: defc...c879f,
+message: Some("<package>::partner_registry::payout_address at offset 17"),
+exec_state: ..., location: Module(ModuleId { address: <package>,
 name: Identifier("partner_registry") }), indices: [], offsets: [...] }
 ```
 
 **Simulation on Movement**, captured by simulating a below-minimum curator deposit:
 
 ```text
-Move abort in 0xdefc3f12...c879f::vault: EDEPOSIT_BELOW_MIN(0x65): Deposit amount is below the minimum required.
+Move abort in <package>::vault: EDEPOSIT_BELOW_MIN(0x65): Deposit amount is below the minimum required.
 ```
 
 **Aptos:**
