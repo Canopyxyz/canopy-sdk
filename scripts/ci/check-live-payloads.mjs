@@ -433,6 +433,15 @@ async function checkCurator(chain, aptos, sdk) {
 
 async function checkCuratorGenericAdapter(chain, aptos, policy, vaultAddress, adapterAddress) {
   const contract = requireContract(chain, "curator.genericAdapter");
+  const readAdapterView = (functionName, args) =>
+    aptos.view({
+      payload: viewFunctionPayload({
+        moduleAddress: contract.address,
+        moduleName: contract.moduleName,
+        functionName,
+        functionArguments: args,
+      }),
+    });
 
   for (const [functionName, args] of [
     ["allocate", [adapterAddress, "1"]],
@@ -453,19 +462,21 @@ async function checkCuratorGenericAdapter(chain, aptos, policy, vaultAddress, ad
   for (const [functionName, args] of [
     ["underlying_metadata", [adapterAddress]],
     ["idle_assets", [adapterAddress]],
-    ["vault_address", [adapterAddress]],
   ]) {
     await checkView(chain, `curator.genericAdapter.${functionName}[${policy}]`, () =>
-      aptos.view({
-        payload: viewFunctionPayload({
-          moduleAddress: contract.address,
-          moduleName: contract.moduleName,
-          functionName,
-          functionArguments: args,
-        }),
-      })
+      readAdapterView(functionName, args)
     );
   }
+
+  await checkView(chain, `curator.genericAdapter.vault_address[${policy}]`, async () => {
+    const [actualVaultAddress] = await readAdapterView("vault_address", [adapterAddress]);
+
+    if (normalizeAddress(actualVaultAddress) !== normalizeAddress(vaultAddress)) {
+      throw new Error(
+        `adapter fixture points at ${actualVaultAddress}; expected paired vault ${vaultAddress}`
+      );
+    }
+  });
 }
 
 async function checkCuratorSanctionsOracle(chain, aptos) {
@@ -763,6 +774,12 @@ async function checkEntryPlan(chain, label, aptos, buildAll) {
 
 async function checkView(chain, label, read) {
   return runCheck(`${chain} ${label}`, "view", read);
+}
+
+function normalizeAddress(value) {
+  const address = String(value);
+  const hex = address.startsWith("0x") ? address.slice(2) : address;
+  return `0x${hex.toLowerCase().padStart(64, "0")}`;
 }
 
 /**

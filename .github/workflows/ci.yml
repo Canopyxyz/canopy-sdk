@@ -5,8 +5,6 @@ on:
   push:
     branches:
       - main
-  schedule:
-    - cron: "17 6 * * *"
 
 # Read-only by default; nothing here needs to write to the repo.
 permissions:
@@ -14,7 +12,6 @@ permissions:
 
 jobs:
   verify:
-    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -101,46 +98,6 @@ jobs:
 
       - name: Check Browser Bundle
         run: pnpm run check:bundle
-
-      - name: Check Local ABI Files
-        run: pnpm run abi:check-local
-
-      - name: Check Movement Mainnet ABI Drift
-        run: pnpm run abi:check -- --chain=movement-mainnet
-
-      - name: Check Movement Testnet ABI Drift
-        run: pnpm run abi:check -- --chain=movement-testnet
-
-      - name: Check Aptos Testnet ABI Drift
-        run: pnpm run abi:check -- --chain=aptos-testnet
-
-      - name: Check Aptos Mainnet ABI Drift
-        run: pnpm run abi:check -- --chain=aptos-mainnet
-
-  abi-drift:
-    if: github.event_name == 'schedule'
-    runs-on: ubuntu-latest
-    steps:
-      # Detects ABI drift at the addresses pinned in packages/deployments/addresses.
-      # It does not detect redeploys to new addresses; that needs an external source of
-      # truth for current deployments. Additive in-place drift still matters because CLI
-      # management tooling relies on complete checked-in ABIs, not only SDK client methods.
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9.15.9
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install
-        run: pnpm install --frozen-lockfile
 
       - name: Check Local ABI Files
         run: pnpm run abi:check-local
