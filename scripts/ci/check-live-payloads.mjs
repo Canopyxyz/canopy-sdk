@@ -145,6 +145,7 @@ const CURATOR_VAULTS = {
 const CURATOR_GENERIC_ADAPTERS = {
   "movement-testnet": {
     floating: "0x5e1ed8cbcf8813a3f909996086c4310cbb7405e26b2494a3b04821c64ec901f4",
+    lockedIn: "0x5cea2cd41a57f0a606a10a6236194d637326867ea051736d0d4e4fe1a3cdb270",
   },
 };
 
@@ -348,7 +349,6 @@ async function checkCurator(chain, aptos, sdk) {
   // into three payload builders and every view below — which fails 17 checks with an
   // unrelated message and buries the actual cause. Fail once, here, and stop.
   const vaultAddress = vaults.floating;
-  const adapterAddress = CURATOR_GENERIC_ADAPTERS[chain]?.floating;
 
   if (!vaultAddress) {
     results.failed.push({
@@ -359,14 +359,28 @@ async function checkCurator(chain, aptos, sdk) {
     return;
   }
 
-  if (!adapterAddress) {
+  const adapterFixtures = CURATOR_GENERIC_ADAPTERS[chain];
+  if (!adapterFixtures) {
     results.failed.push({
       name: `${chain} curator generic adapter`,
       stage: "coverage",
-      message: `CURATOR_GENERIC_ADAPTERS.${chain}.floating is missing; adapter payload/view checks need a real adapter object`,
+      message: `CURATOR_GENERIC_ADAPTERS.${chain} is missing; adapter payload/view checks need real adapter objects`,
     });
   } else {
-    await checkCuratorGenericAdapter(chain, aptos, vaultAddress, adapterAddress);
+    for (const [policy, policyVaultAddress] of Object.entries(vaults)) {
+      const adapterAddress = adapterFixtures[policy];
+
+      if (!adapterAddress) {
+        results.failed.push({
+          name: `${chain} curator generic adapter[${policy}]`,
+          stage: "coverage",
+          message: `CURATOR_GENERIC_ADAPTERS.${chain}.${policy} is missing; adapter payload/view checks need a real adapter object`,
+        });
+        continue;
+      }
+
+      await checkCuratorGenericAdapter(chain, aptos, policy, policyVaultAddress, adapterAddress);
+    }
   }
 
   await checkCuratorSanctionsOracle(chain, aptos);
@@ -382,6 +396,7 @@ async function checkCurator(chain, aptos, sdk) {
   await checkView(chain, "curator.listVaults", () => curator.listVaults({ offset: 0, limit: 5 }));
   await checkView(chain, "curator.getVaultCount", () => curator.getVaultCount());
   await checkView(chain, "curator.getVault", () => curator.getVault(vaultAddress));
+  await checkView(chain, "curator.getVaultConfig", () => curator.getVaultConfig(vaultAddress));
   await checkView(chain, "curator.getVaultAccounting", () =>
     curator.getVaultAccounting(vaultAddress)
   );
@@ -416,7 +431,7 @@ async function checkCurator(chain, aptos, sdk) {
   );
 }
 
-async function checkCuratorGenericAdapter(chain, aptos, vaultAddress, adapterAddress) {
+async function checkCuratorGenericAdapter(chain, aptos, policy, vaultAddress, adapterAddress) {
   const contract = requireContract(chain, "curator.genericAdapter");
 
   for (const [functionName, args] of [
@@ -425,7 +440,7 @@ async function checkCuratorGenericAdapter(chain, aptos, vaultAddress, adapterAdd
     ["deallocate", [adapterAddress, "1"]],
     ["report_offchain_nav", [adapterAddress, "1"]],
   ]) {
-    await checkEntry(chain, `curator.genericAdapter.${functionName}`, aptos, () =>
+    await checkEntry(chain, `curator.genericAdapter.${functionName}[${policy}]`, aptos, () =>
       entryFunctionPayload({
         moduleAddress: contract.address,
         moduleName: contract.moduleName,
@@ -440,7 +455,7 @@ async function checkCuratorGenericAdapter(chain, aptos, vaultAddress, adapterAdd
     ["idle_assets", [adapterAddress]],
     ["vault_address", [adapterAddress]],
   ]) {
-    await checkView(chain, `curator.genericAdapter.${functionName}`, () =>
+    await checkView(chain, `curator.genericAdapter.${functionName}[${policy}]`, () =>
       aptos.view({
         payload: viewFunctionPayload({
           moduleAddress: contract.address,

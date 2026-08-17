@@ -122,11 +122,11 @@ type _DefineChainAbisPreservesEntryFunctionLiteral = Expect<
   Equal<typeof literalAbis.curatorRouter.exposed_functions[0]["name"], "deposit">
 >;
 
-// The real registered movement-testnet set, not the fixture above. `curator_vault.ts`
-// is ~9.7k lines with 340 exposed functions; the casts in chains/movement-testnet.ts
-// keep that literal union out of type inference, and `satisfies` on `abisByChain`
-// does not widen, so these assertions are the only thing standing between a stray
-// cast removal and a large compile-time regression.
+// The real registered movement-testnet set, not the fixture above. The casts in
+// chains/movement-testnet.ts keep the large curator ABIs out of literal type
+// inference, and `satisfies` on `abisByChain` does not widen, so these assertions
+// are the only thing standing between a stray cast removal and a large compile-time
+// regression.
 const movementTestnet = getAbisForChain("movement-testnet");
 
 type _CuratorVaultIsWidened = Expect<

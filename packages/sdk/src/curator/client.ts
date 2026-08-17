@@ -96,7 +96,7 @@ export type CuratorRouterFunction =
  * against the bound ABIs.
  *
  * Curator ABIs are registered as widened `MoveModuleAbi`; nothing needs their literal
- * types, and `curator_vault.ts` alone is ~9.7k lines with 340 exposed functions.
+ * types.
  *
  * Governance and allocator operations are out of scope — this covers deposits,
  * redemptions, and the reads a depositor UI needs.

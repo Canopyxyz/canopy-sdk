@@ -121,6 +121,10 @@ jobs:
     if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
     steps:
+      # Detects ABI drift at the addresses pinned in packages/deployments/addresses.
+      # It does not detect redeploys to new addresses; that needs an external source of
+      # truth for current deployments. Additive in-place drift still matters because CLI
+      # management tooling relies on complete checked-in ABIs, not only SDK client methods.
       - name: Checkout
         uses: actions/checkout@v4
 

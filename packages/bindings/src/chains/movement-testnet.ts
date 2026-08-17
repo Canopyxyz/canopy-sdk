@@ -21,11 +21,11 @@ import { defineChainAbis } from "./define-chain-abis";
 // ends up in `AbisForChain<"movement-testnet">`, and a cast further downstream
 // would be too late.
 //
-// `curator_vault.ts` alone is ~9.7k lines with 340 exposed functions, and nothing
-// needs the literal types: the curator client reads through the raw view path and
-// builds entry payloads with `entryFunctionPayload`, not Surf. These ABIs are still
-// registered because `getAbi(chain, "curator.*")` resolves them and `abi:check`
-// uses them for on-chain drift detection.
+// The curator ABIs are large and nothing needs their literal types: the curator
+// client reads through the raw view path and builds entry payloads with
+// `entryFunctionPayload`, not Surf. These ABIs are still registered because
+// `getAbi(chain, "curator.*")` resolves them and `abi:check` uses them for
+// on-chain drift detection.
 export const movementTestnetAbis = defineChainAbis("movement-testnet", {
   aptosFrameworkObject: frameworkObjectAbi,
   aptosFrameworkPrimaryFungibleStore: frameworkPrimaryFungibleStoreAbi,
