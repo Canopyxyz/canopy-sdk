@@ -1,6 +1,6 @@
 {
   "name": "@canopyhub/canopy-sdk",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "TypeScript SDK for Canopy Protocol",
   "keywords": [
     "movement",
@@ -69,6 +69,7 @@
     "abi:check-local": "node scripts/abi/check-local-abis.mjs",
     "hooks:install": "git config core.hooksPath .githooks",
     "check:exports": "node scripts/ci/check-exports.mjs",
+    "check:consumer-compat": "node scripts/ci/check-consumer-compat.mjs",
     "check:imports": "node scripts/ci/check-imports.mjs",
     "check:payloads": "node scripts/ci/check-live-payloads.mjs",
     "check:bundle": "node scripts/ci/check-browser-bundle.mjs",
@@ -78,7 +79,7 @@
     "prepublishOnly": "node scripts/ci/require-release-tag.mjs && tsup"
   },
   "peerDependencies": {
-    "@aptos-labs/ts-sdk": "^7.0.0"
+    "@aptos-labs/ts-sdk": "^6.3.1 || ^7.0.0"
   },
   "devDependencies": {
     "@aptos-labs/ts-sdk": "^7.0.1",

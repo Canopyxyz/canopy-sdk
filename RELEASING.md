@@ -31,8 +31,8 @@ refuses to publish from an unclean working tree, so commit or stash first.
 ### Why 2.0.0 was held back, and why the hold is over
 
 2.0.0 moved `@aptos-labs/ts-sdk` to `peerDependencies` with a `^7.0.0` range, and every 2.x
-release inherits that. The original concern was that a consumer still on ts-sdk 6 gets one of
-two bad outcomes from npm:
+release through 2.1.0 inherited that. The original concern was that a consumer still on ts-sdk 6
+gets one of two bad outcomes from npm:
 
 - as a direct dependency — `ERESOLVE unable to resolve dependency tree`
 - transitively — ts-sdk 7 installed *alongside* 6, which is the duplicate-copy bug 2.0.0 exists
@@ -40,18 +40,21 @@ two bad outcomes from npm:
 
 pnpm only warns, which is why neither shows up from inside this repo.
 
-That shield is obsolete for the known registry consumers. canopy-cli is the only active
-consumer, pins its SDK version exactly, and verified 2.x against ts-sdk 6.3.1 under pnpm:
-2.x has no `dependencies` block, only the peer range, and every ts-sdk type name in its
-public declarations exists in 6.3.1. The other known consumer is a local scratch dir on
-`^0.0.2`.
+**2.1.1 removes the concern instead of relying on it going unnoticed.** The peer range is now
+`^6.3.1 || ^7.0.0`, genuinely declaring dual-major support rather than depending on npm clients
+warning instead of failing. This is verified, not assumed: `scripts/ci/check-consumer-compat.mjs`
+(see `pnpm check:consumer-compat`) installs each published package in isolation against ts-sdk
+6.3.1, the declared 7.0.0 floor, and a pinned current 7.x, in strict mode with zero peer warnings
+tolerated, and exercises a real view call, a real transaction-payload round-trip, both CJS and ESM
+imports, and every published subpath export against each.
 
-Residual risk: a bare npm install into a ts-sdk 6 project can still hit `ERESOLVE`. No known npm
-consumer is in that shape, and leaving `latest` on 1.1.0 is worse: fresh installs get no curator
-support, stale testnet addresses, and the duplicate-copy bug.
+2.x has no `dependencies` block on `@aptos-labs/ts-sdk`, only the peer range, and every ts-sdk type
+name in its public declarations exists in 6.3.1 — canopy-cli (the only known active consumer)
+independently confirmed this by pinning 2.1.0 exactly and running its own full verification
+against ts-sdk 6.3.1 before this range was widened.
 
-2.1.0 is therefore safe to publish to `latest`. Do not promote 2.0.0 first; it
-predates the curator redeploy address update.
+2.1.1 is therefore safe to publish to `latest`. Do not promote 2.0.0 or 2.1.0 first; both predate
+this peer-range fix, and 2.0.0 additionally predates the curator redeploy address update.
 
 ### Moving a tag without republishing
 
