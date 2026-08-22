@@ -52,6 +52,13 @@ jobs:
       - name: Check Package Imports
         run: pnpm run check:imports
 
+      # Installs all four published packages together, once per ts-sdk major (6.3.1, the declared
+      # 7.0.0 floor, and a pinned current 7.x), in strict mode with zero peer warnings tolerated —
+      # the test for the peerDependencies range itself, not just for whether this repo's own
+      # devDependency happens to work.
+      - name: Check Consumer Compatibility (ts-sdk 6 and 7)
+        run: pnpm run check:consumer-compat
+
       # Builds every entry payload against live fullnodes and reads every view the
       # clients use. The unit tests assert payload shape only and never build a
       # transaction, which is how unsubmittable payloads shipped in v1.1.0.
