@@ -31,8 +31,8 @@ refuses to publish from an unclean working tree, so commit or stash first.
 ### Why 2.0.0 was held back, and why the hold is over
 
 2.0.0 moved `@aptos-labs/ts-sdk` to `peerDependencies` with a `^7.0.0` range, and every 2.x
-release inherits that. The original concern was that a consumer still on ts-sdk 6 gets one of
-two bad outcomes from npm:
+release through 2.1.0 inherited that. The original concern was that a consumer still on ts-sdk 6
+gets one of two bad outcomes from npm:
 
 - as a direct dependency — `ERESOLVE unable to resolve dependency tree`
 - transitively — ts-sdk 7 installed *alongside* 6, which is the duplicate-copy bug 2.0.0 exists
@@ -40,18 +40,50 @@ two bad outcomes from npm:
 
 pnpm only warns, which is why neither shows up from inside this repo.
 
-That shield is obsolete for the known registry consumers. canopy-cli is the only active
-consumer, pins its SDK version exactly, and verified 2.x against ts-sdk 6.3.1 under pnpm:
-2.x has no `dependencies` block, only the peer range, and every ts-sdk type name in its
-public declarations exists in 6.3.1. The other known consumer is a local scratch dir on
-`^0.0.2`.
+**2.1.1 removes the concern instead of relying on it going unnoticed.** The peer range is now
+`^6.3.1 || ^7.0.0`, genuinely declaring dual-major support rather than depending on npm clients
+warning instead of failing. This also required fixing this package's `exports` map itself: the
+`types` field was unconditional, so a `nodenext`-resolving ESM consumer got the CJS-flavoured
+declaration file and saw two structurally distinct `Aptos` types. `types` is now nested per
+`import`/`require` condition, pointing at the matching declaration file for each.
 
-Residual risk: a bare npm install into a ts-sdk 6 project can still hit `ERESOLVE`. No known npm
-consumer is in that shape, and leaving `latest` on 1.1.0 is worse: fresh installs get no curator
-support, stale testnet addresses, and the duplicate-copy bug.
+This is verified, not assumed: `scripts/ci/check-consumer-compat.mjs` (see `pnpm
+check:consumer-compat`) installs all four published packages together into one fresh project per
+ts-sdk version — 6.3.1, the declared 7.0.0 floor, and a pinned current 7.x — via `npm install
+--strict-peer-deps`, checking both stdout and stderr for a peer warning even on exit code 0. Per
+version it exercises a deterministic, mocked view call (a fake `Aptos`-shaped client implementing
+only `.view()`, not a live fullnode), both CJS and ESM imports of every published subpath *and*
+every standalone package by its own name, a real `tsc` build (not just typecheck) of the emitted
+output, typechecking under both `bundler` and `nodenext` resolution, and one real, retried,
+fail-closed transaction-payload build/BCS-serialize round trip against aptos-testnet (payloads
+carry no local ABI by design, so this one step needs a live fullnode and is the one part of the
+script that isn't otherwise deterministic). The one known exception: ts-sdk 6.3.1 itself fails
+`nodenext` + ESM (`.mts`) typechecking for a reason fully external to canopy-sdk — its own
+`.d.mts` references `eventemitter3`'s default export in a way `nodenext` rejects, reproducible
+with no canopy-sdk packages installed at all — and the script asserts that failure explicitly
+(xfail) rather than silently accepting or hiding it.
 
-2.1.0 is therefore safe to publish to `latest`. Do not promote 2.0.0 first; it
-predates the curator redeploy address update.
+2.x has no `dependencies` block on `@aptos-labs/ts-sdk`, only the peer range, and every ts-sdk type
+name in its public declarations exists in 6.3.1 — canopy-cli (the only known active consumer)
+independently confirmed this by pinning 2.1.0 exactly and running its own full verification
+against ts-sdk 6.3.1 before this range was widened.
+
+**Why the root `devDependency` stays on `^7.0.1` (currently resolving to the deprecated 7.0.1,
+flagged by npm for an HTTP/2 bug) rather than a newer 7.x, deliberately.** Tried bumping it: a bare
+`pnpm install` re-resolves the caret range to whatever is newest-matching today (7.3.0), which
+sounds like the obvious fix — until `examples/react`'s own separate, unrelated `^7.0.1` pin (needed
+because its wallet-adapter dependencies declare peer ranges that don't reach ts-sdk 7.x cleanly in
+the first place, an existing gap unrelated to this migration) resolves to a *different* physical
+copy, producing the exact same duplicate-`Aptos`-type break inside this repo's own workspace that
+2.0.0 was written to remove from consumers. Fixing that properly means either patching
+`examples/react`'s wallet-adapter stack (its own, separate, pre-existing problem) or hand-pinning
+an exact version instead of a range (trading one staleness risk for another). Neither is this
+release's job. What actually matters for consumers — the published peer range genuinely supporting
+6.3.1 through current 7.x — is verified independently of this repo's own devDependency by
+`check:consumer-compat` above, which is deliberately not derived from it for exactly this reason.
+
+2.1.1 is therefore safe to publish to `latest`. Do not promote 2.0.0 or 2.1.0 first; both predate
+this peer-range fix, and 2.0.0 additionally predates the curator redeploy address update.
 
 ### Moving a tag without republishing
 

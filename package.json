@@ -1,6 +1,6 @@
 {
   "name": "@canopyhub/canopy-sdk",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "TypeScript SDK for Canopy Protocol",
   "keywords": [
     "movement",
@@ -28,24 +28,44 @@
   },
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
     },
     "./core": {
-      "types": "./dist/core.d.ts",
-      "import": "./dist/core.mjs",
-      "require": "./dist/core.js"
+      "import": {
+        "types": "./dist/core.d.mts",
+        "default": "./dist/core.mjs"
+      },
+      "require": {
+        "types": "./dist/core.d.ts",
+        "default": "./dist/core.js"
+      }
     },
     "./deployments": {
-      "types": "./dist/deployments.d.ts",
-      "import": "./dist/deployments.mjs",
-      "require": "./dist/deployments.js"
+      "import": {
+        "types": "./dist/deployments.d.mts",
+        "default": "./dist/deployments.mjs"
+      },
+      "require": {
+        "types": "./dist/deployments.d.ts",
+        "default": "./dist/deployments.js"
+      }
     },
     "./bindings": {
-      "types": "./dist/bindings.d.ts",
-      "import": "./dist/bindings.mjs",
-      "require": "./dist/bindings.js"
+      "import": {
+        "types": "./dist/bindings.d.mts",
+        "default": "./dist/bindings.mjs"
+      },
+      "require": {
+        "types": "./dist/bindings.d.ts",
+        "default": "./dist/bindings.js"
+      }
     }
   },
   "files": [
@@ -69,6 +89,7 @@
     "abi:check-local": "node scripts/abi/check-local-abis.mjs",
     "hooks:install": "git config core.hooksPath .githooks",
     "check:exports": "node scripts/ci/check-exports.mjs",
+    "check:consumer-compat": "node scripts/ci/check-consumer-compat.mjs",
     "check:imports": "node scripts/ci/check-imports.mjs",
     "check:payloads": "node scripts/ci/check-live-payloads.mjs",
     "check:bundle": "node scripts/ci/check-browser-bundle.mjs",
@@ -78,7 +99,7 @@
     "prepublishOnly": "node scripts/ci/require-release-tag.mjs && tsup"
   },
   "peerDependencies": {
-    "@aptos-labs/ts-sdk": "^7.0.0"
+    "@aptos-labs/ts-sdk": "^6.3.1 || ^7.0.0"
   },
   "devDependencies": {
     "@aptos-labs/ts-sdk": "^7.0.1",
