@@ -60,7 +60,10 @@ export type CuratorVaultViewFunction =
   | "queue_object"
   | "deposit_preview"
   | "instant_redeem_preview"
-  | "queued_redemption_preview";
+  | "queued_redemption_preview"
+  | "request_force_process_at"
+  | "active_lock_duration"
+  | "effective_nav_24h_share_price_deviation_bps";
 
 export type CuratorQueueViewFunction =
   | "request_detail"
@@ -368,6 +371,54 @@ export class CuratorClient {
     );
   }
 
+  /**
+   * The authoritative force-processing deadline for one request.
+   *
+   * `CuratorRedemptionRequest.storedForceProcessAt` is only the submission-time
+   * snapshot; the contract enforces `min(claimableAt + live SLA, snapshot)`, so a later
+   * SLA tightening moves the real deadline *earlier* than the stored value.
+   *
+   * Authoritative for the deadline, not for eligibility as a whole — status, expiry,
+   * available liquidity and the minimum floor all still apply.
+   */
+  async getRequestForceProcessAt(input: CuratorRequestPayloadInput): Promise<bigint> {
+    return readMoveU64(
+      await this.callVaultView("request_force_process_at", [
+        normalizeMoveAddress(input.vaultAddress),
+        normalizeMoveAddress(input.requestAddress),
+      ])
+    );
+  }
+
+  /**
+   * Duration used by the currently active locked-profit schedule.
+   *
+   * Equals `config.lockDuration` when no profit is locked. While a schedule is running
+   * it keeps that schedule's own snapshot, so the two can diverge after the curator
+   * changes `lock_duration` — a new schedule adopts the new value, the running one does
+   * not.
+   */
+  async getActiveLockDuration(vaultAddress: string): Promise<bigint> {
+    return readMoveU64(
+      await this.callVaultView("active_lock_duration", [normalizeMoveAddress(vaultAddress)])
+    );
+  }
+
+  /**
+   * The enforced 24h share-price deviation limit: the stored configuration clamped to
+   * the current `SystemBounds`.
+   *
+   * `CuratorVaultConfig.nav24hSharePriceDeviationBps` is the stored value, which can be
+   * higher than what the guard actually applies.
+   */
+  async getEffectiveNav24hSharePriceDeviationBps(vaultAddress: string): Promise<bigint> {
+    return readMoveU64(
+      await this.callVaultView("effective_nav_24h_share_price_deviation_bps", [
+        normalizeMoveAddress(vaultAddress),
+      ])
+    );
+  }
+
   // ── Partner registry reads ────────────────────────────────────────────────
 
   async isPartnerRegistered(partnerId: bigint | number | string): Promise<boolean> {
@@ -531,6 +582,9 @@ function readVaultAccounting(value: unknown): CuratorVaultAccounting {
 
   return {
     effectiveAssets: readMoveU64(snapshot.effective_assets),
+    equityShareSupply: readMoveU64(snapshot.equity_share_supply),
+    equityTotalAssets: readMoveU64(snapshot.equity_total_assets),
+    fundedEscrowedShares: readMoveU64(snapshot.funded_escrowed_shares),
     hasPendingOffchainNavOverride: readMoveBool(snapshot.has_pending_offchain_nav_override),
     isNavFresh: readMoveBool(snapshot.is_nav_fresh),
     lastNavUpdateAt: readMoveU64(snapshot.last_nav_update_at),
@@ -671,6 +725,7 @@ function readQueuedRedemptionPreview(value: unknown): CuratorQueuedRedemptionPre
     canSubmit: readMoveBool(preview.can_submit),
     estimatedAssetsOut: readMoveU64(preview.estimated_assets_out),
     estimatedClaimableAt: readMoveU64(preview.estimated_claimable_at),
+    forceProcessAt: readMoveU64(preview.force_process_at),
     isSanctioned: readMoveBool(preview.is_sanctioned),
     isVaultBlocklisted: readMoveBool(preview.is_vault_blocklisted),
     pricingPolicy: readMoveEnumVariant(preview.pricing_policy),
@@ -694,6 +749,7 @@ function readRedemptionRequest(
     fundedAmount: readMoveU64(detail.funded_amount),
     fundedAt: readOptionalU64(detail.funded_at),
     lockedAssetsOut: readOptionalU64(detail.locked_assets_out),
+    minAssetsOut: readOptionalU64(detail.min_assets_out),
     originalEscrowedShares: readMoveU64(detail.original_escrowed_shares),
     owner: readMoveAddress(detail.owner),
     pendingRecoveryAddress: readMoveOption(
@@ -703,6 +759,7 @@ function readRedemptionRequest(
     pendingRecoveryNotBefore: readOptionalU64(detail.pending_recovery_not_before),
     requestAddress,
     status: readMoveEnumVariant(detail.status),
+    storedForceProcessAt: readMoveU64(detail.force_process_at),
     submittedAt: readMoveU64(detail.submitted_at),
   };
 }

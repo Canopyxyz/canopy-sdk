@@ -10,6 +10,14 @@ export interface CuratorRedemptionRequestedEvent {
   expiresAt: bigint;
   requestAddress: string;
   sharesEscrowed: bigint;
+  /**
+   * The **immutable** force-processing deadline snapshotted at submission — the same
+   * value later exposed as `CuratorRedemptionRequest.storedForceProcessAt`.
+   *
+   * A later SLA tightening makes the effective deadline earlier, so read
+   * `curator.getRequestForceProcessAt` before acting on it.
+   */
+  storedForceProcessAt: bigint;
   usdcEstimate: bigint;
   userAddress: string;
   vaultAddress: string;
@@ -100,6 +108,7 @@ export function findRedemptionRequests(
       expiresAt: readEventUint(data?.expires_at, "expires_at"),
       requestAddress,
       sharesEscrowed: readEventUint(data?.shares_escrowed, "shares_escrowed"),
+      storedForceProcessAt: readEventUint(data?.force_process_at, "force_process_at"),
       usdcEstimate: readEventUint(data?.usdc_estimate, "usdc_estimate"),
       userAddress,
       vaultAddress,

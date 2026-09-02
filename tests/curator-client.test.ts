@@ -4,12 +4,22 @@ import { movementTestnetAbis } from "../packages/bindings/src";
 import { CanopySdk, findRedemptionRequest } from "../packages/sdk/src";
 import { requireCuratorFeatureContext } from "../packages/sdk/src/context";
 
-const VAULT_PACKAGE = "0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2";
-const ROUTER_PACKAGE = "0x97b28d98b0e76f529a12d4d37671be3954aaf619afe600c0bee58349a8ce02d0";
-const FLOATING_VAULT = "0x66e60c7e5c731b95952f3467274e667c831b78a0feee5cbc69331cbc89d650b4";
-const DEPOSITOR = "0x5bacc47db1706e1318b33d78c576397aa77124b282a505964c44f1fec6b93023";
-const QUEUE = "0xdd608a13af1f22a60c805addf34fea9324d505452012628fdb9b2b9452bd5d90";
+// Two forms of the same package, and they are not interchangeable.
+//
+// The fullnode reports this package unpadded (63 hex); `normalizeMoveAddress` pads it to
+// 64. Mock keys are `payload.function`, which `moveFunctionId` normalizes, and decoded
+// expectations come back through `readMoveAddress` — both padded. Only fields captured
+// verbatim off the wire, such as `raw_abort.package_address`, keep the raw form.
+const VAULT_PACKAGE = "0x08e775fdafef441551521237c279fda77b5010947c8c7b921f1fd0861ea2fe1b";
+const VAULT_PACKAGE_RAW = "0x8e775fdafef441551521237c279fda77b5010947c8c7b921f1fd0861ea2fe1b";
+const ROUTER_PACKAGE = "0x313050fa1c20243da4b6fbe94d8e1c59fbba012afdf9a783e3beda67a5552b97";
+const FLOATING_VAULT = "0x3c7a6b46594b02139e6411a8dc2f83cb7b4552f6138f46a321fcba1500a0ef8e";
+const DEPOSITOR = "0xdc66c438a6579a36f533a6404954d4ec33e595bc8fc2b30f87ef6d792837149b";
+const QUEUE = "0x4a2785da7d7915b69ca1d361b1c5a0aa81ac564dc1ff7097e05e625acd5edf9b";
 const REQUEST = "0xa38a31e2ea362d976f53141c247f3aa297d61ee1ca8520e4fd38d606832ae17b";
+
+/** Uppercase hex: valid input, not canonical output. `normalizeMoveAddress` lowercases it. */
+const denormalized = (address: string) => `0x${address.slice(2).toUpperCase()}`;
 
 interface MockViewClient {
   view: jest.MockedFunction<(input: unknown) => Promise<unknown[]>>;
@@ -45,9 +55,9 @@ function createCuratorSdk(
 
 const VELOCITY_USAGE = { day: "1", month: "17097005004", week: "17097005004" };
 
-// The mandatory (system tier-0) and per-vault checks genuinely differ on the live
-// vault: tier-0 has no aggregate caps configured, the vault does. Kept distinct so
-// the fixture stays a faithful capture.
+// Tier-0 (system) and per-vault checks are kept distinct because they genuinely differ
+// in shape: tier-0 configures no aggregate caps, a vault does. Values are synthetic —
+// see DEPOSIT_PREVIEW below.
 const MANDATORY_VELOCITY_CHECK = {
   aggregate_day_headroom: { vec: [] },
   aggregate_month_headroom: { vec: [] },
@@ -68,11 +78,27 @@ const VAULT_VELOCITY_CHECK = {
 };
 
 /**
- * Captured verbatim from a live `POST /v1/view` against movement-testnet, so the
- * decoders are exercised against real serialization: Move enums arrive as
- * `{ __variant__ }` and `Option` as `{ vec: [...] }`.
+ * A synthetic `deposit_preview` — the wire *shape* is real (Move enums as
+ * `{ __variant__ }`, `Option` as `{ vec: [...] }`), the values are not.
+ *
+ * It models a populated vault. Live previews already cover more than they might appear to
+ * — multiple blocking reasons at once, and genuine velocity arithmetic, since the preview
+ * projects the requested amount into `wallet_usage_after` and the headroom fields.
+ *
+ * What only this fixture reaches:
+ *
+ *   - `IdleBreachActive`, which no live state produces;
+ *   - non-zero *pre-existing* usage, so the projection adds to something rather than
+ *     starting from zero;
+ *   - the velocity-cap branches that are unconfigured live: every `aggregate_*_headroom`
+ *     on both checks, and the per-vault `wallet_*_headroom` set. Those read `None` on
+ *     chain, so only this fixture decodes a present value for them. (The deposit and
+ *     adapter cap headrooms, and the mandatory wallet headrooms, *are* populated live.)
+ *
+ * `raw_abort.package_address` is the one genuinely wire-shaped field: unpadded, as the
+ * node serializes it.
  */
-const LIVE_DEPOSIT_PREVIEW = {
+const DEPOSIT_PREVIEW = {
   adapter_cap_headroom: { vec: ["998899999999"] },
   aggregate_usage_after: VELOCITY_USAGE,
   blocking_reasons: [
@@ -80,7 +106,8 @@ const LIVE_DEPOSIT_PREVIEW = {
       raw_abort: {
         error_code: "101",
         module_name: "vault",
-        package_address: VAULT_PACKAGE,
+        // Raw, as the node serializes it — the decoder is what pads.
+        package_address: VAULT_PACKAGE_RAW,
       },
       reason_id: { __variant__: "DepositBelowMinimum" },
     },
@@ -88,7 +115,7 @@ const LIVE_DEPOSIT_PREVIEW = {
       raw_abort: {
         error_code: "74",
         module_name: "vault",
-        package_address: VAULT_PACKAGE,
+        package_address: VAULT_PACKAGE_RAW,
       },
       reason_id: { __variant__: "IdleBreachActive" },
     },
@@ -134,20 +161,63 @@ const VALID_VAULT_CONFIG = {
   withdrawal_delay_seconds: "172800",
 };
 
-/** Also captured live. */
-const LIVE_VAULT_ACCOUNTING = {
-  effective_assets: "17097005003",
+/**
+ * A constructed snapshot, not a live capture. The redeployed vaults are empty, so live
+ * reads give `0` for every quantity here except `share_price_e18`, which is `1e18` via the
+ * zero-supply branch — and a wall of zeros cannot tell a correct field mapping from a
+ * swapped one.
+ *
+ * Every value is distinct and the accounting identities hold, so a decoder that reads
+ * `total_assets` into `equityTotalAssets` (or `share_total_supply` into
+ * `equityShareSupply`) fails rather than coincidentally matching:
+ *
+ *   equity_total_assets = total_assets        - reserved_for_queue
+ *   equity_share_supply = share_total_supply   - funded_escrowed_shares
+ *   effective_assets    = equity_total_assets  - locked_profit
+ *   unreserved_buffer   = (total_assets - strategy_idle_assets) - reserved_for_queue
+ *   share_price_e18     = effective_assets * 1e18 / equity_share_supply
+ *
+ * `locked_profit` is deliberately non-zero: at zero, `effective_assets` collapses onto
+ * `equity_total_assets` and the fixture stops distinguishing the two. Every numeric value
+ * below is distinct for the same reason.
+ *
+ * Note `share_price_e18` divides by **equity** supply. Pricing on gross `share_total_supply`
+ * is the superseded basis, and a fixture computed that way would ratify the old behaviour.
+ */
+const VAULT_ACCOUNTING = {
+  effective_assets: "17095000000",
+  equity_share_supply: "17098100000",
+  equity_total_assets: "17096901000",
+  funded_escrowed_shares: "95488",
   has_pending_offchain_nav_override: false,
   is_nav_fresh: true,
   last_nav_update_at: "1784721120",
-  locked_profit: "0",
+  locked_profit: "1901000",
   reported_offchain_nav: "0",
-  reserved_for_queue: "0",
-  share_price_e18: "999930373646690639",
+  reserved_for_queue: "104003",
+  share_price_e18: "999818693305104075",
   share_total_supply: "17098195488",
   strategy_idle_assets: "1100000000",
   total_assets: "17097005003",
-  unreserved_buffer: "15997005003",
+  unreserved_buffer: "15996901000",
+};
+
+/**
+ * `queued_redemption_preview`. `force_process_at` is the deadline that would be
+ * snapshotted onto the request at submission.
+ */
+const QUEUED_REDEMPTION_PREVIEW = {
+  allocator_sla_seconds: "86400",
+  blocking_reasons: [],
+  can_submit: true,
+  estimated_assets_out: "998500",
+  estimated_claimable_at: "1784800000",
+  force_process_at: "1784886400",
+  is_sanctioned: false,
+  is_vault_blocklisted: false,
+  pricing_policy: { __variant__: "Floating" },
+  request_expiry_at: "1785400000",
+  shares_to_escrow: "1000000",
 };
 
 describe("curator client composition", () => {
@@ -421,33 +491,98 @@ describe("curator entry payloads", () => {
       functionArguments: expectedArguments,
     });
   });
+
+  it("passes a queued-redemption minAssetsOut through as a bare scalar", () => {
+    // Not cosmetic: this value is now persisted on the request and rechecked against
+    // the final payout at funding time, so dropping it silently widens the user's
+    // accepted slippage to unbounded.
+    const { sdk } = createCuratorSdk();
+
+    expect(
+      sdk.curator!.buildRequestRedemptionPayload({
+        vaultAddress: FLOATING_VAULT,
+        shares: 1_000_000n,
+        minAssetsOut: 995_000n,
+      })
+    ).toMatchObject({
+      function: `${ROUTER_PACKAGE}::router::request_redemption`,
+      functionArguments: [normalizeMoveAddress(FLOATING_VAULT), "1000000", "995000"],
+    });
+  });
 });
 
 describe("curator reads", () => {
-  it("decodes the live vault_accounting snapshot", async () => {
+  it("decodes the vault_accounting snapshot, keeping equity and gross figures apart", async () => {
     const { sdk } = createCuratorSdk({
-      [`${VAULT_PACKAGE}::vault::vault_accounting`]: [LIVE_VAULT_ACCOUNTING],
+      [`${VAULT_PACKAGE}::vault::vault_accounting`]: [VAULT_ACCOUNTING],
     });
 
     await expect(sdk.curator!.getVaultAccounting(FLOATING_VAULT)).resolves.toEqual({
-      effectiveAssets: 17097005003n,
+      effectiveAssets: 17095000000n,
+      equityShareSupply: 17098100000n,
+      equityTotalAssets: 17096901000n,
+      fundedEscrowedShares: 95488n,
       hasPendingOffchainNavOverride: false,
       isNavFresh: true,
       lastNavUpdateAt: 1784721120n,
-      lockedProfit: 0n,
+      lockedProfit: 1901000n,
       reportedOffchainNav: 0n,
-      reservedForQueue: 0n,
-      sharePriceE18: 999930373646690639n,
+      reservedForQueue: 104003n,
+      sharePriceE18: 999818693305104075n,
       shareTotalSupply: 17098195488n,
       strategyIdleAssets: 1100000000n,
       totalAssets: 17097005003n,
-      unreservedBuffer: 15997005003n,
+      unreservedBuffer: 15996901000n,
     });
   });
 
-  it("decodes live deposit_preview blocking reasons including enum variants", async () => {
+  it("decodes the queued redemption preview, including the force-process deadline", async () => {
+    const { sdk } = createCuratorSdk({
+      [`${VAULT_PACKAGE}::vault::queued_redemption_preview`]: [QUEUED_REDEMPTION_PREVIEW],
+    });
+
+    await expect(
+      sdk.curator!.previewQueuedRedemption({
+        vaultAddress: FLOATING_VAULT,
+        user: DEPOSITOR,
+        shares: 1_000_000n,
+      })
+    ).resolves.toEqual({
+      allocatorSlaSeconds: 86400n,
+      blockingReasons: [],
+      canSubmit: true,
+      estimatedAssetsOut: 998500n,
+      estimatedClaimableAt: 1784800000n,
+      forceProcessAt: 1784886400n,
+      isSanctioned: false,
+      isVaultBlocklisted: false,
+      pricingPolicy: "Floating",
+      requestExpiryAt: 1785400000n,
+      sharesToEscrow: 1000000n,
+    });
+  });
+
+  it("passes a present queued-preview minAssetsOut as a bare scalar", async () => {
     const { sdk, client } = createCuratorSdk({
-      [`${VAULT_PACKAGE}::vault::deposit_preview`]: [LIVE_DEPOSIT_PREVIEW],
+      [`${VAULT_PACKAGE}::vault::queued_redemption_preview`]: [QUEUED_REDEMPTION_PREVIEW],
+    });
+
+    await sdk.curator!.previewQueuedRedemption({
+      vaultAddress: FLOATING_VAULT,
+      user: DEPOSITOR,
+      shares: 1_000_000n,
+      minAssetsOut: 998_000n,
+    });
+
+    const payload = (client.view.mock.calls[0]?.[0] as {
+      payload: { functionArguments: unknown[] };
+    }).payload;
+    expect(payload.functionArguments[3]).toBe("998000");
+  });
+
+  it("decodes deposit_preview blocking reasons including enum variants", async () => {
+    const { sdk, client } = createCuratorSdk({
+      [`${VAULT_PACKAGE}::vault::deposit_preview`]: [DEPOSIT_PREVIEW],
     });
 
     const preview = await sdk.curator!.previewDeposit({
@@ -486,7 +621,7 @@ describe("curator reads", () => {
 
   it("passes a present Option view argument as a bare scalar", async () => {
     const { sdk, client } = createCuratorSdk({
-      [`${VAULT_PACKAGE}::vault::deposit_preview`]: [LIVE_DEPOSIT_PREVIEW],
+      [`${VAULT_PACKAGE}::vault::deposit_preview`]: [DEPOSIT_PREVIEW],
     });
 
     await sdk.curator!.previewDeposit({
@@ -625,10 +760,13 @@ describe("curator reads", () => {
             claimed_amount: "0",
             escrowed_shares: "1000000",
             expires_at: "1785400000",
+            force_process_at: "1784886400",
             frozen_at: { vec: [] },
             funded_amount: "0",
             funded_at: { vec: [] },
             locked_assets_out: isCancelled ? { vec: [] } : { vec: ["999000"] },
+            // Both Option branches of the persisted floor, in one fixture.
+            min_assets_out: isCancelled ? { vec: [] } : { vec: ["995000"] },
             original_escrowed_shares: "1000000",
             owner: DEPOSITOR,
             pending_recovery_address: { vec: [] },
@@ -647,12 +785,74 @@ describe("curator reads", () => {
 
     expect(requests.map((request) => request.status)).toEqual(["Pending", "Cancelled"]);
     expect(requests[0]?.requestAddress).toBe(normalizeMoveAddress(REQUEST));
-    // fundedAmount is 0 before an allocator funds; lockedAssetsOut carries the
-    // LockedIn payout estimate instead.
+    // fundedAmount is 0 before the request is funded — by an allocator or by
+    // permissionless force-processing; lockedAssetsOut carries the LockedIn payout
+    // estimate instead.
     expect(requests[0]?.fundedAmount).toBe(0n);
     expect(requests[0]?.lockedAssetsOut).toBe(999000n);
     expect(requests[0]?.submittedAt).toBe(1784700000n);
     expect(requests[1]?.lockedAssetsOut).toBeNull();
+
+    // The persisted floor decodes in both directions: `null` must mean "no floor",
+    // never a zeroed one, since a zero floor is itself a valid contract state.
+    expect(requests[0]?.minAssetsOut).toBe(995000n);
+    expect(requests[1]?.minAssetsOut).toBeNull();
+
+    // The stored snapshot, deliberately distinct from claimableAt and expiresAt so a
+    // decoder reading the wrong u64 cannot pass.
+    expect(requests[0]?.storedForceProcessAt).toBe(1784886400n);
+  });
+
+  it("reads the effective force-process deadline from the vault, not the request", async () => {
+    // The stored snapshot is an upper bound; the contract enforces
+    // min(claimableAt + live SLA, snapshot), so a tightened SLA moves the real
+    // deadline earlier. The getter must go to the vault view, passing vault first.
+    const { sdk, client } = createCuratorSdk({
+      [`${VAULT_PACKAGE}::vault::request_force_process_at`]: ["1784800001"],
+    });
+
+    // Deliberately non-canonical inputs. Both constants are already 64-hex lowercase, so
+    // passing them straight through would let a getter that skipped normalizeMoveAddress
+    // entirely still pass the assertion below.
+    await expect(
+      sdk.curator!.getRequestForceProcessAt({
+        vaultAddress: denormalized(FLOATING_VAULT),
+        requestAddress: denormalized(REQUEST),
+      })
+    ).resolves.toBe(1784800001n);
+
+    const payload = (client.view.mock.calls[0]?.[0] as {
+      payload: { function: string; functionArguments: unknown[] };
+    }).payload;
+    expect(payload.function).toBe(`${VAULT_PACKAGE}::vault::request_force_process_at`);
+    expect(payload.functionArguments).toEqual([
+      normalizeMoveAddress(FLOATING_VAULT),
+      normalizeMoveAddress(REQUEST),
+    ]);
+  });
+
+  it("reads the active lock duration and the effective NAV deviation separately", async () => {
+    // Neither is carried by any composite DTO this SDK exposes: active_lock_duration can
+    // lag config.lockDuration while a profit schedule runs, and the effective NAV bound is
+    // the stored config clamped to SystemBounds. (On-chain the latter also appears as
+    // nav_24h_share_price_band.threshold_bps, which the SDK does not bind.)
+    const { sdk, client } = createCuratorSdk({
+      [`${VAULT_PACKAGE}::vault::active_lock_duration`]: ["604800"],
+      [`${VAULT_PACKAGE}::vault::effective_nav_24h_share_price_deviation_bps`]: ["150"],
+    });
+
+    // Non-canonical input here too, for the same reason as above.
+    await expect(
+      sdk.curator!.getActiveLockDuration(denormalized(FLOATING_VAULT))
+    ).resolves.toBe(604800n);
+    await expect(
+      sdk.curator!.getEffectiveNav24hSharePriceDeviationBps(denormalized(FLOATING_VAULT))
+    ).resolves.toBe(150n);
+
+    for (const call of client.view.mock.calls) {
+      const payload = (call[0] as { payload: { functionArguments: unknown[] } }).payload;
+      expect(payload.functionArguments).toEqual([normalizeMoveAddress(FLOATING_VAULT)]);
+    }
   });
 
   it("returns null for an unregistered partner instead of surfacing the abort", async () => {
@@ -687,11 +887,17 @@ describe("curator reads", () => {
         // Thrown the way the Aptos SDK does, with the body under `data`.
         throw Object.assign(new Error("Move abort"), {
           data: {
+            // Frozen literal, not interpolated. The previous version built `message:`
+            // from the package constant while hard-coding a different package in
+            // `location:`, so it described a transaction that never happened. Recaptured
+            // whole against this deployment; note the node pads inside `message:` and
+            // omits the `0x` inside `location:`.
             message:
               "Failed to execute function: VMError { major_status: ABORTED, sub_status: Some(2), " +
-              `message: Some("${VAULT_PACKAGE}::partner_registry::payout_address at offset 17"), ` +
+              'message: Some("0x08e775fdafef441551521237c279fda77b5010947c8c7b921f1fd0861ea2fe1b' +
+              '::partner_registry::payout_address at offset 17"), ' +
               "exec_state: Some(ExecutionState { stack_trace: [] }), location: Module(ModuleId { " +
-              "address: defc3f12b2d34e03f48b54cfa1d37e58064d3a71b9f546f07ed2a2e9571c879f, " +
+              "address: 08e775fdafef441551521237c279fda77b5010947c8c7b921f1fd0861ea2fe1b, " +
               'name: Identifier("partner_registry") }), indices: [], offsets: [(FunctionDefinitionIndex(2), 17)] }',
             error_code: "invalid_input",
             vm_error_code: null,
@@ -751,6 +957,7 @@ describe("findRedemptionRequest", () => {
           shares_escrowed: "1000000",
           usdc_estimate: "999000",
           claimable_at: "1784800000",
+          force_process_at: "1784886400",
           expires_at: "1785400000",
         },
       },
@@ -765,6 +972,7 @@ describe("findRedemptionRequest", () => {
       expiresAt: 1785400000n,
       requestAddress: normalizeMoveAddress(REQUEST),
       sharesEscrowed: 1000000n,
+      storedForceProcessAt: 1784886400n,
       usdcEstimate: 999000n,
       userAddress: normalizeMoveAddress(DEPOSITOR),
       vaultAddress: normalizeMoveAddress(FLOATING_VAULT),
@@ -786,6 +994,7 @@ describe("findRedemptionRequest", () => {
             shares_escrowed: "1000000",
             usdc_estimate: "999000",
             claimable_at: "1784800000",
+            force_process_at: "1784886400",
             expires_at: "1785400000",
             ...overrides,
           },

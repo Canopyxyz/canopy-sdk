@@ -197,6 +197,19 @@ on `canSubmit` — the three names differ because they answer different question
 `reasonId` is a `string`, not a union, because the on-chain reason enum is
 append-only.
 
+Three reads return values that no composite DTO in this SDK carries:
+
+- `getRequestForceProcessAt({ vaultAddress, requestAddress })` — the *effective*
+  force-processing deadline, which can be earlier than the request's stored snapshot.
+- `getActiveLockDuration(vaultAddress)` — the duration the running locked-profit
+  schedule is using. Equals `config.lockDuration` when no profit is locked, but keeps
+  its own snapshot while a schedule is active, so the two diverge after a config change.
+- `getEffectiveNav24hSharePriceDeviationBps(vaultAddress)` — the enforced NAV deviation
+  bound, i.e. `config.nav24hSharePriceDeviationBps` clamped to the current system
+  bounds. The config field is what was requested; this is what the guard applies. (The
+  same value also appears on-chain as `nav_24h_share_price_band.threshold_bps`, which
+  this SDK does not bind.)
+
 #### Queued redemptions
 
 `buildRequestRedemptionPayload` does not return the request address, so read it from
@@ -207,7 +220,14 @@ import { findRedemptionRequest } from "@canopyhub/canopy-sdk";
 
 const submitted = await sdk.signSubmitAndWaitForTransaction({
   signer: account,
-  payload: sdk.curator!.buildRequestRedemptionPayload({ vaultAddress, shares: 1_000_000n }),
+  payload: sdk.curator!.buildRequestRedemptionPayload({
+    vaultAddress,
+    shares: 1_000_000n,
+    // Persisted on the request, not just checked at submission: if the final payout
+    // comes out below this, funding is skipped, the request stays `Pending` and no
+    // liquidity is consumed. Omit it and you accept any payout.
+    minAssetsOut: 995_000n,
+  }),
 });
 
 const requested = findRedemptionRequest(submitted, { userAddress, vaultAddress });
@@ -217,8 +237,17 @@ const request = await sdk.curator!.getRedemptionRequest(requested!.requestAddres
 Pass `packageAddress` too when parsing a transaction that may include events from
 another `::vault::RedemptionRequestedEvent`.
 
-A queued redemption is not self-service: an allocator must fund the request, and
-`request.claimableAt` must pass, before `buildClaimRedemptionPayload` will succeed.
+A queued redemption is not self-service: the request must be funded and
+`request.claimableAt` must pass before `buildClaimRedemptionPayload` will succeed.
+Funding happens either when an allocator funds the request or through permissionless
+force-processing once its deadline is reached — so do not read `fundedAmount > 0` as
+evidence that an allocator acted.
+
+For that deadline, read `getRequestForceProcessAt({ vaultAddress, requestAddress })`.
+`request.storedForceProcessAt` is only the snapshot taken at submission; the contract
+enforces `min(claimableAt + live SLA, snapshot)`, so a later SLA tightening moves the
+real deadline earlier. The getter is authoritative for the deadline alone — status,
+expiry, available liquidity and `minAssetsOut` all still apply.
 
 `getUserRedemptionRequests` returns live requests **and** ones awaiting claim-back
 (`Cancelled` / `Denied` / `Expired` with escrow outstanding). The latter are

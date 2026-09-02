@@ -62,25 +62,25 @@ describe("CanopySdk", () => {
     expect(getContract("movement-testnet", "curator.vault")).toMatchObject({
       id: "curator.vault",
       chain: "movement-testnet",
-      address: "0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2",
+      address: "0x08e775fdafef441551521237c279fda77b5010947c8c7b921f1fd0861ea2fe1b",
       moduleName: "vault",
     });
     expect(requireContract("movement-testnet", "curator.router")).toMatchObject({
       id: "curator.router",
       chain: "movement-testnet",
-      address: "0x97b28d98b0e76f529a12d4d37671be3954aaf619afe600c0bee58349a8ce02d0",
+      address: "0x313050fa1c20243da4b6fbe94d8e1c59fbba012afdf9a783e3beda67a5552b97",
       moduleName: "router",
     });
     expect(requireContract("movement-testnet", "curator.genericAdapter")).toMatchObject({
       id: "curator.genericAdapter",
       chain: "movement-testnet",
-      address: "0x362f2f52db6906f1c38ee6c2058633987a400eba1cac6c29de48979faabc5078",
+      address: "0x893690b020cddc1be874efb2fc3fcb2209f6e863264d3885c742a58c7a3b12c7",
       moduleName: "generic_adapter",
     });
     expect(requireContract("movement-testnet", "curator.sanctionsOracle")).toMatchObject({
       id: "curator.sanctionsOracle",
       chain: "movement-testnet",
-      address: "0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2",
+      address: "0x08e775fdafef441551521237c279fda77b5010947c8c7b921f1fd0861ea2fe1b",
       moduleName: "sanctions_oracle",
     });
     expect(getContract("movement-mainnet", "curator.vault")).toBeNull();

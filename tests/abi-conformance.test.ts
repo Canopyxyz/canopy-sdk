@@ -35,7 +35,8 @@ type CuratorGenericAdapterFunction =
   | "allocate"
   | "create_adapter_entry"
   | "deallocate"
-  | "report_offchain_nav";
+  | "report_offchain_nav"
+  | "sweep_strategy_idle_surplus";
 
 type CuratorGenericAdapterViewFunction =
   | "underlying_metadata"
@@ -217,6 +218,9 @@ const CURATOR_VAULT_VIEWS = [
   "deposit_preview",
   "instant_redeem_preview",
   "queued_redemption_preview",
+  "request_force_process_at",
+  "active_lock_duration",
+  "effective_nav_24h_share_price_deviation_bps",
 ] as const satisfies readonly CuratorVaultViewFunction[];
 
 const CURATOR_QUEUE_VIEWS = [
@@ -235,6 +239,7 @@ const CURATOR_GENERIC_ADAPTER_FUNCTIONS = [
   "create_adapter_entry",
   "deallocate",
   "report_offchain_nav",
+  "sweep_strategy_idle_surplus",
 ] as const satisfies readonly CuratorGenericAdapterFunction[];
 
 const CURATOR_GENERIC_ADAPTER_VIEWS = [

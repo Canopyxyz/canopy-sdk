@@ -129,12 +129,12 @@ const CHAINS = {
 
 /**
  * Curator vault instances created by the testnet setup script, one per pricing policy.
- * Both branches matter: LockedIn fixes the payout at submission, Floating prices at claim.
+ * Both branches matter: LockedIn fixes the payout at submission, Floating prices at funding.
  */
 const CURATOR_VAULTS = {
   "movement-testnet": {
-    floating: "0x66e60c7e5c731b95952f3467274e667c831b78a0feee5cbc69331cbc89d650b4",
-    lockedIn: "0x10949a0558a95c22d8033e42b8b36047eb0c862e2c4cf06214d8882496e0501b",
+    floating: "0x3c7a6b46594b02139e6411a8dc2f83cb7b4552f6138f46a321fcba1500a0ef8e",
+    lockedIn: "0x268f2e57764590bfdace5c4653af7d1cb8832fc5ce663dd37747b7016b0dd4dd",
   },
 };
 
@@ -144,12 +144,34 @@ const CURATOR_VAULTS = {
  */
 const CURATOR_GENERIC_ADAPTERS = {
   "movement-testnet": {
-    floating: "0x5e1ed8cbcf8813a3f909996086c4310cbb7405e26b2494a3b04821c64ec901f4",
-    lockedIn: "0x5cea2cd41a57f0a606a10a6236194d637326867ea051736d0d4e4fe1a3cdb270",
+    floating: "0xb10ba2bc2a05e92e3df20bc9bf779db70c65ff14675fe5ac29ae9c3c2a73ad64",
+    lockedIn: "0x38a0872307285a5b069cecff9579f51ccd15dbb74ac9746365799787b2b0c7a8",
   },
 };
 
-const CURATOR_DEPOSITOR = "0x5bacc47db1706e1318b33d78c576397aa77124b282a505964c44f1fec6b93023";
+/**
+ * Depositor #1 from the contract team's testnet setup.
+ *
+ * WHAT THE DEPOSITOR-SCOPED CHECKS BELOW ACTUALLY PROVE
+ * ----------------------------------------------------
+ * Nothing about real position data, for as long as the vault has no strategy.
+ *
+ * Deliberately no snapshot of the setup state here: it is mutable and moves through
+ * guardian, router and strategy steps on its own schedule, so anything written down goes
+ * stale between one CI run and the next. Read it live instead — `has_strategy` plus the
+ * `pending_*` views — and treat `can_deposit: false` with `NoActiveStrategy` as the
+ * correct answer during setup, not a regression.
+ *
+ * While that holds, `getShareBalance`, `getUserVaultPosition`, `getOpenRequestCount` and
+ * `getUserRedemptionRequests` currently prove decode shape only, and an empty request
+ * list never reaches `queue::request_detail` at all. `tests/curator-client.test.ts`
+ * carries that decoding coverage instead, and must keep doing so even once this account
+ * is funded.
+ *
+ * Do NOT "fix" the previews by asserting `can_deposit === true`: false is the correct
+ * pre-activation answer, and the blocking-reason path it exercises is real coverage.
+ */
+const CURATOR_DEPOSITOR = "0xdc66c438a6579a36f533a6404954d4ec33e595bc8fc2b30f87ef6d792837149b";
 
 const results = { passed: [], failed: [], infra: [], skipped: [], xfail: [] };
 
@@ -336,11 +358,14 @@ async function checkCurator(chain, aptos, sdk) {
         partnerId: 1n,
       })
     );
+    // minAssetsOut present, not omitted: on the queued path it is persisted on the
+    // request and rechecked against the final payout at funding, so the encoding of a
+    // *present* Option is the case worth proving against a real node.
     await checkEntry(chain, `curator.buildInstantRedeemPayload[${policy}]`, aptos, () =>
-      curator.buildInstantRedeemPayload({ vaultAddress, shares: 1_000n })
+      curator.buildInstantRedeemPayload({ vaultAddress, shares: 1_000n, minAssetsOut: 1n })
     );
     await checkEntry(chain, `curator.buildRequestRedemptionPayload[${policy}]`, aptos, () =>
-      curator.buildRequestRedemptionPayload({ vaultAddress, shares: 1_000n })
+      curator.buildRequestRedemptionPayload({ vaultAddress, shares: 1_000n, minAssetsOut: 1n })
     );
   }
 
@@ -397,9 +422,70 @@ async function checkCurator(chain, aptos, sdk) {
   await checkView(chain, "curator.getVaultCount", () => curator.getVaultCount());
   await checkView(chain, "curator.getVault", () => curator.getVault(vaultAddress));
   await checkView(chain, "curator.getVaultConfig", () => curator.getVaultConfig(vaultAddress));
-  await checkView(chain, "curator.getVaultAccounting", () =>
-    curator.getVaultAccounting(vaultAddress)
-  );
+  await checkView(chain, "curator.getVaultAccounting", async () => {
+    const accounting = await curator.getVaultAccounting(vaultAddress);
+
+    // Assert, don't just resolve. `checkView` passes on any non-throwing call, so a
+    // decoder that silently dropped these three would still go green — which is exactly
+    // how the previous redeploy's field changes could have slipped through.
+    //
+    // Defined, not non-zero: these are legitimately 0 until the vault holds anything.
+    requireBigints("vault_accounting", {
+      equityTotalAssets: accounting.equityTotalAssets,
+      equityShareSupply: accounting.equityShareSupply,
+      fundedEscrowedShares: accounting.fundedEscrowedShares,
+    });
+  });
+
+  // The LockedIn vault is not redundant with the Floating one: it is the only fixture
+  // carrying `idle_limits: None`, so Floating-only coverage cannot show that the absent
+  // Option decodes to null rather than a zeroed pair.
+  const lockedInVaultAddress = vaults.lockedIn;
+
+  if (lockedInVaultAddress) {
+    await checkView(chain, "curator.getVaultConfig[lockedIn]", async () => {
+      const config = await curator.getVaultConfig(lockedInVaultAddress);
+
+      if (config.idleLimits !== null) {
+        throw new Error(
+          `expected the LockedIn fixture to carry no idle limits; got ${JSON.stringify(
+            config.idleLimits,
+            (_key, value) => (typeof value === "bigint" ? value.toString() : value)
+          )}`
+        );
+      }
+    });
+    await checkView(chain, "curator.getVaultAccounting[lockedIn]", async () => {
+      const accounting = await curator.getVaultAccounting(lockedInVaultAddress);
+
+      requireBigints("vault_accounting[lockedIn]", {
+        equityTotalAssets: accounting.equityTotalAssets,
+        equityShareSupply: accounting.equityShareSupply,
+        fundedEscrowedShares: accounting.fundedEscrowedShares,
+      });
+    });
+  } else {
+    results.failed.push({
+      name: `${chain} curator`,
+      stage: "coverage",
+      message: `CURATOR_VAULTS.${chain} has no lockedIn vault; idle_limits: None has no live coverage without one`,
+    });
+  }
+
+  // Scalars no composite DTO in this SDK carries. (The effective NAV bound is also
+  // reachable on-chain via nav_24h_share_price_band.threshold_bps, which the SDK does not
+  // bind.) Floating only: pricing policy adds no branch to either.
+  await checkView(chain, "curator.getActiveLockDuration", async () => {
+    requireBigints("active_lock_duration", {
+      activeLockDuration: await curator.getActiveLockDuration(vaultAddress),
+    });
+  });
+  await checkView(chain, "curator.getEffectiveNav24hSharePriceDeviationBps", async () => {
+    requireBigints("effective_nav_24h_share_price_deviation_bps", {
+      effectiveNav24hSharePriceDeviationBps:
+        await curator.getEffectiveNav24hSharePriceDeviationBps(vaultAddress),
+    });
+  });
   await checkView(chain, "curator.getLiquidityBreakdown", () =>
     curator.getLiquidityBreakdown(vaultAddress)
   );
@@ -413,11 +499,32 @@ async function checkCurator(chain, aptos, sdk) {
     curator.previewDeposit({ vaultAddress, depositor: CURATOR_DEPOSITOR, amount: 5_000_000n })
   );
   await checkView(chain, "curator.previewInstantRedeem", () =>
-    curator.previewInstantRedeem({ vaultAddress, user: CURATOR_DEPOSITOR, shares: 1_000n })
+    curator.previewInstantRedeem({
+      vaultAddress,
+      user: CURATOR_DEPOSITOR,
+      shares: 1_000n,
+      minAssetsOut: 1n,
+    })
   );
-  await checkView(chain, "curator.previewQueuedRedemption", () =>
-    curator.previewQueuedRedemption({ vaultAddress, user: CURATOR_DEPOSITOR, shares: 1_000n })
-  );
+  await checkView(chain, "curator.previewQueuedRedemption", async () => {
+    const preview = await curator.previewQueuedRedemption({
+      vaultAddress,
+      user: CURATOR_DEPOSITOR,
+      shares: 1_000n,
+      minAssetsOut: 1n,
+    });
+
+    // Non-zero, unlike the accounting fields: the contract derives this deadline from
+    // the clock and the SLA, so it carries a real timestamp even on an empty vault.
+    // Settling for "defined" here would waste signal that is genuinely available.
+    if (typeof preview.forceProcessAt !== "bigint" || preview.forceProcessAt === 0n) {
+      throw new Error(
+        `queued_redemption_preview.force_process_at should be a non-zero bigint; got ${String(
+          preview.forceProcessAt
+        )}`
+      );
+    }
+  });
   await checkView(chain, "curator.getQueueAddress", () => curator.getQueueAddress(vaultAddress));
   await checkView(chain, "curator.getOpenRequestCount", () =>
     curator.getOpenRequestCount({ ownerAddress: CURATOR_DEPOSITOR, vaultAddress })
@@ -429,6 +536,20 @@ async function checkCurator(chain, aptos, sdk) {
   await checkView(chain, "curator.getPartnerPayoutAddress", () =>
     curator.getPartnerPayoutAddress(1n)
   );
+}
+
+/**
+ * Fails when a decoded field is missing or not a bigint.
+ *
+ * `checkView` only requires the call not to throw, so a field the decoder forgot reads
+ * as `undefined` and passes silently. Named per field so the failure says which one.
+ */
+function requireBigints(label, fields) {
+  for (const [name, value] of Object.entries(fields)) {
+    if (typeof value !== "bigint") {
+      throw new Error(`${label}.${name} should be a bigint; got ${String(value)}`);
+    }
+  }
 }
 
 async function checkCuratorGenericAdapter(chain, aptos, policy, vaultAddress, adapterAddress) {
@@ -448,6 +569,7 @@ async function checkCuratorGenericAdapter(chain, aptos, policy, vaultAddress, ad
     ["create_adapter_entry", [vaultAddress]],
     ["deallocate", [adapterAddress, "1"]],
     ["report_offchain_nav", [adapterAddress, "1"]],
+    ["sweep_strategy_idle_surplus", [adapterAddress]],
   ]) {
     await checkEntry(chain, `curator.genericAdapter.${functionName}[${policy}]`, aptos, () =>
       entryFunctionPayload({
