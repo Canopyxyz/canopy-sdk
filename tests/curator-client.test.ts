@@ -81,19 +81,14 @@ const VAULT_VELOCITY_CHECK = {
  * A synthetic `deposit_preview` — the wire *shape* is real (Move enums as
  * `{ __variant__ }`, `Option` as `{ vec: [...] }`), the values are not.
  *
- * It models a populated vault. Live previews already cover more than they might appear to
- * — multiple blocking reasons at once, and genuine velocity arithmetic, since the preview
- * projects the requested amount into `wallet_usage_after` and the headroom fields.
+ * It models a populated vault with every optional field present and a specific pair of
+ * blocking reasons, including `IdleBreachActive`.
  *
- * What only this fixture reaches:
- *
- *   - `IdleBreachActive`, which no live state produces;
- *   - non-zero *pre-existing* usage, so the projection adds to something rather than
- *     starting from zero;
- *   - the velocity-cap branches that are unconfigured live: every `aggregate_*_headroom`
- *     on both checks, and the per-vault `wallet_*_headroom` set. Those read `None` on
- *     chain, so only this fixture decodes a present value for them. (The deposit and
- *     adapter cap headrooms, and the mandatory wallet headrooms, *are* populated live.)
+ * Its job is coverage that does not depend on what movement-testnet happens to hold. The
+ * live previews in `scripts/ci/check-live-payloads.mjs` are a genuine second signal, but
+ * which branches they reach changes as the deployment is configured and used — caps get
+ * set, usage accrues, reasons come and go — so which of these fields a live run decodes is
+ * not something this comment can usefully pin down. Assume nothing here is redundant.
  *
  * `raw_abort.package_address` is the one genuinely wire-shaped field: unpadded, as the
  * node serializes it.
