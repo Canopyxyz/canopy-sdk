@@ -163,15 +163,26 @@ const CURATOR_GENERIC_ADAPTERS = {
  * correct answer during setup, not a regression.
  *
  * While that holds, `getShareBalance`, `getUserVaultPosition`, `getOpenRequestCount` and
- * `getUserRedemptionRequests` currently prove decode shape only, and an empty request
- * list never reaches `queue::request_detail` at all. `tests/curator-client.test.ts`
- * carries that decoding coverage instead, and must keep doing so even once this account
- * is funded.
+ * `getUserRedemptionRequests` prove decode shape only for this account. `request_detail`
+ * is covered separately, through CURATOR_REQUEST_OWNER below, and only while that owner
+ * has open requests — so `tests/curator-client.test.ts` keeps its own fixtures for it and
+ * must go on doing so.
  *
  * Do NOT "fix" the previews by asserting `can_deposit === true`: false is the correct
  * pre-activation answer, and the blocking-reason path it exercises is real coverage.
  */
 const CURATOR_DEPOSITOR = "0xdc66c438a6579a36f533a6404954d4ec33e595bc8fc2b30f87ef6d792837149b";
+
+/**
+ * The account the contract team's setup scripts give queued redemptions to — a different
+ * one from CURATOR_DEPOSITOR, which holds shares but submits nothing.
+ *
+ * Request *addresses* are deliberately not pinned here. They are consumed by the setup
+ * flow (expiry and SLA requests are meant to age out), so any address written down stops
+ * resolving. The checks below discover them through `getUserRedemptionRequests` instead,
+ * and skip cleanly when this owner has none.
+ */
+const CURATOR_REQUEST_OWNER = "0x3e7257d1713810981bb2a0fe7848880963c067ab7907664610885de344c4f0e7";
 
 const results = { passed: [], failed: [], infra: [], skipped: [], xfail: [] };
 
@@ -426,15 +437,27 @@ async function checkCurator(chain, aptos, sdk) {
     const accounting = await curator.getVaultAccounting(vaultAddress);
 
     // Assert, don't just resolve. `checkView` passes on any non-throwing call, so a
-    // decoder that silently dropped these three would still go green — which is exactly
-    // how the previous redeploy's field changes could have slipped through.
-    //
-    // Defined, not non-zero: these are legitimately 0 until the vault holds anything.
+    // decoder that silently dropped these would still go green — which is exactly how the
+    // previous redeploy's field changes could have slipped through.
     requireBigints("vault_accounting", {
       equityTotalAssets: accounting.equityTotalAssets,
       equityShareSupply: accounting.equityShareSupply,
       fundedEscrowedShares: accounting.fundedEscrowedShares,
     });
+
+    // Identities rather than magnitudes. These hold in every vault state, including an
+    // empty one, so the check never goes red because someone moved testnet funds — and it
+    // becomes *more* discriminating as the deployment fills out. While reservedForQueue and
+    // fundedEscrowedShares are both 0 the equity figures equal their gross counterparts, so
+    // a swapped mapping is invisible here; it starts failing the moment a funded request is
+    // outstanding. `tests/curator-client.test.ts` covers that discrimination meanwhile.
+    requireIdentities("vault_accounting", [
+      ["equityTotalAssets == totalAssets - reservedForQueue",
+        accounting.equityTotalAssets, accounting.totalAssets - accounting.reservedForQueue],
+      ["equityShareSupply == shareTotalSupply - fundedEscrowedShares",
+        accounting.equityShareSupply,
+        accounting.shareTotalSupply - accounting.fundedEscrowedShares],
+    ]);
   });
 
   // The LockedIn vault is not redundant with the Floating one: it is the only fixture
@@ -489,23 +512,39 @@ async function checkCurator(chain, aptos, sdk) {
   await checkView(chain, "curator.getLiquidityBreakdown", () =>
     curator.getLiquidityBreakdown(vaultAddress)
   );
-  await checkView(chain, "curator.getUserVaultPosition", () =>
-    curator.getUserVaultPosition({ userAddress: CURATOR_DEPOSITOR, vaultAddress })
-  );
+  await checkView(chain, "curator.getUserVaultPosition", async () => {
+    const position = await curator.getUserVaultPosition({
+      userAddress: CURATOR_DEPOSITOR,
+      vaultAddress,
+    });
+
+    // Catches shareValue and sharePriceE18 being swapped or mis-scaled, at any balance.
+    requireIdentities("user_position_view", [
+      ["shareValue == shareBalance * sharePriceE18 / 1e18",
+        position.shareValue,
+        (position.shareBalance * position.sharePriceE18) / 10n ** 18n],
+    ]);
+  });
   await checkView(chain, "curator.getShareBalance", () =>
     curator.getShareBalance({ userAddress: CURATOR_DEPOSITOR, vaultAddress })
   );
   await checkView(chain, "curator.previewDeposit", () =>
     curator.previewDeposit({ vaultAddress, depositor: CURATOR_DEPOSITOR, amount: 5_000_000n })
   );
-  await checkView(chain, "curator.previewInstantRedeem", () =>
-    curator.previewInstantRedeem({
+  await checkView(chain, "curator.previewInstantRedeem", async () => {
+    const shares = 1_000n;
+    const preview = await curator.previewInstantRedeem({
       vaultAddress,
       user: CURATOR_DEPOSITOR,
-      shares: 1_000n,
+      shares,
       minAssetsOut: 1n,
-    })
-  );
+    });
+
+    requireIdentities("instant_redeem_preview", [
+      ["feeShares == shares * feeBps / 10000",
+        preview.feeShares, (shares * preview.feeBps) / 10_000n],
+    ]);
+  });
   await checkView(chain, "curator.previewQueuedRedemption", async () => {
     const preview = await curator.previewQueuedRedemption({
       vaultAddress,
@@ -532,10 +571,110 @@ async function checkCurator(chain, aptos, sdk) {
   await checkView(chain, "curator.getUserRedemptionRequests", () =>
     curator.getUserRedemptionRequests({ ownerAddress: CURATOR_DEPOSITOR, vaultAddress })
   );
+
+  // Request-scoped reads, against the owner the setup scripts actually give requests to.
+  //
+  // `queue::request_detail` is the one decoder with no other live coverage: an owner with
+  // no requests never reaches it, and CURATOR_DEPOSITOR holds shares but submits nothing.
+  // Addresses are discovered rather than pinned, because the setup flow deliberately lets
+  // its expiry and SLA requests age out.
+  const ownedRequests = await (async () => {
+    try {
+      return await curator.getUserRedemptionRequests({
+        ownerAddress: CURATOR_REQUEST_OWNER,
+        vaultAddress,
+      });
+    } catch (error) {
+      results.failed.push({
+        name: `${chain} curator.getUserRedemptionRequests[requestOwner]`,
+        stage: "view",
+        message: error instanceof Error ? error.message : String(error),
+      });
+      return undefined;
+    }
+  })();
+
+  if (ownedRequests === undefined) {
+    // Already recorded as a failure above.
+  } else if (ownedRequests.length === 0) {
+    results.skipped.push(
+      `${chain} curator request-scoped reads: CURATOR_REQUEST_OWNER currently has no open ` +
+        `requests, so queue::request_detail has no live subject`
+    );
+  } else {
+    await checkView(chain, "curator.getUserRedemptionRequests[requestOwner]", async () => {
+      for (const request of ownedRequests) {
+        requireBigints(`request_detail[${request.requestAddress}]`, {
+          escrowedShares: request.escrowedShares,
+          storedForceProcessAt: request.storedForceProcessAt,
+          expiresAt: request.expiresAt,
+          claimableAt: request.claimableAt,
+          fundedAmount: request.fundedAmount,
+          claimedAmount: request.claimedAmount,
+        });
+
+        if (typeof request.status !== "string" || request.status.length === 0) {
+          throw new Error(`request_detail[${request.requestAddress}]: status did not decode`);
+        }
+
+        // Ordering is not guaranteed, so assert the relation rather than a value.
+        requireIdentities(`request_detail[${request.requestAddress}]`, [
+          ["storedForceProcessAt <= expiresAt",
+            request.storedForceProcessAt <= request.expiresAt, true],
+        ]);
+      }
+    });
+
+    const [sample] = ownedRequests;
+
+    await checkView(chain, "curator.getRedemptionRequest", async () => {
+      const request = await curator.getRedemptionRequest(sample.requestAddress);
+
+      if (request.owner !== normalizeAddress(CURATOR_REQUEST_OWNER)) {
+        throw new Error(
+          `request_detail owner is ${request.owner}; expected ${CURATOR_REQUEST_OWNER}`
+        );
+      }
+    });
+
+    await checkView(chain, "curator.getRequestForceProcessAt", async () => {
+      const effective = await curator.getRequestForceProcessAt({
+        vaultAddress,
+        requestAddress: sample.requestAddress,
+      });
+
+      requireBigints("request_force_process_at", { effective });
+
+      // The contract returns min(claimableAt + live SLA, stored snapshot), so the effective
+      // deadline can be earlier than the stored one but never later. Equality is the normal
+      // case while the SLA is untouched; this catches the getter reading the wrong view.
+      if (effective > sample.storedForceProcessAt) {
+        throw new Error(
+          `effective force-process ${effective} exceeds the stored snapshot ` +
+            `${sample.storedForceProcessAt}; it is min(claimableAt + SLA, stored)`
+        );
+      }
+    });
+  }
   await checkView(chain, "curator.isPartnerRegistered", () => curator.isPartnerRegistered(1n));
   await checkView(chain, "curator.getPartnerPayoutAddress", () =>
     curator.getPartnerPayoutAddress(1n)
   );
+}
+
+/**
+ * Fails when a stated arithmetic identity does not hold.
+ *
+ * Preferred over magnitude assertions for live checks: an identity holds in every vault
+ * state, so it cannot go red because someone moved testnet funds, while still catching a
+ * decoder that mapped two fields to the wrong places.
+ */
+function requireIdentities(label, checks) {
+  for (const [description, actual, expected] of checks) {
+    if (actual !== expected) {
+      throw new Error(`${label}: ${description} — got ${actual}, expected ${expected}`);
+    }
+  }
 }
 
 /**
