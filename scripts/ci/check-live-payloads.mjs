@@ -518,12 +518,21 @@ async function checkCurator(chain, aptos, sdk) {
       vaultAddress,
     });
 
-    // Catches shareValue and sharePriceE18 being swapped or mis-scaled, at any balance.
-    requireIdentities("user_position_view", [
-      ["shareValue == shareBalance * sharePriceE18 / 1e18",
-        position.shareValue,
-        (position.shareBalance * position.sharePriceE18) / 10n ** 18n],
-    ]);
+    // The view computes shareValue directly, but sharePriceE18 is floored before this
+    // reconstruction, so the two routes can differ by at most ceil(shareBalance / 1e18).
+    // The difference is one-sided: the reconstructed value cannot exceed shareValue.
+    const scale = 10n ** 18n;
+    const reconstructedShareValue = (position.shareBalance * position.sharePriceE18) / scale;
+    const roundingDelta = position.shareValue - reconstructedShareValue;
+    const maxRoundingDelta = (position.shareBalance + scale - 1n) / scale;
+
+    if (roundingDelta < 0n || roundingDelta > maxRoundingDelta) {
+      throw new Error(
+        "user_position_view: shareValue does not match shareBalance * sharePriceE18 / 1e18 " +
+          `within flooring tolerance — got ${position.shareValue}, reconstructed ` +
+          `${reconstructedShareValue}, maximum delta ${maxRoundingDelta}`
+      );
+    }
   });
   await checkView(chain, "curator.getShareBalance", () =>
     curator.getShareBalance({ userAddress: CURATOR_DEPOSITOR, vaultAddress })
@@ -540,10 +549,15 @@ async function checkCurator(chain, aptos, sdk) {
       minAssetsOut: 1n,
     });
 
-    requireIdentities("instant_redeem_preview", [
-      ["feeShares == shares * feeBps / 10000",
-        preview.feeShares, (shares * preview.feeBps) / 10_000n],
-    ]);
+    const expectedFeeShares = (shares * preview.feeBps) / 10_000n;
+
+    // The contract deliberately waives the fee when its recipient cannot receive shares.
+    if (preview.feeShares !== expectedFeeShares && preview.feeShares !== 0n) {
+      throw new Error(
+        "instant_redeem_preview: feeShares should equal shares * feeBps / 10000 or be " +
+          `waived to 0 — got ${preview.feeShares}, expected ${expectedFeeShares}`
+      );
+    }
   });
   await checkView(chain, "curator.previewQueuedRedemption", async () => {
     const preview = await curator.previewQueuedRedemption({
@@ -578,32 +592,16 @@ async function checkCurator(chain, aptos, sdk) {
   // no requests never reaches it, and CURATOR_DEPOSITOR holds shares but submits nothing.
   // Addresses are discovered rather than pinned, because the setup flow deliberately lets
   // its expiry and SLA requests age out.
-  const ownedRequests = await (async () => {
-    try {
-      return await curator.getUserRedemptionRequests({
+  const owned = await checkView(
+    chain,
+    "curator.getUserRedemptionRequests[requestOwner]",
+    async () => {
+      const requests = await curator.getUserRedemptionRequests({
         ownerAddress: CURATOR_REQUEST_OWNER,
         vaultAddress,
       });
-    } catch (error) {
-      results.failed.push({
-        name: `${chain} curator.getUserRedemptionRequests[requestOwner]`,
-        stage: "view",
-        message: error instanceof Error ? error.message : String(error),
-      });
-      return undefined;
-    }
-  })();
 
-  if (ownedRequests === undefined) {
-    // Already recorded as a failure above.
-  } else if (ownedRequests.length === 0) {
-    results.skipped.push(
-      `${chain} curator request-scoped reads: CURATOR_REQUEST_OWNER currently has no open ` +
-        `requests, so queue::request_detail has no live subject`
-    );
-  } else {
-    await checkView(chain, "curator.getUserRedemptionRequests[requestOwner]", async () => {
-      for (const request of ownedRequests) {
+      for (const request of requests) {
         requireBigints(`request_detail[${request.requestAddress}]`, {
           escrowedShares: request.escrowedShares,
           storedForceProcessAt: request.storedForceProcessAt,
@@ -623,8 +621,20 @@ async function checkCurator(chain, aptos, sdk) {
             request.storedForceProcessAt <= request.expiresAt, true],
         ]);
       }
-    });
 
+      return requests;
+    }
+  );
+  const ownedRequests = owned.ok ? owned.value : undefined;
+
+  if (ownedRequests === undefined) {
+    // Already recorded as a failed or infra check above.
+  } else if (ownedRequests.length === 0) {
+    results.skipped.push(
+      `${chain} curator request-scoped reads: CURATOR_REQUEST_OWNER currently has no open ` +
+        `requests, so queue::request_detail has no live subject`
+    );
+  } else {
     const [sample] = ownedRequests;
 
     await checkView(chain, "curator.getRedemptionRequest", async () => {

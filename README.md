@@ -172,6 +172,7 @@ Reads:
 - `getVault(vaultAddress)`, `getVaultConfig(...)`, `getVaultAccounting(...)`, `getLiquidityBreakdown(...)`
 - `getUserVaultPosition({ userAddress, vaultAddress })`, `getShareBalance({ userAddress, vaultAddress })`
 - `getRedemptionRequest(requestAddress)`, `getUserRedemptionRequests({ vaultAddress, ownerAddress })`, `getOpenRequestCount({ vaultAddress, ownerAddress })`
+- `getRequestForceProcessAt({ vaultAddress, requestAddress })`, `getActiveLockDuration(vaultAddress)`, `getEffectiveNav24hSharePriceDeviationBps(vaultAddress)`
 - `isPartnerRegistered(partnerId)`, `getPartnerPayoutAddress(partnerId)`
 
 #### Previews are the validation API
@@ -236,6 +237,10 @@ const request = await sdk.curator!.getRedemptionRequest(requested!.requestAddres
 
 Pass `packageAddress` too when parsing a transaction that may include events from
 another `::vault::RedemptionRequestedEvent`.
+
+If a funding or force-processing transaction leaves a request pending because its
+minimum was missed, `findRedemptionFundingMinimumNotMetEvent(...)` returns the
+calculated payout, required minimum, request, vault, actor, and attempt time.
 
 A queued redemption is not self-service: the request must be funded and
 `request.claimableAt` must pass before `buildClaimRedemptionPayload` will succeed.

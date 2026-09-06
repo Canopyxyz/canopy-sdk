@@ -1,7 +1,12 @@
 import { jest } from "@jest/globals";
 import { CanopyError, normalizeMoveAddress } from "../packages/core/src";
 import { movementTestnetAbis } from "../packages/bindings/src";
-import { CanopySdk, findRedemptionRequest } from "../packages/sdk/src";
+import {
+  CanopySdk,
+  findRedemptionFundingMinimumNotMetEvent,
+  findRedemptionFundingMinimumNotMetEvents,
+  findRedemptionRequest,
+} from "../packages/sdk/src";
 import { requireCuratorFeatureContext } from "../packages/sdk/src/context";
 
 // Two forms of the same package, and they are not interchangeable.
@@ -1060,5 +1065,94 @@ describe("findRedemptionRequest", () => {
     ).toBeUndefined();
     expect(findRedemptionRequest({ events: [] })).toBeUndefined();
     expect(findRedemptionRequest({})).toBeUndefined();
+  });
+});
+
+describe("findRedemptionFundingMinimumNotMetEvent", () => {
+  const minimumNotMetEvent = {
+    type: `${VAULT_PACKAGE}::vault::RedemptionFundingMinimumNotMetEvent`,
+    data: {
+      attempted_at: "1784886400",
+      attempted_by: DEPOSITOR,
+      calculated_assets_out: "990000",
+      min_assets_out: "1000000",
+      request_object_address: REQUEST,
+      vault: FLOATING_VAULT,
+    },
+  };
+
+  it("explains why a redemption request remained pending", () => {
+    expect(
+      findRedemptionFundingMinimumNotMetEvent({
+        events: [{ type: "0x1::fungible_asset::Withdraw", data: {} }, minimumNotMetEvent],
+      })
+    ).toEqual({
+      attemptedAt: 1784886400n,
+      attemptedBy: normalizeMoveAddress(DEPOSITOR),
+      calculatedAssetsOut: 990000n,
+      minAssetsOut: 1000000n,
+      requestAddress: normalizeMoveAddress(REQUEST),
+      vaultAddress: normalizeMoveAddress(FLOATING_VAULT),
+    });
+  });
+
+  it("returns every matching event in emission order and supports filters", () => {
+    const otherRequest = "0x123";
+    const second = {
+      ...minimumNotMetEvent,
+      data: { ...minimumNotMetEvent.data, request_object_address: otherRequest },
+    };
+    const txResult = { events: [minimumNotMetEvent, second] };
+
+    expect(findRedemptionFundingMinimumNotMetEvents(txResult)).toHaveLength(2);
+    expect(
+      findRedemptionFundingMinimumNotMetEvents(txResult, { requestAddress: otherRequest })
+    ).toEqual([
+      expect.objectContaining({ requestAddress: normalizeMoveAddress(otherRequest) }),
+    ]);
+    expect(
+      findRedemptionFundingMinimumNotMetEvents(txResult, { vaultAddress: QUEUE })
+    ).toEqual([]);
+    expect(
+      findRedemptionFundingMinimumNotMetEvents(txResult, { packageAddress: ROUTER_PACKAGE })
+    ).toEqual([]);
+  });
+
+  it.each([
+    ["attempted_at", undefined],
+    ["calculated_assets_out", ""],
+    ["min_assets_out", "not-a-number"],
+  ])("throws when numeric field %s is malformed", (field, value) => {
+    expect(() =>
+      findRedemptionFundingMinimumNotMetEvent({
+        events: [
+          {
+            ...minimumNotMetEvent,
+            data: { ...minimumNotMetEvent.data, [field]: value },
+          },
+        ],
+      })
+    ).toThrow(new RegExp(field));
+  });
+
+  it.each(["attempted_by", "request_object_address", "vault"])(
+    "throws when address field %s is missing",
+    (field) => {
+      expect(() =>
+        findRedemptionFundingMinimumNotMetEvent({
+          events: [
+            {
+              ...minimumNotMetEvent,
+              data: { ...minimumNotMetEvent.data, [field]: undefined },
+            },
+          ],
+        })
+      ).toThrow(new RegExp(field));
+    }
+  );
+
+  it("returns undefined when the transaction has no matching event", () => {
+    expect(findRedemptionFundingMinimumNotMetEvent({ events: [] })).toBeUndefined();
+    expect(findRedemptionFundingMinimumNotMetEvent({})).toBeUndefined();
   });
 });
