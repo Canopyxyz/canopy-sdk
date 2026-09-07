@@ -551,11 +551,14 @@ async function checkCurator(chain, aptos, sdk) {
 
     const expectedFeeShares = (shares * preview.feeBps) / 10_000n;
 
-    // The contract deliberately waives the fee when its recipient cannot receive shares.
-    if (preview.feeShares !== expectedFeeShares && preview.feeShares !== 0n) {
+    if (preview.feeShares !== expectedFeeShares) {
+      const waiverHint = preview.feeShares === 0n
+        ? "; a fee-recipient eligibility waiver may explain the zero value"
+        : "";
+
       throw new Error(
-        "instant_redeem_preview: feeShares should equal shares * feeBps / 10000 or be " +
-          `waived to 0 — got ${preview.feeShares}, expected ${expectedFeeShares}`
+        "instant_redeem_preview: feeShares should equal shares * feeBps / 10000 — " +
+          `got ${preview.feeShares}, expected ${expectedFeeShares}${waiverHint}`
       );
     }
   });
