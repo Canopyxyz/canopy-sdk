@@ -53,18 +53,18 @@ describe("ABI bindings", () => {
     expect(movementTestnet.curatorPartnerRegistry.name).toBe("partner_registry");
     expect(movementTestnet.curatorSanctionsOracle.name).toBe("sanctions_oracle");
     expect(movementTestnet.curatorVault.address).toBe(
-      "0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2"
+      "0x8e775fdafef441551521237c279fda77b5010947c8c7b921f1fd0861ea2fe1b"
     );
     expect(movementTestnet.curatorQueue.address).toBe(
       movementTestnet.curatorVault.address
     );
     expect(movementTestnet.curatorRouter.name).toBe("router");
     expect(movementTestnet.curatorRouter.address).toBe(
-      "0x97b28d98b0e76f529a12d4d37671be3954aaf619afe600c0bee58349a8ce02d0"
+      "0x313050fa1c20243da4b6fbe94d8e1c59fbba012afdf9a783e3beda67a5552b97"
     );
     expect(movementTestnet.curatorGenericAdapter.name).toBe("generic_adapter");
     expect(movementTestnet.curatorGenericAdapter.address).toBe(
-      "0x362f2f52db6906f1c38ee6c2058633987a400eba1cac6c29de48979faabc5078"
+      "0x893690b020cddc1be874efb2fc3fcb2209f6e863264d3885c742a58c7a3b12c7"
     );
     expect(movementTestnet.curatorSanctionsOracle.address).toBe(
       movementTestnet.curatorVault.address

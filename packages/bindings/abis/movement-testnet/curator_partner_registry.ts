@@ -1,5 +1,5 @@
 export const ABI = {
-  "address": "0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2",
+  "address": "0x8e775fdafef441551521237c279fda77b5010947c8c7b921f1fd0861ea2fe1b",
   "name": "partner_registry",
   "friends": [],
   "exposed_functions": [

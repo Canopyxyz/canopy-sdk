@@ -1,5 +1,5 @@
 export const ABI = {
-  "address": "0x362f2f52db6906f1c38ee6c2058633987a400eba1cac6c29de48979faabc5078",
+  "address": "0x893690b020cddc1be874efb2fc3fcb2209f6e863264d3885c742a58c7a3b12c7",
   "name": "generic_adapter",
   "friends": [],
   "exposed_functions": [
@@ -11,10 +11,16 @@ export const ABI = {
       "generic_type_params": [],
       "params": [
         "&signer",
+        "&0x8e775fdafef441551521237c279fda77b5010947c8c7b921f1fd0861ea2fe1b::vault::RouterRef",
         "address",
-        "u64"
+        "address",
+        "0x1::fungible_asset::FungibleAsset",
+        "0x1::option::Option<u64>"
       ],
-      "return": []
+      "return": [
+        "u64",
+        "u64"
+      ]
     },
     {
       "name": "underlying_metadata",
@@ -50,10 +56,10 @@ export const ABI = {
       "generic_type_params": [],
       "params": [
         "&signer",
-        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::vault::Vault>"
+        "0x1::object::Object<0x8e775fdafef441551521237c279fda77b5010947c8c7b921f1fd0861ea2fe1b::vault::Vault>"
       ],
       "return": [
-        "0x1::object::Object<0x362f2f52db6906f1c38ee6c2058633987a400eba1cac6c29de48979faabc5078::generic_adapter::GenericAdapter>"
+        "0x1::object::Object<0x893690b020cddc1be874efb2fc3fcb2209f6e863264d3885c742a58c7a3b12c7::generic_adapter::GenericAdapter>"
       ]
     },
     {
@@ -64,7 +70,7 @@ export const ABI = {
       "generic_type_params": [],
       "params": [
         "&signer",
-        "0x1::object::Object<0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::vault::Vault>"
+        "0x1::object::Object<0x8e775fdafef441551521237c279fda77b5010947c8c7b921f1fd0861ea2fe1b::vault::Vault>"
       ],
       "return": []
     },
@@ -89,8 +95,7 @@ export const ABI = {
       "generic_type_params": [],
       "params": [
         "&signer",
-        "&0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::vault::RouterRef",
-        "&signer",
+        "&0x8e775fdafef441551521237c279fda77b5010947c8c7b921f1fd0861ea2fe1b::vault::RouterRef",
         "address",
         "u64"
       ],
@@ -117,7 +122,7 @@ export const ABI = {
       "generic_type_params": [],
       "params": [
         "&signer",
-        "&0x8ff93d763976b0b71ee99e3601ada04800dd372806d6d7248086266613167bd2::vault::RouterRef",
+        "&0x8e775fdafef441551521237c279fda77b5010947c8c7b921f1fd0861ea2fe1b::vault::RouterRef",
         "&signer",
         "address",
         "u64"
@@ -136,6 +141,18 @@ export const ABI = {
         "&signer",
         "address",
         "u64"
+      ],
+      "return": []
+    },
+    {
+      "name": "sweep_strategy_idle_surplus",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "address"
       ],
       "return": []
     },
@@ -329,6 +346,38 @@ export const ABI = {
         },
         {
           "name": "vault",
+          "type": "address"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "StrategyIdleSurplusSweptEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "strategy",
+          "type": "address"
+        },
+        {
+          "name": "vault",
+          "type": "address"
+        },
+        {
+          "name": "recovery_address",
+          "type": "address"
+        },
+        {
+          "name": "sweeper",
           "type": "address"
         },
         {

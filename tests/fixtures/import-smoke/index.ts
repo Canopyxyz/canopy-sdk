@@ -1,4 +1,5 @@
 import {
+  findRedemptionFundingMinimumNotMetEvent,
   findRedemptionRequest,
   getCanopyStrategyContract,
   requireContract,
@@ -31,6 +32,7 @@ const curatorOracleAbi: MoveModuleAbi = requireAbi(
 const noneOption = moveOptionArgument(undefined);
 const someOption = moveOptionArgument(10n);
 const requestedEvent = findRedemptionRequest({ events: [] });
+const minimumNotMetEvent = findRedemptionFundingMinimumNotMetEvent({ events: [] });
 
 declare const curatorVault: CuratorVault;
 declare const curatorPreview: CuratorDepositPreview;
@@ -46,6 +48,7 @@ void curatorRequest;
 void curatorVault;
 void deploymentAddress;
 void noneOption;
+void minimumNotMetEvent;
 void requestedEvent;
 void resolvedContract;
 void someOption;
