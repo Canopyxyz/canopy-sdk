@@ -1,5 +1,5 @@
 export const ABI = {
-  "address": "0x893690b020cddc1be874efb2fc3fcb2209f6e863264d3885c742a58c7a3b12c7",
+  "address": "0x98158ac8cda7c40da87c2102c5b45b96efe3d21b9363bab25f0980ba39707dd3",
   "name": "generic_adapter",
   "friends": [],
   "exposed_functions": [
@@ -11,7 +11,7 @@ export const ABI = {
       "generic_type_params": [],
       "params": [
         "&signer",
-        "&0x8e775fdafef441551521237c279fda77b5010947c8c7b921f1fd0861ea2fe1b::vault::RouterRef",
+        "&0x6a7b799d69fb088fad29b249901b94cbe902a1faca77c218496b9095cf4d3a09::vault::RouterRef",
         "address",
         "address",
         "0x1::fungible_asset::FungibleAsset",
@@ -56,10 +56,10 @@ export const ABI = {
       "generic_type_params": [],
       "params": [
         "&signer",
-        "0x1::object::Object<0x8e775fdafef441551521237c279fda77b5010947c8c7b921f1fd0861ea2fe1b::vault::Vault>"
+        "0x1::object::Object<0x6a7b799d69fb088fad29b249901b94cbe902a1faca77c218496b9095cf4d3a09::vault::Vault>"
       ],
       "return": [
-        "0x1::object::Object<0x893690b020cddc1be874efb2fc3fcb2209f6e863264d3885c742a58c7a3b12c7::generic_adapter::GenericAdapter>"
+        "0x1::object::Object<0x98158ac8cda7c40da87c2102c5b45b96efe3d21b9363bab25f0980ba39707dd3::generic_adapter::GenericAdapter>"
       ]
     },
     {
@@ -70,7 +70,7 @@ export const ABI = {
       "generic_type_params": [],
       "params": [
         "&signer",
-        "0x1::object::Object<0x8e775fdafef441551521237c279fda77b5010947c8c7b921f1fd0861ea2fe1b::vault::Vault>"
+        "0x1::object::Object<0x6a7b799d69fb088fad29b249901b94cbe902a1faca77c218496b9095cf4d3a09::vault::Vault>"
       ],
       "return": []
     },
@@ -95,7 +95,7 @@ export const ABI = {
       "generic_type_params": [],
       "params": [
         "&signer",
-        "&0x8e775fdafef441551521237c279fda77b5010947c8c7b921f1fd0861ea2fe1b::vault::RouterRef",
+        "&0x6a7b799d69fb088fad29b249901b94cbe902a1faca77c218496b9095cf4d3a09::vault::RouterRef",
         "address",
         "u64"
       ],
@@ -122,7 +122,7 @@ export const ABI = {
       "generic_type_params": [],
       "params": [
         "&signer",
-        "&0x8e775fdafef441551521237c279fda77b5010947c8c7b921f1fd0861ea2fe1b::vault::RouterRef",
+        "&0x6a7b799d69fb088fad29b249901b94cbe902a1faca77c218496b9095cf4d3a09::vault::RouterRef",
         "&signer",
         "address",
         "u64"

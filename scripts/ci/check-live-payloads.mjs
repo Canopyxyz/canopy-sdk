@@ -133,8 +133,8 @@ const CHAINS = {
  */
 const CURATOR_VAULTS = {
   "movement-testnet": {
-    floating: "0x3c7a6b46594b02139e6411a8dc2f83cb7b4552f6138f46a321fcba1500a0ef8e",
-    lockedIn: "0x268f2e57764590bfdace5c4653af7d1cb8832fc5ce663dd37747b7016b0dd4dd",
+    floating: "0xab63e5ed706edc1a78e17b7c0776ce7347afa6a643ac3190cbb00cf7f8cb970d",
+    lockedIn: "0x264e3827d3f546b823d1d9420fa7b6f2261b3a48fa88106f47f4e08f4b45d877",
   },
 };
 
@@ -144,8 +144,8 @@ const CURATOR_VAULTS = {
  */
 const CURATOR_GENERIC_ADAPTERS = {
   "movement-testnet": {
-    floating: "0xb10ba2bc2a05e92e3df20bc9bf779db70c65ff14675fe5ac29ae9c3c2a73ad64",
-    lockedIn: "0x38a0872307285a5b069cecff9579f51ccd15dbb74ac9746365799787b2b0c7a8",
+    floating: "0x262a59ed5f0df4bf6df7db6a46f7cadc4baa258491d6e92c964043dacf1a7b35",
+    lockedIn: "0x826ed9bfdc1679582c2ef5b9be59a20c1dd66898723750852d1c0bf8b4e57d54",
   },
 };
 

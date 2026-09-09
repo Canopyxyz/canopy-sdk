@@ -8,6 +8,8 @@ import {
 export interface CuratorRedemptionRequestedEvent {
   claimableAt: bigint;
   expiresAt: bigint;
+  /** The optional payout floor persisted on the request. */
+  minAssetsOut: bigint | null;
   requestAddress: string;
   sharesEscrowed: bigint;
   /**
@@ -118,6 +120,11 @@ export function findRedemptionRequests(
     parsed.push({
       claimableAt: readEventUint(data?.claimable_at, "claimable_at", REDEMPTION_REQUESTED_EVENT),
       expiresAt: readEventUint(data?.expires_at, "expires_at", REDEMPTION_REQUESTED_EVENT),
+      minAssetsOut: readEventOptionalUint(
+        data?.min_assets_out,
+        "min_assets_out",
+        REDEMPTION_REQUESTED_EVENT
+      ),
       requestAddress,
       sharesEscrowed: readEventUint(
         data?.shares_escrowed,
@@ -256,6 +263,24 @@ function readEventUint(value: unknown, field: string, eventName = REDEMPTION_REQ
   }
 
   return parseU64(value, `${eventName}.${field}`);
+}
+
+function readEventOptionalUint(value: unknown, field: string, eventName: string): bigint | null {
+  if (
+    typeof value !== "object" ||
+    value === null ||
+    !("vec" in value) ||
+    !Array.isArray(value.vec) ||
+    value.vec.length > 1
+  ) {
+    throw new CanopyError(
+      `${eventName} has a malformed optional numeric field: ${field}`,
+      CanopyErrorCode.ViewCallFailed,
+      { field, valueType: typeof value }
+    );
+  }
+
+  return value.vec.length === 0 ? null : readEventUint(value.vec[0], field, eventName);
 }
 
 /**

@@ -235,6 +235,10 @@ const requested = findRedemptionRequest(submitted, { userAddress, vaultAddress }
 const request = await sdk.curator!.getRedemptionRequest(requested!.requestAddress);
 ```
 
+`requested.minAssetsOut` is the same optional floor carried by the request event;
+`request.minAssetsOut` reads its persisted value from queue state. Both are `bigint`
+when present and `null` when absent; malformed wire options throw rather than defaulting.
+
 Pass `packageAddress` too when parsing a transaction that may include events from
 another `::vault::RedemptionRequestedEvent`.
 
