@@ -9,18 +9,16 @@ import {
 } from "../packages/sdk/src";
 import { requireCuratorFeatureContext } from "../packages/sdk/src/context";
 
-// Two forms of the same package, and they are not interchangeable.
+// Normalized SDK outputs and verbatim wire values are kept conceptually distinct.
 //
-// The fullnode reports this package unpadded (63 hex); `normalizeMoveAddress` pads it to
-// 64. Mock keys are `payload.function`, which `moveFunctionId` normalizes, and decoded
-// expectations come back through `readMoveAddress` — both padded. Only fields captured
-// verbatim off the wire, such as `raw_abort.package_address`, keep the raw form.
-const VAULT_PACKAGE = "0x08e775fdafef441551521237c279fda77b5010947c8c7b921f1fd0861ea2fe1b";
-const VAULT_PACKAGE_RAW = "0x8e775fdafef441551521237c279fda77b5010947c8c7b921f1fd0861ea2fe1b";
-const ROUTER_PACKAGE = "0x313050fa1c20243da4b6fbe94d8e1c59fbba012afdf9a783e3beda67a5552b97";
-const FLOATING_VAULT = "0x3c7a6b46594b02139e6411a8dc2f83cb7b4552f6138f46a321fcba1500a0ef8e";
+// This deployment's package address is already 64 hex digits, so both forms happen to
+// have the same text.
+const VAULT_PACKAGE = "0x6a7b799d69fb088fad29b249901b94cbe902a1faca77c218496b9095cf4d3a09";
+const VAULT_PACKAGE_RAW = VAULT_PACKAGE;
+const ROUTER_PACKAGE = "0xa1e7649274d0d74e80e1cdfd201402d654c47631f853a52454bd5cd1609b58f6";
+const FLOATING_VAULT = "0xab63e5ed706edc1a78e17b7c0776ce7347afa6a643ac3190cbb00cf7f8cb970d";
 const DEPOSITOR = "0xdc66c438a6579a36f533a6404954d4ec33e595bc8fc2b30f87ef6d792837149b";
-const QUEUE = "0x4a2785da7d7915b69ca1d361b1c5a0aa81ac564dc1ff7097e05e625acd5edf9b";
+const QUEUE = "0x5db92e377ebe3d369cb51e37cd26248467942c4dfdb33689d4bcdd891b6d6b13";
 const REQUEST = "0xa38a31e2ea362d976f53141c247f3aa297d61ee1ca8520e4fd38d606832ae17b";
 
 /** Uppercase hex: valid input, not canonical output. `normalizeMoveAddress` lowercases it. */
@@ -894,10 +892,10 @@ describe("curator reads", () => {
             // omits the `0x` inside `location:`.
             message:
               "Failed to execute function: VMError { major_status: ABORTED, sub_status: Some(2), " +
-              'message: Some("0x08e775fdafef441551521237c279fda77b5010947c8c7b921f1fd0861ea2fe1b' +
+              'message: Some("0x6a7b799d69fb088fad29b249901b94cbe902a1faca77c218496b9095cf4d3a09' +
               '::partner_registry::payout_address at offset 17"), ' +
               "exec_state: Some(ExecutionState { stack_trace: [] }), location: Module(ModuleId { " +
-              "address: 08e775fdafef441551521237c279fda77b5010947c8c7b921f1fd0861ea2fe1b, " +
+              "address: 6a7b799d69fb088fad29b249901b94cbe902a1faca77c218496b9095cf4d3a09, " +
               'name: Identifier("partner_registry") }), indices: [], offsets: [(FunctionDefinitionIndex(2), 17)] }',
             error_code: "invalid_input",
             vm_error_code: null,
@@ -959,6 +957,7 @@ describe("findRedemptionRequest", () => {
           claimable_at: "1784800000",
           force_process_at: "1784886400",
           expires_at: "1785400000",
+          min_assets_out: { vec: ["995000"] },
         },
       },
     ],
@@ -970,6 +969,7 @@ describe("findRedemptionRequest", () => {
     expect(findRedemptionRequest(txResult)).toEqual({
       claimableAt: 1784800000n,
       expiresAt: 1785400000n,
+      minAssetsOut: 995000n,
       requestAddress: normalizeMoveAddress(REQUEST),
       sharesEscrowed: 1000000n,
       storedForceProcessAt: 1784886400n,
@@ -996,6 +996,7 @@ describe("findRedemptionRequest", () => {
             claimable_at: "1784800000",
             force_process_at: "1784886400",
             expires_at: "1785400000",
+            min_assets_out: { vec: ["995000"] },
             ...overrides,
           },
         },
@@ -1027,6 +1028,21 @@ describe("findRedemptionRequest", () => {
 
     expect(request?.sharesEscrowed).toBe(18446744073709551615n);
   });
+
+  it("preserves an absent minimum as null", () => {
+    expect(
+      findRedemptionRequest(eventWith({ min_assets_out: { vec: [] } }))?.minAssetsOut
+    ).toBeNull();
+  });
+
+  it.each([undefined, null, {}, { vec: ["1", "2"] }])(
+    "throws when min_assets_out has a malformed Option shape",
+    (value) => {
+      expect(() => findRedemptionRequest(eventWith({ min_assets_out: value }))).toThrow(
+        /min_assets_out/
+      );
+    }
+  );
 
   it.each([
     ["request_object_address", "request_object_address"],
