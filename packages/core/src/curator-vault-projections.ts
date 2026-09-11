@@ -188,6 +188,22 @@ export function projectVaultAt(input: CuratorVaultProjectionInput): CuratorVault
   };
 }
 
+/**
+ * Projects the funded escrow shares remaining after cumulative partial claims.
+ * Pass the request's original escrowed shares, not its current remaining shares.
+ */
+export function remainingFundedShares(
+  originalShares: bigint,
+  fundedAmount: bigint,
+  claimedAmount: bigint,
+): bigint {
+  if (fundedAmount === 0n) return originalShares;
+  if (claimedAmount > fundedAmount) {
+    throw new RangeError("curator vault accounting invariant: claimedAmount exceeds fundedAmount");
+  }
+  return originalShares - (originalShares * claimedAmount) / fundedAmount;
+}
+
 export function activeVelocityEpochBoundsAt(
   at: bigint,
 ): Record<CuratorVaultVelocityTier, CuratorVaultVelocityEpochBound> {

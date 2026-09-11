@@ -182,6 +182,7 @@ Event-driven Sentio consumers can import the canonical bigint projection helpers
 - `projectVaultAt(...)` for accounting, share price, cap headroom, locked profit, and NAV freshness.
 - `activeVelocityEpochBoundsAt(...)` for bounded bucket queries.
 - `projectAggregateVelocityAt(...)` and `projectWalletVelocityAt(...)` for current velocity use.
+- `remainingFundedShares(...)` for partial-claim queue share projection.
 
 Map GraphQL numeric scalars to `bigint` and supply the projection timestamp. GraphQL introspection describes the stored rows after processor upload; these helpers own the financial arithmetic.
 

@@ -4,6 +4,7 @@ import {
   projectAggregateVelocityAt,
   projectVaultAt,
   projectWalletVelocityAt,
+  remainingFundedShares,
   type CuratorVaultAccountingState,
 } from "../packages/core/src";
 
@@ -114,5 +115,14 @@ describe("Curator Vault projections", () => {
     expect(projectAggregateVelocityAt(buckets, at).redemption.day).toBe(0n);
     expect(projectWalletVelocityAt(buckets, at).deposit.day).toBe(CURATOR_VAULT_U64_MAX);
     expect(projectWalletVelocityAt(buckets, at).redemption.day).toBe(20n);
+  });
+
+  it("projects remaining funded shares with contract floor division", () => {
+    expect(remainingFundedShares(101n, 100n, 0n)).toBe(101n);
+    expect(remainingFundedShares(101n, 100n, 50n)).toBe(51n);
+    expect(remainingFundedShares(101n, 100n, 100n)).toBe(0n);
+    expect(remainingFundedShares(101n, 3n, 1n)).toBe(68n);
+    expect(remainingFundedShares(101n, 0n, 0n)).toBe(101n);
+    expect(() => remainingFundedShares(101n, 100n, 101n)).toThrow(/claimedAmount exceeds fundedAmount/);
   });
 });
